@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0b1f33">
+<title>Caixa · Movimento Vou Fluir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f6f9; --card:#ffffff; --ink:#0b1f33; --muted:#5d7085; --line:#dfe6ee;
+  --brand:#0b1f33; --accent:#13a6c4; --accent2:#3fd0b5; --danger:#d9434e; --ok:#1f9d6b;
+  --chip:#e9f6f9;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select{font-family:inherit;font-size:16px}
+header{background:linear-gradient(120deg,var(--brand) 0%,#123a5c 60%,#0f6f8a 100%);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:20}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1200px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;font-size:15px}
+.logo h1{font-size:17px;margin:0;line-height:1.1;font-weight:700}
+.logo small{display:block;font-size:12px;opacity:.75;font-weight:400}
+.today{text-align:right;font-size:12px;opacity:.85}
+.today b{display:block;font-size:18px;opacity:1}
+nav{display:flex;gap:4px;max-width:1200px;margin:12px auto 0}
+nav button{flex:1;background:transparent;color:#cfe3ee;padding:11px 6px;font-size:15px;font-weight:600;border-radius:12px 12px 0 0}
+nav button.on{background:var(--bg);color:var(--ink)}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+
+/* Venda */
+.pos{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+@media(max-width:860px){.pos{grid-template-columns:1fr}}
+.group{margin-bottom:16px}
+.group h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:left;min-height:84px;display:flex;flex-direction:column;justify-content:space-between;position:relative;transition:transform .06s}
+.prod:active{transform:scale(.97);background:var(--chip)}
+.prod .n{font-weight:600;font-size:15px;line-height:1.2}
+.prod .p{font-weight:700;color:var(--accent);font-size:16px;margin-top:8px}
+.prod.free .p{color:var(--muted);font-weight:500;font-size:13px}
+.prod .q{position:absolute;top:8px;right:8px;background:var(--accent);color:#fff;border-radius:999px;min-width:24px;height:24px;font-size:13px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+
+.cart{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;position:sticky;top:120px}
+@media(max-width:860px){.cart{position:static}}
+.cart h2{margin:0 0 10px;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.link{background:none;color:var(--danger);font-size:14px;font-weight:600;padding:4px}
+.lines{max-height:38vh;overflow:auto;margin:0 -4px}
+.line{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px dashed var(--line)}
+.line .info{flex:1;min-width:0}
+.line .info b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.line .info span{font-size:13px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{width:32px;height:32px;border-radius:9px;background:var(--chip);color:var(--ink);font-size:18px;font-weight:700}
+.qty em{font-style:normal;min-width:22px;text-align:center;font-weight:700}
+.line .sub{min-width:72px;text-align:right;font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:24px 8px;font-size:15px}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 10px}
+.total span{color:var(--muted)}
+.total b{font-size:32px;font-weight:800}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay button{padding:12px 8px;border-radius:12px;background:var(--chip);color:var(--ink);font-weight:600;font-size:15px;border:2px solid transparent}
+.pay button.on{border-color:var(--accent);background:#d6f1f6}
+.cash{margin-top:10px;display:none}
+.cash.on{display:block}
+.cash label{font-size:13px;color:var(--muted)}
+.cash input{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:20px;font-weight:700;margin-top:4px}
+.quick{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.quick button{flex:1;padding:8px 4px;border-radius:9px;background:#f0f3f6;font-weight:600;font-size:14px;color:var(--ink)}
+.troco{margin-top:8px;font-size:17px;display:flex;justify-content:space-between}
+.troco b{font-size:22px;color:var(--ok)}
+.troco.neg b{color:var(--danger)}
+.go{width:100%;margin-top:12px;padding:16px;border-radius:14px;background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;font-size:18px;font-weight:700}
+.go:disabled{opacity:.4}
+
+/* Cards / tables */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi b{display:block;font-size:24px;font-weight:800;margin-top:4px}
+.kpi.big{background:linear-gradient(120deg,var(--brand),#0f6f8a);color:#fff;border:0}
+.kpi.big span{color:#bfe0ea}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:9px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+.sale{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--card)}
+.sale.cx{opacity:.5}
+.sale .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sale .h b{font-size:18px}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);font-weight:600}
+.sale ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.sale .acts{margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.btn{padding:11px 14px;border-radius:12px;background:var(--chip);color:var(--ink);font-weight:600;font-size:15px}
+.btn.dark{background:var(--brand);color:#fff}
+.btn.red{background:#fde8ea;color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.cfg{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.cfg input{padding:9px;border:1px solid var(--line);border-radius:10px}
+.cfg .nm{flex:1;min-width:0}
+.cfg .pr{width:100px}
+.cfg select{padding:9px;border:1px solid var(--line);border-radius:10px;width:120px}
+.hint{font-size:13px;color:var(--muted)}
+
+/* Modal */
+.modal{position:fixed;inset:0;background:rgba(11,31,51,.55);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.on{display:flex}
+@media(min-width:600px){.modal{align-items:center}}
+.sheet{background:#fff;width:100%;max-width:440px;border-radius:20px 20px 0 0;padding:20px}
+@media(min-width:600px){.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 12px;font-size:20px}
+.sheet label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+.sheet input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;margin-top:4px}
+.sheet input.money{font-size:24px;font-weight:700}
+.sheet .row{margin-top:16px}
+.sheet .row .btn{flex:1;padding:14px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;margin-top:4px;opacity:.95}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:#9fb3c4}
+.status.on::before{background:#3fd08a}.status.wait::before{background:#f5c04a}.status.off::before{background:#ff6b6b}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--ok);color:#fff;padding:14px 22px;border-radius:14px;font-weight:600;font-size:16px;transition:transform .25s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.toast.on{transform:translateX(-50%) translateY(0)}
+
+/* Pedidos da livraria */
+.pedbox{background:#fff7e0;border:2px solid #f5c04a;border-radius:16px;padding:12px;margin-bottom:16px}
+.pedbox h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+.pedbox h3 .cnt{background:#e0a000;color:#fff;border-radius:999px;padding:2px 9px;font-size:13px}
+.ped{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:8px}
+.ped .info{flex:1;min-width:0}
+.ped .info b{font-size:16px}
+.ped .info small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ped .val{font-weight:800;font-size:17px;white-space:nowrap}
+.ped .btn{padding:10px 14px}
+.ped.novo,.lpedido.novo{animation:pisca 1s ease-in-out 3}
+@keyframes pisca{50%{background:#ffe9a8}}
+.lpedido{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;background:#fff}
+.lpedido .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lpedido .h b{font-size:18px}
+.lpedido ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.lpedido .acts{margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.lpedido.pago{border:2px solid var(--ok);background:#eafaf2}
+.lpedido.pago .tag{background:var(--ok);color:#fff}
+.lpedido.entregue{opacity:.6}
+.tag.aguard{background:#fff1c7;color:#8a6400}
+.btn.ok{background:var(--ok);color:#fff}
+.livline{display:flex;gap:8px;margin-top:8px;align-items:center}
+.livline input{padding:12px;border:1px solid var(--line);border-radius:12px}
+.livline .tt{flex:1;min-width:0}
+.livline .pp{width:110px;font-weight:700}
+.field{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;margin-top:4px;font-size:17px}
+.secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 4px;font-weight:600}
+.cart .pedtag{display:inline-block;font-size:11px;background:#fff1c7;color:#8a6400;border-radius:6px;padding:1px 6px;margin-right:4px;font-weight:700}
+body.liv nav{display:none}
+body.liv header{padding-bottom:14px}
+body.liv #v-livros{max-width:640px;margin:0 auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">
+      <div class="logo-mark">VF</div>
+      <div><h1>Movimento Vou Fluir</h1><small id="subtitulo">Caixa do evento</small></div>
+    </div>
+    <div class="today"><span id="hojeQtd">0 vendas</span><b id="hojeTotal">R$ 0,00</b><span class="status" id="status">Conectando…</span></div>
+  </div>
+  <nav>
+    <button data-v="venda" class="on">Venda</button>
+    <button data-v="livros">Livros</button>
+    <button data-v="historico">Vendas</button>
+    <button data-v="resumo">Resumo</button>
+    <button data-v="config">Produtos</button>
+  </nav>
+</header>
+
+<main>
+  <!-- VENDA -->
+  <section class="view on" id="v-venda">
+    <div class="pos">
+      <div><div id="pedidosCaixa"></div><div id="catalogo"></div></div>
+      <aside class="cart">
+        <h2>Pedido atual <button class="link" id="limpar">Limpar</button></h2>
+        <div class="lines" id="linhas"></div>
+        <div class="total"><span>Total</span><b id="total">R$ 0,00</b></div>
+        <div class="pay" id="pay">
+          <button data-m="Dinheiro">💵 Dinheiro</button>
+          <button data-m="Pix">⚡ Pix</button>
+          <button data-m="Débito">💳 Débito</button>
+          <button data-m="Crédito">💳 Crédito</button>
+        </div>
+        <div class="cash" id="cash">
+          <label>Valor recebido</label>
+          <input id="recebido" inputmode="decimal" placeholder="0,00">
+          <div class="quick" id="quick"></div>
+          <div class="troco" id="trocoBox"><span>Troco</span><b id="troco">R$ 0,00</b></div>
+        </div>
+        <button class="go" id="finalizar" disabled>Finalizar venda</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- LIVRARIA -->
+  <section class="view" id="v-livros">
+    <div class="card">
+      <h3 style="margin:0 0 4px">Novo pedido de livro</h3>
+      <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e os livros. O pedido aparece na hora no caixa.</p>
+      <label class="hint">Nome da pessoa</label>
+      <input id="livCliente" class="field" placeholder="Ex.: Maria Souza" autocomplete="off">
+      <div id="livLinhas"></div>
+      <datalist id="livTitulos"></datalist>
+      <button class="btn" id="livAdd" style="margin-top:10px">+ Outro livro</button>
+      <div class="total"><span>Total</span><b id="livTotal">R$ 0,00</b></div>
+      <button class="go" id="livEnviar">Enviar para o caixa</button>
+    </div>
+    <div class="secao">✅ Pagos — entregar</div><div id="lPagos"></div>
+    <div class="secao">⏳ Aguardando pagamento</div><div id="lAguard"></div>
+    <div class="secao">Entregues</div><div id="lEntregues"></div>
+  </section>
+
+  <!-- HISTÓRICO -->
+  <section class="view" id="v-historico">
+    <div id="lista"></div>
+  </section>
+
+  <!-- RESUMO -->
+  <section class="view" id="v-resumo">
+    <div class="kpis" id="kpis"></div>
+    <div class="card"><h3 style="margin:0 0 8px">Por forma de pagamento</h3><table id="tPag"></table></div>
+    <div class="card"><h3 style="margin:0 0 8px">Por produto</h3><table id="tProd"></table></div>
+    <div class="row">
+      <button class="btn dark" id="csv">Baixar planilha (CSV)</button>
+      <button class="btn" onclick="window.print()">Imprimir</button>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section class="view" id="v-config">
+    <div class="card">
+      <h3 style="margin:0 0 4px">Produtos e preços</h3>
+      <p class="hint" style="margin:0 0 8px">Deixe o preço em branco para produtos de valor variável (o valor é digitado na hora da venda).</p>
+      <div id="cfgList"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="addProd">+ Adicionar produto</button>
+        <button class="btn dark" id="salvarCfg">Salvar alterações</button>
+      </div>
+    </div>
+    <p class="hint">As vendas ficam salvas na nuvem e aparecem em qualquer aparelho que abrir este link. Se a internet cair, as vendas ficam guardadas neste aparelho e são enviadas sozinhas quando a conexão voltar — não feche a aba enquanto houver pendentes. Este aparelho: <b id="aparelhoNome"></b>.</p>
+  </section>
+</main>
+
+<!-- Modal valor variável -->
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h3 id="mTitulo">Produto</h3>
+    <label>Descrição (opcional)</label>
+    <input id="mDesc" placeholder="Ex.: nome do livro, tamanho M">
+    <label>Valor (R$)</label>
+    <input id="mValor" class="money" inputmode="decimal" placeholder="0,00">
+    <div class="row">
+      <button class="btn" id="mCancel">Cancelar</button>
+      <button class="btn dark" id="mOk">Adicionar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = 'https://wengqckoknqqgeucgubg.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_JuPHTEh530A0RGsn4CugKg_L-DaKIBm';
+const LIV = new URLSearchParams(location.search).has('livraria');
+
+const DEFAULT = [
+  {id:'coca',  nome:'Coca-Cola',       preco:6,  cat:'Bebidas'},
+  {id:'cocaz', nome:'Coca-Cola Zero',  preco:6,  cat:'Bebidas'},
+  {id:'guara', nome:'Guaraná',         preco:6,  cat:'Bebidas'},
+  {id:'tonic', nome:'Tônica',          preco:6,  cat:'Bebidas'},
+  {id:'agua',  nome:'Água sem gás',    preco:5,  cat:'Bebidas'},
+  {id:'aguag', nome:'Água com gás',    preco:5,  cat:'Bebidas'},
+  {id:'hamb',  nome:'Hambúrguer',      preco:25, cat:'Comida'},
+  {id:'cafe',  nome:'Café',            preco:33, cat:'Comida'},
+  {id:'livro', nome:'Livro',           preco:null, cat:'Loja'},
+  {id:'camis', nome:'Camiseta',        preco:null, cat:'Loja'},
+  {id:'outro', nome:'Outro item',      preco:null, cat:'Loja'}
+];
+const CATS = ['Bebidas','Comida','Loja'];
+const K = {p:'vf2_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
+           pc:'vf3_pedidos_cache', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
+
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const uuid = ()=> (crypto.randomUUID ? crypto.randomUUID() :
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);}));
+
+let produtos = load(K.p, DEFAULT);
+let servidor = load(K.s, []);      // vendas confirmadas no Supabase
+let pendentes = load(K.q, []);     // vendas ainda não enviadas
+let cancelPend = load(K.c, {});    // {vendaId: true/false}
+let pedServ = load(K.pc, []);      // pedidos de livro no Supabase
+let pedNovos = load(K.pn, []);     // pedidos criados aqui e ainda não enviados
+let pedPend = load(K.pp, {});      // {pedidoId: {status,...}} alterações não enviadas
+let aparelho = load(K.d, null); if(!aparelho){ aparelho = 'Caixa-'+Math.random().toString(36).slice(2,6).toUpperCase(); save(K.d, aparelho); }
+let carrinho = [];
+let metodo = null;
+let online = null;
+let vistos = null;                 // {pedidoId: status} para detectar novidades
+
+const $ = s => document.querySelector(s);
+const brl = v => (+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const num = s => { if(s==null) return NaN; s = String(s).trim().replace(/\s|R\$/g,''); if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); return parseFloat(s); };
+const hora = ts => new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2200); }
+
+/* ---------- Aviso sonoro ---------- */
+let actx = null;
+document.addEventListener('pointerdown', ()=>{ try{ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }, {once:false});
+function bip(vezes=2){
+  try{
+    if(!actx) return; let t = actx.currentTime;
+    for(let i=0;i<vezes;i++){
+      const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value = i%2? 1040 : 880;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.35,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+0.25); t += 0.3;
+    }
+  }catch(e){}
+  try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
+}
+
+/* ---------- Supabase (REST) ---------- */
+async function sb(path, opt={}){
+  const r = await fetch(SB_URL+path, { ...opt, headers:{ apikey:SB_KEY, 'Content-Type':'application/json', ...(opt.headers||{}) } });
+  if(!r.ok) throw new Error(r.status+' '+await r.text());
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+
+function todasVendas(){
+  const ids = new Set(servidor.map(v=>v.id));
+  const lista = [...servidor, ...pendentes.filter(v=>!ids.has(v.id)).map(v=>({...v, pendente:true}))];
+  return lista.map(v=> v.id in cancelPend ? {...v, cancelada:cancelPend[v.id]} : v)
+              .sort((a,b)=> new Date(a.ts)-new Date(b.ts));
+}
+function todosPedidos(){
+  const ids = new Set(pedServ.map(p=>p.id));
+  const lista = [...pedServ, ...pedNovos.filter(p=>!ids.has(p.id)).map(p=>({...p, pendente:true}))];
+  return lista.map(p=> pedPend[p.id] ? {...p, ...pedPend[p.id]} : p)
+              .sort((a,b)=> new Date(a.criado_em)-new Date(b.criado_em));
+}
+function setPedido(id, patch){
+  const novo = pedNovos.find(p=>p.id===id);
+  if(novo && !pedServ.some(p=>p.id===id)){ Object.assign(novo, patch); save(K.pn, pedNovos); }
+  else { pedPend[id] = {...(pedPend[id]||{}), ...patch}; save(K.pp, pedPend); }
+}
+
+let syncando = false;
+async function sync(){
+  if(syncando) return; syncando = true;
+  try{
+    for(const p of [...pedNovos]){
+      const {pendente, ...row} = p;
+      // um pedido criado offline pode já ter sido cobrado; insere como aguardando e manda o resto como alteração
+      const {status, venda_id, pago_em, entregue_em, ...base} = row;
+      await sb('/vf_caixa_pedidos', {method:'POST', headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}, body:JSON.stringify({...base, status:'aguardando'})});
+      if(status && status!=='aguardando'){ pedPend[p.id] = {...(pedPend[p.id]||{}), status, venda_id, pago_em, entregue_em}; save(K.pp, pedPend); }
+      pedNovos = pedNovos.filter(x=>x.id!==p.id); save(K.pn, pedNovos);
+    }
+    for(const v of [...pendentes]){
+      const {pendente, ...row} = v;
+      await sb('/vf_caixa_vendas', {method:'POST', headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}, body:JSON.stringify(row)});
+      pendentes = pendentes.filter(x=>x.id!==v.id); save(K.q, pendentes);
+    }
+    for(const [id, val] of Object.entries(cancelPend)){
+      await sb('/vf_caixa_vendas?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({cancelada:val})});
+      delete cancelPend[id]; save(K.c, cancelPend);
+    }
+    for(const [id, patch] of Object.entries(pedPend)){
+      await sb('/vf_caixa_pedidos?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(patch)});
+      delete pedPend[id]; save(K.pp, pedPend);
+    }
+    const [vs, ps, cfg] = await Promise.all([
+      sb('/vf_caixa_vendas?select=*&order=ts.asc'),
+      sb('/vf_caixa_pedidos?select=*&order=criado_em.asc'),
+      sb('/vf_caixa_config?id=eq.produtos&select=valor')
+    ]);
+    servidor = vs; servidor.forEach(v=>{ v.total=+v.total; if(v.recebido!=null) v.recebido=+v.recebido; if(v.troco!=null) v.troco=+v.troco; });
+    save(K.s, servidor);
+    pedServ = ps; pedServ.forEach(p=>{ p.total=+p.total; }); save(K.pc, pedServ);
+    if(cfg && cfg[0] && Array.isArray(cfg[0].valor) && !document.querySelector('#v-config.on')){
+      if(JSON.stringify(cfg[0].valor)!==JSON.stringify(produtos)){ produtos = cfg[0].valor; save(K.p, produtos); renderCatalogo(); }
+    }
+    setOnline(true);
+  }catch(e){ console.warn('sync', e); setOnline(false); }
+  finally{ syncando = false; avisos(); atualizarTelas(); }
+}
+function setOnline(v){ online = v; renderStatus(); }
+function renderStatus(){
+  const pend = pendentes.length + Object.keys(cancelPend).length + pedNovos.length + Object.keys(pedPend).length;
+  const el = $('#status');
+  el.className = 'status ' + (online===false ? 'off' : pend ? 'wait' : 'on');
+  el.textContent = online===false ? `Sem conexão${pend?` · ${pend} pendente${pend>1?'s':''}`:''}`
+                 : pend ? `Enviando ${pend}…` : online ? 'Sincronizado' : 'Conectando…';
+}
+
+/* Detecta pedidos novos (caixa) e pedidos pagos (livraria) */
+let destacar = new Set();
+function avisos(){
+  const peds = todosPedidos();
+  if(vistos===null){ vistos = {}; peds.forEach(p=>vistos[p.id]=p.status); return; }
+  const novos = [], pagos = [];
+  peds.forEach(p=>{
+    const antes = vistos[p.id];
+    if(antes===undefined && p.status==='aguardando') novos.push(p);
+    if(antes!=='pago' && antes!==undefined && p.status==='pago') pagos.push(p);
+    if(antes===undefined && p.status==='pago') pagos.push(p);
+    vistos[p.id] = p.status;
+  });
+  if(!LIV && novos.length){
+    novos.forEach(p=>destacar.add(p.id)); bip(2);
+    toast(novos.length===1 ? `📚 Novo pedido de livro: ${novos[0].cliente} · ${brl(novos[0].total)}` : `📚 ${novos.length} novos pedidos de livro`, '#b07d00', 3500);
+  }
+  if(LIV && pagos.length){
+    pagos.forEach(p=>destacar.add(p.id)); bip(3);
+    toast(pagos.length===1 ? `✅ PAGO: ${pagos[0].cliente} — pode entregar` : `✅ ${pagos.length} pedidos pagos — pode entregar`, 'var(--ok)', 4000);
+  }
+}
+
+function atualizarTelas(){
+  renderTopo(); renderStatus(); renderPedidosCaixa();
+  if($('#v-livros').classList.contains('on')) renderLivrosListas();
+  if($('#v-historico').classList.contains('on')) renderHistorico();
+  if($('#v-resumo').classList.contains('on')) renderResumo();
+}
+setInterval(sync, 4000);
+window.addEventListener('online', sync);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) sync(); });
+
+/* ---------- Navegação ---------- */
+function irPara(v){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  if(v==='livros') renderLivrosListas();
+  if(v==='historico') renderHistorico();
+  if(v==='resumo') renderResumo();
+  if(v==='config') renderConfig();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
+
+/* ---------- Catálogo ---------- */
+function renderCatalogo(){
+  const qtdPor = {}; carrinho.forEach(l=>{ if(!l.pedido) qtdPor[l.pid]=(qtdPor[l.pid]||0)+l.qtd; });
+  const cats = [...new Set([...CATS, ...produtos.map(p=>p.cat||'Outros')])];
+  $('#catalogo').innerHTML = cats.map(c=>{
+    const ps = produtos.filter(p=>(p.cat||'Outros')===c); if(!ps.length) return '';
+    return `<div class="group"><h3>${esc(c)}</h3><div class="grid">${ps.map(p=>`
+      <button class="prod ${p.preco==null?'free':''}" data-id="${p.id}">
+        ${qtdPor[p.id]?`<span class="q">${qtdPor[p.id]}</span>`:''}
+        <span class="n">${esc(p.nome)}</span>
+        <span class="p">${p.preco==null?'Digitar valor':brl(p.preco)}</span>
+      </button>`).join('')}</div></div>`;
+  }).join('');
+  document.querySelectorAll('.prod').forEach(b=>b.onclick=()=>addProduto(b.dataset.id));
+}
+
+function addProduto(id){
+  const p = produtos.find(x=>x.id===id); if(!p) return;
+  if(p.preco==null){ abrirModal(p); return; }
+  const l = carrinho.find(x=>x.key===p.id);
+  if(l) l.qtd++; else carrinho.push({key:p.id, pid:p.id, nome:p.nome, preco:p.preco, qtd:1});
+  renderCarrinho();
+}
+
+/* ---------- Pedidos de livro no caixa ---------- */
+function renderPedidosCaixa(){
+  const el = $('#pedidosCaixa'); if(LIV){ el.innerHTML=''; return; }
+  const noCarrinho = new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido));
+  const ag = todosPedidos().filter(p=>p.status==='aguardando' && !noCarrinho.has(p.id));
+  if(!ag.length){ el.innerHTML=''; return; }
+  el.innerHTML = `<div class="pedbox"><h3>📚 Livros aguardando pagamento <span class="cnt">${ag.length}</span></h3>
+    ${ag.map(p=>`<div class="ped ${destacar.has(p.id)?'novo':''}">
+      <div class="info"><b>${esc(p.cliente)}</b><small>${p.n?'#'+p.n+' · ':''}${hora(p.criado_em)} · ${p.itens.map(i=>esc(i.titulo)).join(', ')}</small></div>
+      <span class="val">${brl(p.total)}</span>
+      <button class="btn dark" data-cobrar="${p.id}">Cobrar</button>
+    </div>`).join('')}</div>`;
+  el.querySelectorAll('[data-cobrar]').forEach(b=>b.onclick=()=>cobrarPedido(b.dataset.cobrar));
+  destacar.clear();
+}
+function cobrarPedido(id){
+  const p = todosPedidos().find(x=>x.id===id); if(!p || p.status!=='aguardando') return;
+  p.itens.forEach((i,k)=>carrinho.push({key:`ped_${id}_${k}`, pid:'livro', nome:`Livro – ${i.titulo}`, preco:+i.preco, qtd:+i.qtd||1, pedido:id, cliente:p.cliente}));
+  renderCarrinho(); renderPedidosCaixa();
+  if(window.innerWidth<860) $('.cart').scrollIntoView({behavior:'smooth'});
+}
+
+/* ---------- Modal valor variável ---------- */
+let modalProd = null;
+function abrirModal(p){
+  modalProd = p; $('#mTitulo').textContent = p.nome; $('#mDesc').value=''; $('#mValor').value='';
+  $('#modal').classList.add('on'); setTimeout(()=>$('#mValor').focus(),50);
+}
+function fecharModal(){ $('#modal').classList.remove('on'); modalProd=null; }
+$('#mCancel').onclick = fecharModal;
+$('#modal').onclick = e=>{ if(e.target.id==='modal') fecharModal(); };
+$('#mOk').onclick = ()=>{
+  const v = num($('#mValor').value);
+  if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
+  const d = $('#mDesc').value.trim();
+  const nome = modalProd.nome + (d?` – ${d}`:'');
+  carrinho.push({key:modalProd.id+'_'+Date.now(), pid:modalProd.id, nome, preco:Math.round(v*100)/100, qtd:1});
+  fecharModal(); renderCarrinho();
+};
+$('#mValor').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#mOk').click(); });
+
+/* ---------- Carrinho ---------- */
+const totalCarrinho = ()=> carrinho.reduce((s,l)=>s+l.preco*l.qtd,0);
+
+function renderCarrinho(){
+  const el = $('#linhas');
+  if(!carrinho.length){ el.innerHTML = '<div class="empty">Toque nos produtos para adicionar</div>'; }
+  else el.innerHTML = carrinho.map((l,i)=>`
+    <div class="line">
+      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:''}${esc(l.pedido? l.nome.replace(/^Livro – /,'') : l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
+      ${l.pedido ? `<div class="qty"><button data-rmped="${l.pedido}" title="Tirar pedido do caixa">×</button></div>`
+                 : `<div class="qty"><button data-i="${i}" data-d="-1">−</button><em>${l.qtd}</em><button data-i="${i}" data-d="1">+</button></div>`}
+      <div class="sub">${brl(l.preco*l.qtd)}</div>
+    </div>`).join('');
+  el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{
+    const l = carrinho[+b.dataset.i]; l.qtd += +b.dataset.d;
+    if(l.qtd<=0) carrinho.splice(+b.dataset.i,1);
+    renderCarrinho();
+  });
+  el.querySelectorAll('[data-rmped]').forEach(b=>b.onclick=()=>{
+    carrinho = carrinho.filter(l=>l.pedido!==b.dataset.rmped); renderCarrinho(); renderPedidosCaixa();
+  });
+  const t = totalCarrinho();
+  $('#total').textContent = brl(t);
+  renderQuick(t); calcTroco();
+  $('#finalizar').disabled = !carrinho.length || !metodo || (metodo==='Dinheiro' && trocoInvalido());
+  renderCatalogo();
+}
+
+$('#limpar').onclick = ()=>{ if(carrinho.length && confirm('Limpar o pedido atual?')){ resetPedido(); renderPedidosCaixa(); } };
+
+function resetPedido(){
+  carrinho=[]; metodo=null; $('#recebido').value='';
+  document.querySelectorAll('#pay button').forEach(x=>x.classList.remove('on'));
+  $('#cash').classList.remove('on'); renderCarrinho();
+}
+
+/* ---------- Pagamento ---------- */
+document.querySelectorAll('#pay button').forEach(b=>b.onclick=()=>{
+  metodo = b.dataset.m;
+  document.querySelectorAll('#pay button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#cash').classList.toggle('on', metodo==='Dinheiro');
+  renderCarrinho();
+  if(metodo==='Dinheiro') setTimeout(()=>$('#recebido').focus(),50);
+});
+
+function renderQuick(t){
+  const opts = new Set();
+  [5,10,20,50,100,200].forEach(n=>{ if(n>=t && opts.size<4) opts.add(n); });
+  $('#quick').innerHTML = `<button data-v="${t}">Exato</button>` + [...opts].filter(n=>n!==t).map(n=>`<button data-v="${n}">${brl(n).replace(',00','')}</button>`).join('');
+  $('#quick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ $('#recebido').value = (+b.dataset.v).toFixed(2).replace('.',','); calcTroco(); renderCarrinho(); });
+}
+function trocoInvalido(){ const r = num($('#recebido').value); return isNaN(r) || r < totalCarrinho()-0.001; }
+function calcTroco(){
+  const r = num($('#recebido').value), t = totalCarrinho();
+  const box = $('#trocoBox');
+  if(isNaN(r)){ $('#troco').textContent='—'; box.classList.remove('neg'); return; }
+  const d = r - t;
+  box.classList.toggle('neg', d<0);
+  box.firstElementChild.textContent = d<0 ? 'Falta' : 'Troco';
+  $('#troco').textContent = brl(Math.abs(d));
+}
+$('#recebido').addEventListener('input',()=>{ calcTroco(); $('#finalizar').disabled = !carrinho.length || !metodo || trocoInvalido(); });
+
+$('#finalizar').onclick = ()=>{
+  if(!carrinho.length || !metodo) return;
+  const total = Math.round(totalCarrinho()*100)/100;
+  const peds = [...new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido))];
+  const venda = { id: uuid(), ts: new Date().toISOString(),
+    itens: carrinho.map(l=>({pid:l.pid, nome:l.nome, preco:l.preco, qtd:l.qtd, ...(l.pedido?{pedido:l.pedido}:{})})),
+    total, metodo, cancelada:false, aparelho, recebido:null, troco:null, pedidos:peds };
+  if(metodo==='Dinheiro'){ venda.recebido = num($('#recebido').value); venda.troco = Math.round((venda.recebido-total)*100)/100; }
+  pendentes.push(venda); save(K.q, pendentes);
+  const agora = new Date().toISOString();
+  peds.forEach(id=>setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}));
+  peds.forEach(id=>{ if(vistos) vistos[id]='pago'; });
+  toast(metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`);
+  resetPedido(); atualizarTelas(); sync();
+};
+
+/* ---------- Topo ---------- */
+function renderTopo(){
+  if(LIV){
+    const n = todosPedidos().filter(p=>p.status==='pago').length;
+    $('#hojeQtd').textContent = 'Para entregar';
+    $('#hojeTotal').textContent = n + (n===1?' pedido':' pedidos');
+    return;
+  }
+  const ok = todasVendas().filter(v=>!v.cancelada);
+  $('#hojeQtd').textContent = ok.length + (ok.length===1?' venda':' vendas');
+  $('#hojeTotal').textContent = brl(ok.reduce((s,v)=>s+v.total,0));
+}
+
+/* ---------- Livraria ---------- */
+let livLinhas = [{titulo:'', preco:''}];
+function sugestoes(){
+  const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo) m[i.titulo.trim()] = +i.preco; })); return m;
+}
+function renderLivForm(){
+  const sug = sugestoes();
+  $('#livTitulos').innerHTML = Object.keys(sug).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  $('#livLinhas').innerHTML = livLinhas.map((l,i)=>`
+    <div class="livline">
+      <input class="tt" list="livTitulos" data-i="${i}" placeholder="Título do livro" value="${esc(l.titulo)}" autocomplete="off">
+      <input class="pp" data-i="${i}" inputmode="decimal" placeholder="R$ 0,00" value="${esc(l.preco)}">
+      ${livLinhas.length>1?`<button class="link" data-rm="${i}">✕</button>`:''}
+    </div>`).join('');
+  $('#livLinhas').querySelectorAll('.tt').forEach(inp=>{
+    inp.oninput = ()=>{ livLinhas[+inp.dataset.i].titulo = inp.value; };
+    inp.onchange = ()=>{
+      const l = livLinhas[+inp.dataset.i]; const s = sugestoes()[inp.value.trim()];
+      if(s && !l.preco){ l.preco = String(s.toFixed(2)).replace('.',','); renderLivForm(); }
+      livTotal();
+    };
+  });
+  $('#livLinhas').querySelectorAll('.pp').forEach(inp=>inp.oninput = ()=>{ livLinhas[+inp.dataset.i].preco = inp.value; livTotal(); });
+  $('#livLinhas').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ livLinhas.splice(+b.dataset.rm,1); renderLivForm(); });
+  livTotal();
+}
+function livTotal(){
+  const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0);
+  $('#livTotal').textContent = brl(t); return t;
+}
+$('#livAdd').onclick = ()=>{ livLinhas.push({titulo:'',preco:''}); renderLivForm(); const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus(); };
+$('#livEnviar').onclick = ()=>{
+  const cliente = $('#livCliente').value.trim();
+  if(!cliente){ toast('Escreva o nome da pessoa','var(--danger)'); $('#livCliente').focus(); return; }
+  const itens = [];
+  for(const l of livLinhas){
+    const t = l.titulo.trim(), v = num(l.preco);
+    if(!t && !l.preco) continue;
+    if(!t){ toast('Falta o título de um livro','var(--danger)'); return; }
+    if(!(v>0)){ toast(`Falta o preço de "${t}"`,'var(--danger)'); return; }
+    itens.push({titulo:t, preco:Math.round(v*100)/100, qtd:1});
+  }
+  if(!itens.length){ toast('Adicione pelo menos um livro','var(--danger)'); return; }
+  const total = Math.round(itens.reduce((s,i)=>s+i.preco,0)*100)/100;
+  const p = {id:uuid(), criado_em:new Date().toISOString(), cliente, itens, total, status:'aguardando'};
+  pedNovos.push(p); save(K.pn, pedNovos);
+  if(vistos) vistos[p.id] = 'aguardando';
+  livLinhas = [{titulo:'',preco:''}]; $('#livCliente').value='';
+  renderLivForm(); toast(`Pedido de ${cliente} enviado ao caixa · ${brl(total)}`);
+  atualizarTelas(); sync();
+};
+function renderLivrosListas(){
+  const peds = todosPedidos();
+  const card = (p, acoes)=>`
+    <div class="lpedido ${p.status} ${destacar.has(p.id)?'novo':''}">
+      <div class="h"><b>${esc(p.cliente)} · ${brl(p.total)}</b>
+        <span class="tag ${p.status==='aguardando'?'aguard':''}">${p.status==='pago'?'PAGO':p.status==='aguardando'?'Aguardando caixa':p.status==='entregue'?'Entregue':'Cancelado'}</span></div>
+      <ul>${p.itens.map(i=>`<li>${esc(i.titulo)} — ${brl(i.preco*(i.qtd||1))}</li>`).join('')}</ul>
+      <div class="acts"><span>${p.n?'#'+p.n+' · ':''}pedido ${hora(p.criado_em)}${p.pago_em?' · pago '+hora(p.pago_em):''}${p.entregue_em?' · entregue '+hora(p.entregue_em):''}${p.pendente?' · enviando…':''}</span>${acoes}</div>
+    </div>`;
+  const pagos = peds.filter(p=>p.status==='pago');
+  const ag = peds.filter(p=>p.status==='aguardando');
+  const ent = peds.filter(p=>p.status==='entregue').reverse().slice(0,20);
+  $('#lPagos').innerHTML = pagos.length ? pagos.map(p=>card(p, `<button class="btn ok" data-ent="${p.id}">Entregue ✓</button>`)).join('') : '<p class="hint">Nenhum pedido pago esperando entrega.</p>';
+  $('#lAguard').innerHTML = ag.length ? ag.map(p=>card(p, `<button class="link" data-cx="${p.id}">Cancelar pedido</button>`)).join('') : '<p class="hint">Nenhum pedido aguardando.</p>';
+  $('#lEntregues').innerHTML = ent.length ? ent.map(p=>card(p, `<button class="link" style="color:var(--muted)" data-volta="${p.id}">Desfazer</button>`)).join('') : '<p class="hint">Nenhum ainda.</p>';
+  document.querySelectorAll('[data-ent]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.ent,{status:'entregue', entregue_em:new Date().toISOString()}); atualizarTelas(); sync(); });
+  document.querySelectorAll('[data-volta]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.volta,{status:'pago', entregue_em:null}); atualizarTelas(); sync(); });
+  document.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{
+    const p = peds.find(x=>x.id===b.dataset.cx);
+    if(confirm(`Cancelar o pedido de ${p.cliente} (${brl(p.total)})?`)){ setPedido(p.id,{status:'cancelado'}); atualizarTelas(); sync(); }
+  });
+  destacar.clear();
+}
+
+/* ---------- Histórico ---------- */
+function renderHistorico(){
+  const el = $('#lista'); const vendas = todasVendas();
+  if(!vendas.length){ el.innerHTML='<div class="empty card">Nenhuma venda registrada ainda.</div>'; return; }
+  el.innerHTML = [...vendas].reverse().map(v=>`
+    <div class="sale ${v.cancelada?'cx':''}">
+      <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${v.cancelada?'Cancelada':esc(v.metodo)}</span></div>
+      <ul>${v.itens.map(i=>`<li>${i.qtd}× ${esc(i.nome)} — ${brl(i.preco*i.qtd)}</li>`).join('')}</ul>
+      <div class="acts"><span>${hora(v.ts)}${v.metodo==='Dinheiro'&&v.recebido?` · recebido ${brl(v.recebido)} · troco ${brl(v.troco)}`:''}</span>
+      ${v.cancelada?`<button class="link" style="color:var(--accent)" data-r="${v.id}">Reativar</button>`:`<button class="link" data-c="${v.id}">Cancelar</button>`}</div>
+    </div>`).join('');
+  const marcar = (v, val)=>{
+    const p = pendentes.find(x=>x.id===v.id);
+    if(p){ p.cancelada = val; save(K.q, pendentes); } else { cancelPend[v.id] = val; save(K.c, cancelPend); }
+    (v.pedidos||[]).forEach(id=> setPedido(id, val ? {status:'aguardando', venda_id:null, pago_em:null}
+                                                   : {status:'pago', venda_id:v.id, pago_em:new Date().toISOString()}));
+    atualizarTelas(); sync();
+  };
+  el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+    const v=vendas.find(x=>x.id===b.dataset.c);
+    const aviso = (v.pedidos||[]).length ? '\n\nOs livros desta venda voltam para "aguardando pagamento".' : '';
+    if(confirm(`Cancelar a venda ${v.n?'#'+v.n+' ':''}de ${brl(v.total)}?${aviso}`)) marcar(v,true);
+  });
+  el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>marcar(vendas.find(x=>x.id===b.dataset.r),false));
+}
+
+/* ---------- Resumo ---------- */
+function agregados(){
+  const ok = todasVendas().filter(v=>!v.cancelada);
+  const pag = {}, prod = {};
+  ok.forEach(v=>{
+    pag[v.metodo] = pag[v.metodo]||{q:0,t:0}; pag[v.metodo].q++; pag[v.metodo].t+=v.total;
+    v.itens.forEach(i=>{
+      const p = produtos.find(x=>x.id===i.pid); const nome = p? p.nome : i.nome.split(' – ')[0];
+      prod[nome] = prod[nome]||{q:0,t:0}; prod[nome].q+=i.qtd; prod[nome].t+=i.preco*i.qtd;
+    });
+  });
+  const total = ok.reduce((s,v)=>s+v.total,0);
+  return {ok,pag,prod,total};
+}
+function renderResumo(){
+  const {ok,pag,prod,total} = agregados();
+  const itens = Object.values(prod).reduce((s,x)=>s+x.q,0);
+  const dinheiro = (pag['Dinheiro']||{t:0}).t;
+  $('#kpis').innerHTML = `
+    <div class="kpi big"><span>Total vendido</span><b>${brl(total)}</b></div>
+    <div class="kpi"><span>Vendas</span><b>${ok.length}</b></div>
+    <div class="kpi"><span>Itens vendidos</span><b>${itens}</b></div>
+    <div class="kpi"><span>Dinheiro em caixa</span><b>${brl(dinheiro)}</b></div>
+    <div class="kpi"><span>Ticket médio</span><b>${brl(ok.length?total/ok.length:0)}</b></div>`;
+  const ordem = ['Dinheiro','Pix','Débito','Crédito'];
+  $('#tPag').innerHTML = `<tr><th>Forma</th><th class="r">Vendas</th><th class="r">Valor</th></tr>` +
+    ordem.map(m=>`<tr><td>${m}</td><td class="r">${(pag[m]||{q:0}).q}</td><td class="r"><b>${brl((pag[m]||{t:0}).t)}</b></td></tr>`).join('') +
+    `<tr><td><b>Total</b></td><td class="r"><b>${ok.length}</b></td><td class="r"><b>${brl(total)}</b></td></tr>`;
+  const linhas = Object.entries(prod).sort((a,b)=>b[1].t-a[1].t);
+  $('#tProd').innerHTML = `<tr><th>Produto</th><th class="r">Qtd</th><th class="r">Valor</th></tr>` +
+    (linhas.length ? linhas.map(([n,x])=>`<tr><td>${esc(n)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('') : `<tr><td colspan="3" class="hint">Sem vendas ainda</td></tr>`);
+}
+
+$('#csv').onclick = ()=>{
+  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Aparelho']];
+  todasVendas().forEach(v=>{
+    const d = new Date(v.ts);
+    v.itens.forEach(i=>linhas.push([v.n||'pendente', d.toLocaleDateString('pt-BR'), hora(v.ts), i.nome, i.qtd,
+      (+i.preco).toFixed(2).replace('.',','), (i.preco*i.qtd).toFixed(2).replace('.',','), v.metodo,
+      (+v.total).toFixed(2).replace('.',','), v.cancelada?'Cancelada':'OK', v.aparelho||'']));
+  });
+  const csv = '﻿' + linhas.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `vendas-vou-fluir-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+/* ---------- Configuração ---------- */
+function renderConfig(){
+  const cats = [...new Set([...CATS, ...produtos.map(p=>p.cat||'Outros')])];
+  $('#cfgList').innerHTML = produtos.map((p,i)=>`
+    <div class="cfg" data-i="${i}">
+      <input class="nm" value="${esc(p.nome)}" placeholder="Nome">
+      <input class="pr" inputmode="decimal" value="${p.preco==null?'':String(p.preco).replace('.',',')}" placeholder="Variável">
+      <select>${cats.map(c=>`<option ${c===(p.cat||'Outros')?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <button class="link" data-del="${i}">✕</button>
+    </div>`).join('');
+  $('#cfgList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ lerConfig(); produtos.splice(+b.dataset.del,1); renderConfig(); });
+  $('#aparelhoNome').textContent = aparelho;
+}
+function lerConfig(){
+  document.querySelectorAll('#cfgList .cfg').forEach(row=>{
+    const p = produtos[+row.dataset.i]; if(!p) return;
+    p.nome = row.querySelector('.nm').value.trim() || p.nome;
+    const v = num(row.querySelector('.pr').value); p.preco = isNaN(v) ? null : Math.round(v*100)/100;
+    p.cat = row.querySelector('select').value;
+  });
+}
+$('#addProd').onclick = ()=>{ lerConfig(); produtos.push({id:'p'+Date.now(), nome:'Novo produto', preco:null, cat:'Loja'}); renderConfig(); };
+$('#salvarCfg').onclick = async ()=>{
+  lerConfig(); save(K.p, produtos); renderCatalogo();
+  try{
+    await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:'produtos', valor:produtos, atualizado_em:new Date().toISOString()})});
+    toast('Produtos salvos em todos os aparelhos');
+  }catch(e){ toast('Salvo só neste aparelho (sem conexão)','var(--danger)'); }
+};
+
+/* ---------- Init ---------- */
+if(LIV){
+  document.body.classList.add('liv');
+  $('#subtitulo').textContent = 'Livraria';
+  document.title = 'Livraria · Movimento Vou Fluir';
+  irPara('livros');
+}
+renderLivForm();
+renderCarrinho(); atualizarTelas(); sync();
+window.addEventListener('beforeunload', e=>{ if(carrinho.length || pendentes.length || pedNovos.length || Object.keys(pedPend).length){ e.preventDefault(); e.returnValue=''; } });
+</script>
+</body>
+</html>
