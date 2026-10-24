@@ -80,6 +80,13 @@ main{max-width:1200px;margin:0 auto;padding:16px}
 .troco{margin-top:8px;font-size:17px;display:flex;justify-content:space-between}
 .troco b{font-size:22px;color:var(--ok)}
 .troco.neg b{color:var(--danger)}
+.pay .fiadobtn{grid-column:1/-1;background:#fff4dd}
+.pay .fiadobtn.on{border-color:#e0a000;background:#ffe9b3}
+.fiadobox{background:#fff7e0;border:2px solid #f5c04a;border-radius:16px;padding:12px;margin-bottom:14px}
+.fiadobox h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+.fiadobox h3 .cnt{background:#e0a000;color:#fff;border-radius:999px;padding:2px 9px;font-size:13px}
+.fiadobox h3 .ftot{margin-left:auto;font-size:16px}
+.sale.fiado{border:2px solid #f5c04a}
 .go{width:100%;margin-top:12px;padding:16px;border-radius:14px;background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;font-size:18px;font-weight:700}
 .go:disabled{opacity:.4}
 
@@ -237,6 +244,11 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
           <button data-m="Pix">⚡ Pix</button>
           <button data-m="Débito">💳 Débito</button>
           <button data-m="Crédito">💳 Crédito</button>
+          <button data-m="Fiado" class="fiadobtn">📝 Fiado (pagar depois)</button>
+        </div>
+        <div class="cash" id="fiadoBox">
+          <label for="fiadoNome">Nome de quem vai pagar depois</label>
+          <input id="fiadoNome" placeholder="Ex.: João Silva" autocomplete="off">
         </div>
         <div class="cash" id="cash">
           <label>Valor recebido</label>
@@ -333,6 +345,21 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
     </div>
   </div>
 </div>
+<div class="modal" id="receberModal">
+  <div class="sheet">
+    <h3 id="rTitulo">Receber fiado</h3>
+    <div class="total" style="margin:4px 0 6px"><span>Valor</span><b id="rValor">R$ 0,00</b></div>
+    <p class="hint" id="rItens" style="margin:0 0 12px"></p>
+    <p class="hint" style="margin:0 0 6px">Como a pessoa pagou?</p>
+    <div class="pay">
+      <button type="button" data-rm="Dinheiro">💵 Dinheiro</button>
+      <button type="button" data-rm="Pix">⚡ Pix</button>
+      <button type="button" data-rm="Débito">💳 Débito</button>
+      <button type="button" data-rm="Crédito">💳 Crédito</button>
+    </div>
+    <div class="row"><button class="btn" id="rCancel" type="button">Cancelar</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -380,7 +407,7 @@ const rotulo = i => (i.qtd>1 ? i.qtd+'× ' : '') + (i.tipo==='fixo' || i.tipo===
 const nomeCaixa = i => i.tipo==='fixo' ? i.titulo : `${tipoDe(i).nome} – ${i.titulo}`;
 const pidCaixa = i => i.tipo==='fixo' ? 'liv_'+i.cid : tipoDe(i).pid;
 const K = {p:'vf4_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
-           pc:'vf3_pedidos_cache', cat:'vf6_catalogo_livraria', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
+           pc:'vf3_pedidos_cache', fp:'vf7_fiado_pend', cat:'vf6_catalogo_livraria', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -390,7 +417,8 @@ const uuid = ()=> (crypto.randomUUID ? crypto.randomUUID() :
 let produtos = load(K.p, DEFAULT);
 let servidor = load(K.s, []);      // vendas confirmadas no Supabase
 let pendentes = load(K.q, []);     // vendas ainda não enviadas
-let cancelPend = load(K.c, {});    // {vendaId: true/false}
+let cancelPend = load(K.c, {});
+let fiadoPend = load(K.fp, {});   // {vendaId: {fiado_pago_em, fiado_pago_metodo}}    // {vendaId: true/false}
 let pedServ = load(K.pc, []);      // pedidos de livro no Supabase
 let pedNovos = load(K.pn, []);     // pedidos criados aqui e ainda não enviados
 let pedPend = load(K.pp, {});      // {pedidoId: {status,...}} alterações não enviadas
@@ -434,6 +462,7 @@ function todasVendas(){
   const ids = new Set(servidor.map(v=>v.id));
   const lista = [...servidor, ...pendentes.filter(v=>!ids.has(v.id)).map(v=>({...v, pendente:true}))];
   return lista.map(v=> v.id in cancelPend ? {...v, cancelada:cancelPend[v.id]} : v)
+              .map(v=> fiadoPend[v.id] ? {...v, ...fiadoPend[v.id]} : v)
               .sort((a,b)=> new Date(a.ts)-new Date(b.ts));
 }
 function todosPedidos(){
@@ -469,6 +498,10 @@ async function sync(){
       await sb('/vf_caixa_vendas?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({cancelada:val})});
       delete cancelPend[id]; save(K.c, cancelPend);
     }
+    for(const [id, patch] of Object.entries(fiadoPend)){
+      await sb('/vf_caixa_vendas?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(patch)});
+      delete fiadoPend[id]; save(K.fp, fiadoPend);
+    }
     for(const [id, patch] of Object.entries(pedPend)){
       await sb('/vf_caixa_pedidos?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(patch)});
       delete pedPend[id]; save(K.pp, pedPend);
@@ -499,7 +532,7 @@ async function sync(){
 }
 function setOnline(v){ online = v; renderStatus(); }
 function renderStatus(){
-  const pend = pendentes.length + Object.keys(cancelPend).length + pedNovos.length + Object.keys(pedPend).length;
+  const pend = pendentes.length + Object.keys(cancelPend).length + Object.keys(fiadoPend).length + pedNovos.length + Object.keys(pedPend).length;
   const el = $('#status');
   el.className = 'status ' + (online===false ? 'off' : pend ? 'wait' : 'on');
   el.textContent = online===false ? `Sem conexão${pend?` · ${pend} pendente${pend>1?'s':''}`:''}`
@@ -640,7 +673,7 @@ function renderCarrinho(){
   const t = totalCarrinho();
   $('#total').textContent = brl(t);
   renderQuick(t); calcTroco();
-  $('#finalizar').disabled = !carrinho.length || !metodo || (metodo==='Dinheiro' && trocoInvalido());
+  $('#finalizar').disabled = !podeFinalizar();
   renderCatalogo();
 }
 
@@ -649,7 +682,7 @@ $('#limpar').onclick = ()=>{ if(carrinho.length && confirm('Limpar o pedido atua
 function resetPedido(){
   carrinho=[]; metodo=null; $('#recebido').value='';
   document.querySelectorAll('#pay button').forEach(x=>x.classList.remove('on'));
-  $('#cash').classList.remove('on'); renderCarrinho();
+  $('#cash').classList.remove('on'); $('#fiadoBox').classList.remove('on'); $('#fiadoNome').value=''; renderCarrinho();
 }
 
 /* ---------- Pagamento ---------- */
@@ -657,8 +690,10 @@ document.querySelectorAll('#pay button').forEach(b=>b.onclick=()=>{
   metodo = b.dataset.m;
   document.querySelectorAll('#pay button').forEach(x=>x.classList.toggle('on',x===b));
   $('#cash').classList.toggle('on', metodo==='Dinheiro');
+  $('#fiadoBox').classList.toggle('on', metodo==='Fiado');
   renderCarrinho();
   if(metodo==='Dinheiro') setTimeout(()=>$('#recebido').focus(),50);
+  if(metodo==='Fiado') setTimeout(()=>$('#fiadoNome').focus(),50);
 });
 
 function renderQuick(t){
@@ -677,7 +712,14 @@ function calcTroco(){
   box.firstElementChild.textContent = d<0 ? 'Falta' : 'Troco';
   $('#troco').textContent = brl(Math.abs(d));
 }
-$('#recebido').addEventListener('input',()=>{ calcTroco(); $('#finalizar').disabled = !carrinho.length || !metodo || trocoInvalido(); });
+function podeFinalizar(){
+  if(!carrinho.length || !metodo) return false;
+  if(metodo==='Dinheiro') return !trocoInvalido();
+  if(metodo==='Fiado') return $('#fiadoNome').value.trim().length>0;
+  return true;
+}
+$('#recebido').addEventListener('input',()=>{ calcTroco(); $('#finalizar').disabled = !podeFinalizar(); });
+$('#fiadoNome').addEventListener('input',()=>{ $('#finalizar').disabled = !podeFinalizar(); });
 
 $('#finalizar').onclick = ()=>{
   if(!carrinho.length || !metodo) return;
@@ -687,13 +729,14 @@ $('#finalizar').onclick = ()=>{
     itens: carrinho.map(l=>({pid:l.pid, nome:l.nome, preco:l.preco, qtd:l.qtd, ...(l.pedido?{pedido:l.pedido}:{})})),
     total, metodo, cancelada:false, aparelho, recebido:null, troco:null, pedidos:peds };
   if(metodo==='Dinheiro'){ venda.recebido = num($('#recebido').value); venda.troco = Math.round((venda.recebido-total)*100)/100; }
+  if(metodo==='Fiado'){ venda.fiado_nome = $('#fiadoNome').value.trim(); }
   pendentes.push(venda); save(K.q, pendentes);
   const agora = new Date().toISOString();
   peds.forEach(id=>setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}));
   peds.forEach(id=>{ if(vistos) vistos[id]='pago'; });
   const cart = {}; carrinho.forEach(l=>{ const c=CORES[l.pid]; if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
   const txtCart = Object.entries(cart).map(([n,q])=>`${q} ${n}`).join(', ');
-  toast((metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2200);
+  toast((metodo==='Fiado' ? `📝 Fiado anotado para ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2200);
   resetPedido(); atualizarTelas(); sync();
 };
 
@@ -918,9 +961,17 @@ function renderLivrosListas(){
 function renderHistorico(){
   const el = $('#lista'); const vendas = todasVendas();
   if(!vendas.length){ el.innerHTML='<div class="empty card">Nenhuma venda registrada ainda.</div>'; return; }
-  el.innerHTML = [...vendas].reverse().map(v=>`
-    <div class="sale ${v.cancelada?'cx':''}">
-      <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${v.cancelada?'Cancelada':esc(v.metodo)}</span></div>
+  const abertos = vendas.filter(v=>!v.cancelada && v.metodo==='Fiado' && !v.fiado_pago_em);
+  const tagDe = v => v.cancelada ? 'Cancelada' : v.metodo!=='Fiado' ? esc(v.metodo)
+                   : v.fiado_pago_em ? `Fiado pago · ${esc(v.fiado_pago_metodo)}` : `📝 Fiado · ${esc(v.fiado_nome)}`;
+  const blocoFiado = abertos.length ? `<div class="fiadobox">
+      <h3>📝 Fiados em aberto <span class="cnt">${abertos.length}</span> <span class="ftot">${brl(abertos.reduce((s,v)=>s+v.total,0))}</span></h3>
+      ${abertos.map(v=>`<div class="ped"><div class="info"><b>${esc(v.fiado_nome)}</b><small>${v.n?'#'+v.n+' · ':''}${hora(v.ts)} · ${v.itens.map(i=>`${i.qtd}× ${esc(i.nome)}`).join(', ')}</small></div>
+        <span class="val">${brl(v.total)}</span><button class="btn dark" data-receber="${v.id}">Receber</button></div>`).join('')}
+    </div>` : '';
+  el.innerHTML = blocoFiado + [...vendas].reverse().map(v=>`
+    <div class="sale ${v.cancelada?'cx':''} ${!v.cancelada&&v.metodo==='Fiado'&&!v.fiado_pago_em?'fiado':''}">
+      <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${tagDe(v)}</span></div>
       <ul>${v.itens.map(i=>`<li>${i.qtd}× ${esc(i.nome)} — ${brl(i.preco*i.qtd)}</li>`).join('')}</ul>
       <div class="acts"><span>${hora(v.ts)}${v.metodo==='Dinheiro'&&v.recebido?` · recebido ${brl(v.recebido)} · troco ${brl(v.troco)}`:''}</span>
       ${v.cancelada?`<button class="link" style="color:var(--accent)" data-r="${v.id}">Reativar</button>`:`<button class="link" data-c="${v.id}">Cancelar</button>`}</div>
@@ -938,14 +989,33 @@ function renderHistorico(){
     if(confirm(`Cancelar a venda ${v.n?'#'+v.n+' ':''}de ${brl(v.total)}?${aviso}`)) marcar(v,true);
   });
   el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>marcar(vendas.find(x=>x.id===b.dataset.r),false));
+  el.querySelectorAll('[data-receber]').forEach(b=>b.onclick=()=>abrirReceber(vendas.find(x=>x.id===b.dataset.receber)));
 }
+let receberVenda = null;
+function abrirReceber(v){
+  receberVenda = v; $('#rTitulo').textContent = `Receber de ${v.fiado_nome}`; $('#rValor').textContent = brl(v.total);
+  $('#rItens').textContent = v.itens.map(i=>`${i.qtd}× ${i.nome}`).join(', ');
+  $('#receberModal').classList.add('on');
+}
+function fecharReceber(){ $('#receberModal').classList.remove('on'); receberVenda=null; }
+$('#rCancel').onclick = fecharReceber;
+$('#receberModal').onclick = e=>{ if(e.target.id==='receberModal') fecharReceber(); };
+document.querySelectorAll('#receberModal [data-rm]').forEach(b=>b.onclick=()=>{
+  const v = receberVenda; if(!v) return;
+  const patch = {fiado_pago_em:new Date().toISOString(), fiado_pago_metodo:b.dataset.rm};
+  const p = pendentes.find(x=>x.id===v.id);
+  if(p){ Object.assign(p, patch); save(K.q, pendentes); } else { fiadoPend[v.id] = patch; save(K.fp, fiadoPend); }
+  toast(`Fiado de ${v.fiado_nome} recebido · ${brl(v.total)} no ${b.dataset.rm}`);
+  fecharReceber(); atualizarTelas(); sync();
+});
 
 /* ---------- Resumo ---------- */
 function agregados(){
   const ok = todasVendas().filter(v=>!v.cancelada);
   const pag = {}, prod = {};
   ok.forEach(v=>{
-    pag[v.metodo] = pag[v.metodo]||{q:0,t:0}; pag[v.metodo].q++; pag[v.metodo].t+=v.total;
+    const m = v.metodo==='Fiado' ? (v.fiado_pago_em ? v.fiado_pago_metodo : 'Fiado') : v.metodo;
+    pag[m] = pag[m]||{q:0,t:0}; pag[m].q++; pag[m].t+=v.total;
     v.itens.forEach(i=>{
       const p = produtos.find(x=>x.id===i.pid); const nome = p? p.nome : i.nome.split(' – ')[0];
       prod[nome] = prod[nome]||{q:0,t:0}; prod[nome].q+=i.qtd; prod[nome].t+=i.preco*i.qtd;
@@ -963,10 +1033,11 @@ function renderResumo(){
     <div class="kpi"><span>Vendas</span><b>${ok.length}</b></div>
     <div class="kpi"><span>Itens vendidos</span><b>${itens}</b></div>
     <div class="kpi"><span>Dinheiro em caixa</span><b>${brl(dinheiro)}</b></div>
+    <div class="kpi"><span>Fiado a receber</span><b>${brl((pag['Fiado']||{t:0}).t)}</b></div>
     <div class="kpi"><span>Ticket médio</span><b>${brl(ok.length?total/ok.length:0)}</b></div>`;
   const ordem = ['Dinheiro','Pix','Débito','Crédito'];
   $('#tPag').innerHTML = `<tr><th>Forma</th><th class="r">Vendas</th><th class="r">Valor</th></tr>` +
-    ordem.map(m=>`<tr><td>${m}</td><td class="r">${(pag[m]||{q:0}).q}</td><td class="r"><b>${brl((pag[m]||{t:0}).t)}</b></td></tr>`).join('') +
+    [...ordem,'Fiado'].map(m=>`<tr><td>${m==='Fiado'?'Fiado (a receber)':m}</td><td class="r">${(pag[m]||{q:0}).q}</td><td class="r"><b>${brl((pag[m]||{t:0}).t)}</b></td></tr>`).join('') +
     `<tr><td><b>Total</b></td><td class="r"><b>${ok.length}</b></td><td class="r"><b>${brl(total)}</b></td></tr>`;
   const linhas = Object.entries(prod).sort((a,b)=>b[1].t-a[1].t);
   $('#tProd').innerHTML = `<tr><th>Produto</th><th class="r">Qtd</th><th class="r">Valor</th></tr>` +
@@ -974,12 +1045,13 @@ function renderResumo(){
 }
 
 $('#csv').onclick = ()=>{
-  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Aparelho']];
+  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Fiado – nome','Fiado – situação','Aparelho']];
   todasVendas().forEach(v=>{
     const d = new Date(v.ts);
     v.itens.forEach(i=>linhas.push([v.n||'pendente', d.toLocaleDateString('pt-BR'), hora(v.ts), i.nome, i.qtd,
       (+i.preco).toFixed(2).replace('.',','), (i.preco*i.qtd).toFixed(2).replace('.',','), v.metodo,
-      (+v.total).toFixed(2).replace('.',','), v.cancelada?'Cancelada':'OK', v.aparelho||'']));
+      (+v.total).toFixed(2).replace('.',','), v.cancelada?'Cancelada':'OK', v.fiado_nome||'',
+      v.metodo==='Fiado' ? (v.fiado_pago_em ? `Pago (${v.fiado_pago_metodo}) ${new Date(v.fiado_pago_em).toLocaleString('pt-BR')}` : 'Em aberto') : '', v.aparelho||'']));
   });
   const csv = '﻿' + linhas.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
   const a = document.createElement('a');
