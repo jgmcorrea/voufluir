@@ -146,9 +146,13 @@ td.r,th.r{text-align:right}
 .lpedido.entregue{opacity:.6}
 .tag.aguard{background:#fff1c7;color:#8a6400}
 .btn.ok{background:var(--ok);color:#fff}
+.livitem{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px}
+.tipos{display:flex;gap:6px;align-items:center}
+.tipo{padding:8px 12px;border-radius:999px;background:#f0f3f6;color:var(--ink);font-weight:600;font-size:14px;border:2px solid transparent}
+.tipo.on{background:#d6f1f6;border-color:var(--accent)}
 .livline{display:flex;gap:8px;margin-top:8px;align-items:center}
 .livline input{padding:12px;border:1px solid var(--line);border-radius:12px}
-.livline .tt{flex:1;min-width:0}
+.livline .tt{flex:1;min-width:0;font-size:16px}
 .livline .pp{width:110px;font-weight:700}
 .field{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;margin-top:4px;font-size:17px}
 .secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 4px;font-weight:600}
@@ -169,7 +173,7 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
   </div>
   <nav>
     <button data-v="venda" class="on">Venda</button>
-    <button data-v="livros">Livros</button>
+    <button data-v="livros">Livraria</button>
     <button data-v="historico">Vendas</button>
     <button data-v="resumo">Resumo</button>
     <button data-v="config">Produtos</button>
@@ -205,13 +209,13 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
   <!-- LIVRARIA -->
   <section class="view" id="v-livros">
     <div class="card">
-      <h3 style="margin:0 0 4px">Novo pedido de livro</h3>
-      <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e os livros. O pedido aparece na hora no caixa.</p>
+      <h3 style="margin:0 0 4px">Novo pedido</h3>
+      <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e os livros ou camisetas. O pedido aparece na hora no caixa.</p>
       <label class="hint">Nome da pessoa</label>
       <input id="livCliente" class="field" placeholder="Ex.: Maria Souza" autocomplete="off">
       <div id="livLinhas"></div>
-      <datalist id="livTitulos"></datalist>
-      <button class="btn" id="livAdd" style="margin-top:10px">+ Outro livro</button>
+      <datalist id="livTitulos"></datalist><datalist id="livCamisetas"></datalist>
+      <button class="btn" id="livAdd" style="margin-top:10px">+ Outro item</button>
       <div class="total"><span>Total</span><b id="livTotal">R$ 0,00</b></div>
       <button class="go" id="livEnviar">Enviar para o caixa</button>
     </div>
@@ -279,14 +283,22 @@ const DEFAULT = [
   {id:'tonic', nome:'Tônica',          preco:6,  cat:'Bebidas'},
   {id:'agua',  nome:'Água sem gás',    preco:5,  cat:'Bebidas'},
   {id:'aguag', nome:'Água com gás',    preco:5,  cat:'Bebidas'},
+  {id:'suco',  nome:'Suco de uva natural', preco:9, cat:'Bebidas'},
   {id:'hamb',  nome:'Hambúrguer',      preco:25, cat:'Comida'},
   {id:'cafe',  nome:'Café',            preco:33, cat:'Comida'},
+  {id:'pipoca',nome:'Pipoca',          preco:3,  cat:'Doces e gelados'},
+  {id:'picole',nome:'Picolé',          preco:6,  cat:'Doces e gelados'},
+  {id:'gelad', nome:'Geladinho',       preco:1,  cat:'Doces e gelados'},
+  {id:'pacoca',nome:'Paçoquinha',      preco:1.5,cat:'Doces e gelados'},
   {id:'livro', nome:'Livro',           preco:null, cat:'Loja'},
   {id:'camis', nome:'Camiseta',        preco:null, cat:'Loja'},
   {id:'outro', nome:'Outro item',      preco:null, cat:'Loja'}
 ];
-const CATS = ['Bebidas','Comida','Loja'];
-const K = {p:'vf2_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
+const CATS = ['Bebidas','Comida','Doces e gelados','Loja'];
+const TIPOS = {livro:{pid:'livro', nome:'Livro', ico:'📚', ph:'Título do livro'}, camiseta:{pid:'camis', nome:'Camiseta', ico:'👕', ph:'Modelo e tamanho (ex.: Preta M)'}};
+const tipoDe = i => TIPOS[i.tipo] || TIPOS.livro;
+const rotulo = i => (i.tipo==='camiseta' ? '👕 Camiseta ' : '') + i.titulo;
+const K = {p:'vf4_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
            pc:'vf3_pedidos_cache', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
@@ -419,7 +431,7 @@ function avisos(){
   });
   if(!LIV && novos.length){
     novos.forEach(p=>destacar.add(p.id)); bip(2);
-    toast(novos.length===1 ? `📚 Novo pedido de livro: ${novos[0].cliente} · ${brl(novos[0].total)}` : `📚 ${novos.length} novos pedidos de livro`, '#b07d00', 3500);
+    toast(novos.length===1 ? `📚 Novo pedido da livraria: ${novos[0].cliente} · ${brl(novos[0].total)}` : `📚 ${novos.length} novos pedidos da livraria`, '#b07d00', 3500);
   }
   if(LIV && pagos.length){
     pagos.forEach(p=>destacar.add(p.id)); bip(3);
@@ -479,9 +491,9 @@ function renderPedidosCaixa(){
   const noCarrinho = new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido));
   const ag = todosPedidos().filter(p=>p.status==='aguardando' && !noCarrinho.has(p.id));
   if(!ag.length){ el.innerHTML=''; return; }
-  el.innerHTML = `<div class="pedbox"><h3>📚 Livros aguardando pagamento <span class="cnt">${ag.length}</span></h3>
+  el.innerHTML = `<div class="pedbox"><h3>📚 Livraria aguardando pagamento <span class="cnt">${ag.length}</span></h3>
     ${ag.map(p=>`<div class="ped ${destacar.has(p.id)?'novo':''}">
-      <div class="info"><b>${esc(p.cliente)}</b><small>${p.n?'#'+p.n+' · ':''}${hora(p.criado_em)} · ${p.itens.map(i=>esc(i.titulo)).join(', ')}</small></div>
+      <div class="info"><b>${esc(p.cliente)}</b><small>${p.n?'#'+p.n+' · ':''}${hora(p.criado_em)} · ${p.itens.map(i=>esc(rotulo(i))).join(', ')}</small></div>
       <span class="val">${brl(p.total)}</span>
       <button class="btn dark" data-cobrar="${p.id}">Cobrar</button>
     </div>`).join('')}</div>`;
@@ -490,7 +502,7 @@ function renderPedidosCaixa(){
 }
 function cobrarPedido(id){
   const p = todosPedidos().find(x=>x.id===id); if(!p || p.status!=='aguardando') return;
-  p.itens.forEach((i,k)=>carrinho.push({key:`ped_${id}_${k}`, pid:'livro', nome:`Livro – ${i.titulo}`, preco:+i.preco, qtd:+i.qtd||1, pedido:id, cliente:p.cliente}));
+  p.itens.forEach((i,k)=>{ const t = tipoDe(i); carrinho.push({key:`ped_${id}_${k}`, pid:t.pid, nome:`${t.nome} – ${i.titulo}`, preco:+i.preco, qtd:+i.qtd||1, pedido:id, cliente:p.cliente}); });
   renderCarrinho(); renderPedidosCaixa();
   if(window.innerWidth<860) $('.cart').scrollIntoView({behavior:'smooth'});
 }
@@ -522,7 +534,7 @@ function renderCarrinho(){
   if(!carrinho.length){ el.innerHTML = '<div class="empty">Toque nos produtos para adicionar</div>'; }
   else el.innerHTML = carrinho.map((l,i)=>`
     <div class="line">
-      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:''}${esc(l.pedido? l.nome.replace(/^Livro – /,'') : l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
+      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:''}${esc(l.pedido? l.nome.replace(/^Livro – /,'').replace(/^Camiseta – /,'👕 ') : l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
       ${l.pedido ? `<div class="qty"><button data-rmped="${l.pedido}" title="Tirar pedido do caixa">×</button></div>`
                  : `<div class="qty"><button data-i="${i}" data-d="-1">−</button><em>${l.qtd}</em><button data-i="${i}" data-d="1">+</button></div>`}
       <div class="sub">${brl(l.preco*l.qtd)}</div>
@@ -607,23 +619,29 @@ function renderTopo(){
 }
 
 /* ---------- Livraria ---------- */
-let livLinhas = [{titulo:'', preco:''}];
-function sugestoes(){
-  const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo) m[i.titulo.trim()] = +i.preco; })); return m;
+let livLinhas = [{tipo:'livro', titulo:'', preco:''}];
+function sugestoes(tipo){
+  const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo && (i.tipo||'livro')===tipo) m[i.titulo.trim()] = +i.preco; })); return m;
 }
 function renderLivForm(){
-  const sug = sugestoes();
-  $('#livTitulos').innerHTML = Object.keys(sug).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  $('#livTitulos').innerHTML = Object.keys(sugestoes('livro')).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  $('#livCamisetas').innerHTML = Object.keys(sugestoes('camiseta')).sort().map(t=>`<option value="${esc(t)}">`).join('');
   $('#livLinhas').innerHTML = livLinhas.map((l,i)=>`
-    <div class="livline">
-      <input class="tt" list="livTitulos" data-i="${i}" placeholder="Título do livro" value="${esc(l.titulo)}" autocomplete="off">
-      <input class="pp" data-i="${i}" inputmode="decimal" placeholder="R$ 0,00" value="${esc(l.preco)}">
-      ${livLinhas.length>1?`<button class="link" data-rm="${i}">✕</button>`:''}
+    <div class="livitem">
+      <div class="tipos" role="group" aria-label="Tipo do item">
+        ${Object.entries(TIPOS).map(([k,t])=>`<button type="button" class="tipo ${l.tipo===k?'on':''}" data-i="${i}" data-tipo="${k}">${t.ico} ${t.nome}</button>`).join('')}
+        ${livLinhas.length>1?`<button class="link" data-rm="${i}" style="margin-left:auto">Remover</button>`:''}
+      </div>
+      <div class="livline">
+        <input class="tt" id="livTt${i}" list="${l.tipo==='camiseta'?'livCamisetas':'livTitulos'}" data-i="${i}" placeholder="${TIPOS[l.tipo].ph}" value="${esc(l.titulo)}" autocomplete="off">
+        <input class="pp" id="livPp${i}" data-i="${i}" inputmode="decimal" placeholder="R$ 0,00" value="${esc(l.preco)}">
+      </div>
     </div>`).join('');
+  $('#livLinhas').querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ livLinhas[+b.dataset.i].tipo = b.dataset.tipo; renderLivForm(); });
   $('#livLinhas').querySelectorAll('.tt').forEach(inp=>{
     inp.oninput = ()=>{ livLinhas[+inp.dataset.i].titulo = inp.value; };
     inp.onchange = ()=>{
-      const l = livLinhas[+inp.dataset.i]; const s = sugestoes()[inp.value.trim()];
+      const l = livLinhas[+inp.dataset.i]; const s = sugestoes(l.tipo)[inp.value.trim()];
       if(s && !l.preco){ l.preco = String(s.toFixed(2)).replace('.',','); renderLivForm(); }
       livTotal();
     };
@@ -636,7 +654,7 @@ function livTotal(){
   const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0);
   $('#livTotal').textContent = brl(t); return t;
 }
-$('#livAdd').onclick = ()=>{ livLinhas.push({titulo:'',preco:''}); renderLivForm(); const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus(); };
+$('#livAdd').onclick = ()=>{ const ult = livLinhas[livLinhas.length-1]; livLinhas.push({tipo:ult?ult.tipo:'livro', titulo:'',preco:''}); renderLivForm(); const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus(); };
 $('#livEnviar').onclick = ()=>{
   const cliente = $('#livCliente').value.trim();
   if(!cliente){ toast('Escreva o nome da pessoa','var(--danger)'); $('#livCliente').focus(); return; }
@@ -644,16 +662,16 @@ $('#livEnviar').onclick = ()=>{
   for(const l of livLinhas){
     const t = l.titulo.trim(), v = num(l.preco);
     if(!t && !l.preco) continue;
-    if(!t){ toast('Falta o título de um livro','var(--danger)'); return; }
+    if(!t){ toast(l.tipo==='camiseta' ? 'Falta o modelo/tamanho da camiseta' : 'Falta o título de um livro','var(--danger)'); return; }
     if(!(v>0)){ toast(`Falta o preço de "${t}"`,'var(--danger)'); return; }
-    itens.push({titulo:t, preco:Math.round(v*100)/100, qtd:1});
+    itens.push({tipo:l.tipo, titulo:t, preco:Math.round(v*100)/100, qtd:1});
   }
-  if(!itens.length){ toast('Adicione pelo menos um livro','var(--danger)'); return; }
+  if(!itens.length){ toast('Adicione pelo menos um livro ou camiseta','var(--danger)'); return; }
   const total = Math.round(itens.reduce((s,i)=>s+i.preco,0)*100)/100;
   const p = {id:uuid(), criado_em:new Date().toISOString(), cliente, itens, total, status:'aguardando'};
   pedNovos.push(p); save(K.pn, pedNovos);
   if(vistos) vistos[p.id] = 'aguardando';
-  livLinhas = [{titulo:'',preco:''}]; $('#livCliente').value='';
+  livLinhas = [{tipo:'livro', titulo:'',preco:''}]; $('#livCliente').value='';
   renderLivForm(); toast(`Pedido de ${cliente} enviado ao caixa · ${brl(total)}`);
   atualizarTelas(); sync();
 };
@@ -663,7 +681,7 @@ function renderLivrosListas(){
     <div class="lpedido ${p.status} ${destacar.has(p.id)?'novo':''}">
       <div class="h"><b>${esc(p.cliente)} · ${brl(p.total)}</b>
         <span class="tag ${p.status==='aguardando'?'aguard':''}">${p.status==='pago'?'PAGO':p.status==='aguardando'?'Aguardando caixa':p.status==='entregue'?'Entregue':'Cancelado'}</span></div>
-      <ul>${p.itens.map(i=>`<li>${esc(i.titulo)} — ${brl(i.preco*(i.qtd||1))}</li>`).join('')}</ul>
+      <ul>${p.itens.map(i=>`<li>${esc(rotulo(i))} — ${brl(i.preco*(i.qtd||1))}</li>`).join('')}</ul>
       <div class="acts"><span>${p.n?'#'+p.n+' · ':''}pedido ${hora(p.criado_em)}${p.pago_em?' · pago '+hora(p.pago_em):''}${p.entregue_em?' · entregue '+hora(p.entregue_em):''}${p.pendente?' · enviando…':''}</span>${acoes}</div>
     </div>`;
   const pagos = peds.filter(p=>p.status==='pago');
