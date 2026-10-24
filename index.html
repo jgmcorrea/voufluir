@@ -457,6 +457,11 @@ async function sync(){
       await sb('/vf_caixa_pedidos?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(patch)});
       delete pedPend[id]; save(K.pp, pedPend);
     }
+    if(load('vf6_cat_pendente', false)){
+      await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
+      save('vf6_cat_pendente', false);
+    }
     const [vs, ps, cfg] = await Promise.all([
       sb('/vf_caixa_vendas?select=*&order=ts.asc'),
       sb('/vf_caixa_pedidos?select=*&order=criado_em.asc'),
@@ -469,7 +474,7 @@ async function sync(){
     if(cProd && Array.isArray(cProd.valor) && !document.querySelector('#v-config.on')){
       if(JSON.stringify(cProd.valor)!==JSON.stringify(produtos)){ produtos = cProd.valor; save(K.p, produtos); renderCatalogo(); }
     }
-    if(cLiv && Array.isArray(cLiv.valor) && !editandoCatalogo && !precoItem){
+    if(cLiv && Array.isArray(cLiv.valor) && !editandoCatalogo && !precoItem && !load('vf6_cat_pendente', false)){
       if(JSON.stringify(cLiv.valor)!==JSON.stringify(catalogo)){ catalogo = cLiv.valor; save(K.cat, catalogo); renderCatalogoLiv(); livTotal(); }
     }
     setOnline(true);
@@ -764,12 +769,13 @@ function lerCatalogo(){
   });
 }
 async function enviarCatalogo(msgOk){
-  save(K.cat, catalogo);
+  save(K.cat, catalogo); save('vf6_cat_pendente', true);
   try{
     await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
+    save('vf6_cat_pendente', false);
     if(msgOk) toast(msgOk);
-  }catch(e){ toast('Salvo só neste aparelho (sem conexão)','var(--danger)'); }
+  }catch(e){ console.warn('catalogo', e); toast('Guardado neste aparelho. Envio automático assim que der.','#b07d00', 3500); }
 }
 async function salvarCatalogo(){
   lerCatalogo();
