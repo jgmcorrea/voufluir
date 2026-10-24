@@ -146,9 +146,21 @@ td.r,th.r{text-align:right}
 .lpedido.entregue{opacity:.6}
 .tag.aguard{background:#fff1c7;color:#8a6400}
 .btn.ok{background:var(--ok);color:#fff}
+.sub2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.sub2 .link{text-transform:none;letter-spacing:0;font-size:14px}
+.fixos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.fixo{border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+.fixo.on{border:2px solid var(--accent);background:#eefafc}
+.fixo .fx{background:none;text-align:left;padding:10px 12px;display:flex;flex-direction:column;gap:4px;color:var(--ink)}
+.fixo .fx .n{font-weight:600;font-size:14px;line-height:1.2}
+.fixo .fx .p{font-weight:700;color:var(--accent);font-size:15px}
+.fixo .qty{padding:0 10px 10px;justify-content:flex-start}
+.addtipos{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.addtipos .btn{padding:10px 12px;font-size:14px}
+.catedit .cfg .pr{width:90px}
 .livitem{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px}
 .tipos{display:flex;gap:6px;align-items:center}
-.tipo{padding:8px 12px;border-radius:999px;background:#f0f3f6;color:var(--ink);font-weight:600;font-size:14px;border:2px solid transparent}
+.tipo{white-space:nowrap;padding:7px 11px;border-radius:999px;background:#f0f3f6;color:var(--ink);font-weight:600;font-size:14px;border:2px solid transparent}
 .tipo.on{background:#d6f1f6;border-color:var(--accent)}
 .livline{display:flex;gap:8px;margin-top:8px;align-items:center}
 .livline input{padding:12px;border:1px solid var(--line);border-radius:12px}
@@ -210,12 +222,19 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
   <section class="view" id="v-livros">
     <div class="card">
       <h3 style="margin:0 0 4px">Novo pedido</h3>
-      <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e os livros ou camisetas. O pedido aparece na hora no caixa.</p>
+      <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e o que ela vai levar. O pedido aparece na hora no caixa.</p>
       <label class="hint">Nome da pessoa</label>
       <input id="livCliente" class="field" placeholder="Ex.: Maria Souza" autocomplete="off">
+      <div class="sub2"><span>Itens com preço fixo</span><button class="link" id="catEditar" type="button" style="color:var(--accent)">Editar itens e preços</button></div>
+      <div id="livFixos"></div>
+      <div class="sub2"><span>Livros, Bíblias e itens diversos</span></div>
+      <div class="addtipos">
+        <button class="btn" type="button" data-addtipo="livro">+ 📚 Livro</button>
+        <button class="btn" type="button" data-addtipo="biblia">+ 📖 Bíblia</button>
+        <button class="btn" type="button" data-addtipo="diversos">+ 🧩 Itens diversos</button>
+      </div>
       <div id="livLinhas"></div>
-      <datalist id="livTitulos"></datalist><datalist id="livCamisetas"></datalist>
-      <button class="btn" id="livAdd" style="margin-top:10px">+ Outro item</button>
+      <datalist id="livTitulos"></datalist><datalist id="livBiblias"></datalist><datalist id="livDiversos"></datalist>
       <div class="total"><span>Total</span><b id="livTotal">R$ 0,00</b></div>
       <button class="go" id="livEnviar">Enviar para o caixa</button>
     </div>
@@ -295,11 +314,19 @@ const DEFAULT = [
   {id:'outro', nome:'Outro item',      preco:null, cat:'Loja'}
 ];
 const CATS = ['Bebidas','Comida','Doces e gelados','Loja'];
-const TIPOS = {livro:{pid:'livro', nome:'Livro', ico:'📚', ph:'Título do livro'}, camiseta:{pid:'camis', nome:'Camiseta', ico:'👕', ph:'Modelo e tamanho (ex.: Preta M)'}};
+const TIPOS = {
+  livro:    {pid:'livro',    nome:'Livro',          ico:'📚', ph:'Título do livro'},
+  biblia:   {pid:'biblia',   nome:'Bíblia',         ico:'📖', ph:'Qual Bíblia (ex.: NVI letra grande)'},
+  diversos: {pid:'diversos', nome:'Itens diversos', ico:'🧩', ph:'O que é o item'},
+  camiseta: {pid:'camis',    nome:'Camiseta',       ico:'👕', ph:'Modelo e tamanho'}
+};
+const TIPOS_LIVRES = ['livro','biblia','diversos'];
 const tipoDe = i => TIPOS[i.tipo] || TIPOS.livro;
-const rotulo = i => (i.tipo==='camiseta' ? '👕 Camiseta ' : '') + i.titulo;
+const rotulo = i => (i.qtd>1 ? i.qtd+'× ' : '') + (i.tipo==='fixo' || i.tipo==='livro' || !i.tipo ? '' : TIPOS[i.tipo].ico+' '+(i.tipo==='diversos'?'':TIPOS[i.tipo].nome+' ')) + i.titulo;
+const nomeCaixa = i => i.tipo==='fixo' ? i.titulo : `${tipoDe(i).nome} – ${i.titulo}`;
+const pidCaixa = i => i.tipo==='fixo' ? 'liv_'+i.cid : tipoDe(i).pid;
 const K = {p:'vf4_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
-           pc:'vf3_pedidos_cache', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
+           pc:'vf3_pedidos_cache', cat:'vf5_catalogo_livraria', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -395,13 +422,17 @@ async function sync(){
     const [vs, ps, cfg] = await Promise.all([
       sb('/vf_caixa_vendas?select=*&order=ts.asc'),
       sb('/vf_caixa_pedidos?select=*&order=criado_em.asc'),
-      sb('/vf_caixa_config?id=eq.produtos&select=valor')
+      sb('/vf_caixa_config?select=id,valor')
     ]);
     servidor = vs; servidor.forEach(v=>{ v.total=+v.total; if(v.recebido!=null) v.recebido=+v.recebido; if(v.troco!=null) v.troco=+v.troco; });
     save(K.s, servidor);
     pedServ = ps; pedServ.forEach(p=>{ p.total=+p.total; }); save(K.pc, pedServ);
-    if(cfg && cfg[0] && Array.isArray(cfg[0].valor) && !document.querySelector('#v-config.on')){
-      if(JSON.stringify(cfg[0].valor)!==JSON.stringify(produtos)){ produtos = cfg[0].valor; save(K.p, produtos); renderCatalogo(); }
+    const cProd = (cfg||[]).find(c=>c.id==='produtos'), cLiv = (cfg||[]).find(c=>c.id==='livraria');
+    if(cProd && Array.isArray(cProd.valor) && !document.querySelector('#v-config.on')){
+      if(JSON.stringify(cProd.valor)!==JSON.stringify(produtos)){ produtos = cProd.valor; save(K.p, produtos); renderCatalogo(); }
+    }
+    if(cLiv && Array.isArray(cLiv.valor) && !editandoCatalogo){
+      if(JSON.stringify(cLiv.valor)!==JSON.stringify(catalogo)){ catalogo = cLiv.valor; save(K.cat, catalogo); renderCatalogoLiv(); livTotal(); }
     }
     setOnline(true);
   }catch(e){ console.warn('sync', e); setOnline(false); }
@@ -502,7 +533,7 @@ function renderPedidosCaixa(){
 }
 function cobrarPedido(id){
   const p = todosPedidos().find(x=>x.id===id); if(!p || p.status!=='aguardando') return;
-  p.itens.forEach((i,k)=>{ const t = tipoDe(i); carrinho.push({key:`ped_${id}_${k}`, pid:t.pid, nome:`${t.nome} – ${i.titulo}`, preco:+i.preco, qtd:+i.qtd||1, pedido:id, cliente:p.cliente}); });
+  p.itens.forEach((i,k)=>carrinho.push({key:`ped_${id}_${k}`, pid:pidCaixa(i), nome:nomeCaixa(i), preco:+i.preco, qtd:+i.qtd||1, pedido:id, cliente:p.cliente}));
   renderCarrinho(); renderPedidosCaixa();
   if(window.innerWidth<860) $('.cart').scrollIntoView({behavior:'smooth'});
 }
@@ -534,7 +565,7 @@ function renderCarrinho(){
   if(!carrinho.length){ el.innerHTML = '<div class="empty">Toque nos produtos para adicionar</div>'; }
   else el.innerHTML = carrinho.map((l,i)=>`
     <div class="line">
-      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:''}${esc(l.pedido? l.nome.replace(/^Livro – /,'').replace(/^Camiseta – /,'👕 ') : l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
+      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:''}${esc(l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
       ${l.pedido ? `<div class="qty"><button data-rmped="${l.pedido}" title="Tirar pedido do caixa">×</button></div>`
                  : `<div class="qty"><button data-i="${i}" data-d="-1">−</button><em>${l.qtd}</em><button data-i="${i}" data-d="1">+</button></div>`}
       <div class="sub">${brl(l.preco*l.qtd)}</div>
@@ -619,21 +650,88 @@ function renderTopo(){
 }
 
 /* ---------- Livraria ---------- */
-let livLinhas = [{tipo:'livro', titulo:'', preco:''}];
+const CATALOGO_PADRAO = [
+  {id:'chav_cor', nome:'Chaveiro coração',        preco:10},
+  {id:'chav_jes', nome:'Chaveiro Amo Jesus',      preco:10},
+  {id:'chav_met', nome:'Chaveiro metal',          preco:20},
+  {id:'caderno',  nome:'Caderno',                 preco:60},
+  {id:'cam_pa',   nome:'Camiseta preta adulto',   preco:75},
+  {id:'cam_pi',   nome:'Camiseta preta infantil', preco:65},
+  {id:'cam_br',   nome:'Camiseta branca (festa)', preco:55},
+  {id:'caneta',   nome:'Caneta marca-texto gel',  preco:45},
+  {id:'pulseira', nome:'Pulseira',                preco:26}
+];
+let catalogo = load(K.cat, CATALOGO_PADRAO);
+let editandoCatalogo = false;
+const novaLinha = (tipo='livro')=>({tipo, titulo:'', preco:''});
+let livLinhas = [];               // itens livres (livro, bíblia, diversos)
+let livFixos = {};                // {catalogoId: qtd}
+
 function sugestoes(tipo){
   const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo && (i.tipo||'livro')===tipo) m[i.titulo.trim()] = +i.preco; })); return m;
 }
+function renderCatalogoLiv(){
+  if(editandoCatalogo){
+    $('#livFixos').innerHTML = `<div class="catedit">${catalogo.map((c,i)=>`
+      <div class="cfg" data-i="${i}">
+        <input class="nm" id="catNm${i}" value="${esc(c.nome)}" placeholder="Nome do item">
+        <input class="pr" id="catPr${i}" inputmode="decimal" value="${String(c.preco).replace('.',',')}" placeholder="R$">
+        <button class="link" data-catdel="${i}">✕</button>
+      </div>`).join('')}
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="catAdd" type="button">+ Novo item</button>
+        <button class="btn dark" id="catSalvar" type="button">Salvar itens</button>
+        <button class="link" id="catCancelar" type="button" style="color:var(--muted)">Cancelar</button>
+      </div></div>`;
+    $('#livFixos').querySelectorAll('[data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
+    $('#catAdd').onclick = ()=>{ lerCatalogo(); catalogo.push({id:'c'+Date.now(), nome:'', preco:0}); renderCatalogoLiv(); $(`#catNm${catalogo.length-1}`).focus(); };
+    $('#catCancelar').onclick = ()=>{ editandoCatalogo=false; catalogo = load(K.cat, CATALOGO_PADRAO); renderCatalogoLiv(); };
+    $('#catSalvar').onclick = salvarCatalogo;
+    $('#catEditar').textContent = '';
+    return;
+  }
+  $('#catEditar').textContent = 'Editar itens e preços';
+  $('#livFixos').innerHTML = `<div class="fixos">${catalogo.map(c=>{ const q = livFixos[c.id]||0; return `
+    <div class="fixo ${q?'on':''}">
+      <button type="button" class="fx" data-fx="${c.id}"><span class="n">${esc(c.nome)}</span><span class="p">${brl(c.preco)}</span></button>
+      ${q?`<div class="qty"><button type="button" data-fxm="${c.id}" aria-label="Tirar um">−</button><em>${q}</em><button type="button" data-fx="${c.id}" aria-label="Pôr mais um">+</button></div>`:''}
+    </div>`; }).join('')}</div>`;
+  $('#livFixos').querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{ livFixos[b.dataset.fx]=(livFixos[b.dataset.fx]||0)+1; renderCatalogoLiv(); livTotal(); });
+  $('#livFixos').querySelectorAll('[data-fxm]').forEach(b=>b.onclick=()=>{ const id=b.dataset.fxm; livFixos[id]--; if(livFixos[id]<=0) delete livFixos[id]; renderCatalogoLiv(); livTotal(); });
+}
+function lerCatalogo(){
+  document.querySelectorAll('#livFixos .cfg').forEach(row=>{
+    const c = catalogo[+row.dataset.i]; if(!c) return;
+    c.nome = row.querySelector('.nm').value.trim();
+    const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : 0;
+  });
+}
+async function salvarCatalogo(){
+  lerCatalogo();
+  const ruim = catalogo.find(c=>!c.nome || !(c.preco>0));
+  if(ruim){ toast(ruim.nome ? `Falta o preço de "${ruim.nome}"` : 'Um item está sem nome','var(--danger)'); return; }
+  save(K.cat, catalogo); editandoCatalogo=false; renderCatalogoLiv();
+  try{
+    await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
+    toast('Itens salvos para todos os aparelhos');
+  }catch(e){ toast('Salvo só neste aparelho (sem conexão)','var(--danger)'); }
+}
+$('#catEditar').onclick = ()=>{ editandoCatalogo = true; renderCatalogoLiv(); };
+
 function renderLivForm(){
   $('#livTitulos').innerHTML = Object.keys(sugestoes('livro')).sort().map(t=>`<option value="${esc(t)}">`).join('');
-  $('#livCamisetas').innerHTML = Object.keys(sugestoes('camiseta')).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  $('#livBiblias').innerHTML = Object.keys(sugestoes('biblia')).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  $('#livDiversos').innerHTML = Object.keys(sugestoes('diversos')).sort().map(t=>`<option value="${esc(t)}">`).join('');
+  const lista = {livro:'livTitulos', biblia:'livBiblias', diversos:'livDiversos'};
   $('#livLinhas').innerHTML = livLinhas.map((l,i)=>`
     <div class="livitem">
       <div class="tipos" role="group" aria-label="Tipo do item">
-        ${Object.entries(TIPOS).map(([k,t])=>`<button type="button" class="tipo ${l.tipo===k?'on':''}" data-i="${i}" data-tipo="${k}">${t.ico} ${t.nome}</button>`).join('')}
-        ${livLinhas.length>1?`<button class="link" data-rm="${i}" style="margin-left:auto">Remover</button>`:''}
+        ${TIPOS_LIVRES.map(k=>`<button type="button" class="tipo ${l.tipo===k?'on':''}" data-i="${i}" data-tipo="${k}">${TIPOS[k].ico} ${k==='diversos'?'Diversos':TIPOS[k].nome}</button>`).join('')}
+        <button class="link" data-rm="${i}" style="margin-left:auto" aria-label="Remover item">✕</button>
       </div>
       <div class="livline">
-        <input class="tt" id="livTt${i}" list="${l.tipo==='camiseta'?'livCamisetas':'livTitulos'}" data-i="${i}" placeholder="${TIPOS[l.tipo].ph}" value="${esc(l.titulo)}" autocomplete="off">
+        <input class="tt" id="livTt${i}" list="${lista[l.tipo]}" data-i="${i}" placeholder="${TIPOS[l.tipo].ph}" value="${esc(l.titulo)}" autocomplete="off">
         <input class="pp" id="livPp${i}" data-i="${i}" inputmode="decimal" placeholder="R$ 0,00" value="${esc(l.preco)}">
       </div>
     </div>`).join('');
@@ -648,30 +746,38 @@ function renderLivForm(){
   });
   $('#livLinhas').querySelectorAll('.pp').forEach(inp=>inp.oninput = ()=>{ livLinhas[+inp.dataset.i].preco = inp.value; livTotal(); });
   $('#livLinhas').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ livLinhas.splice(+b.dataset.rm,1); renderLivForm(); });
+  renderCatalogoLiv();
   livTotal();
 }
+function itensFixos(){
+  return Object.entries(livFixos).map(([id,q])=>{ const c = catalogo.find(x=>x.id===id); return c && {tipo:'fixo', cid:c.id, titulo:c.nome, preco:c.preco, qtd:q}; }).filter(Boolean);
+}
 function livTotal(){
-  const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0);
+  const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0)
+          + itensFixos().reduce((s,i)=>s+i.preco*i.qtd,0);
   $('#livTotal').textContent = brl(t); return t;
 }
-$('#livAdd').onclick = ()=>{ const ult = livLinhas[livLinhas.length-1]; livLinhas.push({tipo:ult?ult.tipo:'livro', titulo:'',preco:''}); renderLivForm(); const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus(); };
+document.querySelectorAll('[data-addtipo]').forEach(b=>b.onclick=()=>{
+  livLinhas.push(novaLinha(b.dataset.addtipo)); renderLivForm();
+  const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus();
+});
 $('#livEnviar').onclick = ()=>{
   const cliente = $('#livCliente').value.trim();
   if(!cliente){ toast('Escreva o nome da pessoa','var(--danger)'); $('#livCliente').focus(); return; }
-  const itens = [];
+  const itens = itensFixos();
   for(const l of livLinhas){
     const t = l.titulo.trim(), v = num(l.preco);
     if(!t && !l.preco) continue;
-    if(!t){ toast(l.tipo==='camiseta' ? 'Falta o modelo/tamanho da camiseta' : 'Falta o título de um livro','var(--danger)'); return; }
+    if(!t){ toast(`Falta a descrição de um item (${TIPOS[l.tipo].nome})`,'var(--danger)'); return; }
     if(!(v>0)){ toast(`Falta o preço de "${t}"`,'var(--danger)'); return; }
     itens.push({tipo:l.tipo, titulo:t, preco:Math.round(v*100)/100, qtd:1});
   }
-  if(!itens.length){ toast('Adicione pelo menos um livro ou camiseta','var(--danger)'); return; }
-  const total = Math.round(itens.reduce((s,i)=>s+i.preco,0)*100)/100;
+  if(!itens.length){ toast('Adicione pelo menos um item','var(--danger)'); return; }
+  const total = Math.round(itens.reduce((s,i)=>s+i.preco*i.qtd,0)*100)/100;
   const p = {id:uuid(), criado_em:new Date().toISOString(), cliente, itens, total, status:'aguardando'};
   pedNovos.push(p); save(K.pn, pedNovos);
   if(vistos) vistos[p.id] = 'aguardando';
-  livLinhas = [{tipo:'livro', titulo:'',preco:''}]; $('#livCliente').value='';
+  livLinhas = []; livFixos = {}; $('#livCliente').value='';
   renderLivForm(); toast(`Pedido de ${cliente} enviado ao caixa · ${brl(total)}`);
   atualizarTelas(); sync();
 };
