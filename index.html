@@ -272,6 +272,9 @@ nav button{flex:1 0 auto;padding:11px 12px}
 .formgrid input,.formgrid select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;margin-top:3px}
 .porquem{font-size:12px;color:var(--muted)}
 .aviso{background:#fff7e0;border:1px solid #f5c04a;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+
+.pos > *{min-width:0}
+.abas{max-width:100%}
 </style>
 </head>
 <body>
@@ -279,7 +282,7 @@ nav button{flex:1 0 auto;padding:11px 12px}
   <div class="top">
     <div class="logo">
       <div class="logo-mark">VF</div>
-      <div><h1>Movimento Vou Fluir</h1><button class="ctxbtn" id="ctxBtn" type="button">Caixa do ano todo ▾</button></div>
+      <div><h1>Movimento Vou Fluir</h1><button class="ctxbtn" id="ctxBtn" type="button">Lojinha ▾</button></div>
     </div>
     <div class="dir">
       <div class="today"><span id="hojeQtd">0 vendas</span><b id="hojeTotal">R$ 0,00</b><span class="status" id="status">Conectando…</span></div>
@@ -414,7 +417,7 @@ nav button{flex:1 0 auto;padding:11px 12px}
           <div><label for="evNome">Nome do evento</label><input id="evNome" placeholder="Ex.: Culto de Natal"></div>
           <div><label for="evData">Data</label><input id="evData" type="date"></div>
           <div style="grid-column:1/-1"><label for="evBase">Produtos e preços</label>
-            <select id="evBase"><option value="perm">Copiar do caixa do ano todo</option><option value="ultimo">Copiar do último evento</option></select></div>
+            <select id="evBase"><option value="ultimo">Copiar do último evento</option><option value="perm">Lista básica (só bebidas)</option></select></div>
         </div>
         <div class="row" style="margin-top:12px"><button class="btn dark" id="evCriar">Criar e começar a vender</button></div>
       </div>
@@ -433,7 +436,7 @@ nav button{flex:1 0 auto;padding:11px 12px}
         <div><label for="mNome">Nome</label><input id="mNome" placeholder="Ex.: Ana Paula" autocomplete="off"></div>
         <div><label for="mEmail">E-mail</label><input id="mEmail" type="email" placeholder="ana@email.com" autocomplete="off"></div>
         <div><label for="mSenha">Senha inicial (mín. 6)</label><input id="mSenha" type="text" autocomplete="off"></div>
-        <div><label for="mAdmin">Permissão</label><select id="mAdmin"><option value="0">Equipe (vende e controla estoque)</option><option value="1">Administrador (também cadastra a equipe)</option></select></div>
+        <div><label for="mAdmin">Permissão</label><select id="mAdmin"><option value="0">Equipe (vende e controla estoque)</option><option value="1">Administrador / master (cadastra a equipe e encerra eventos)</option></select></div>
       </div>
       <div class="row" style="margin-top:12px"><button class="btn dark" id="mCriar">Cadastrar</button></div>
       <p class="hint" style="margin:10px 0 0">Passe o e-mail e a senha para a pessoa. Ela pode trocar a senha depois, tocando no círculo com a inicial dela no topo.</p>
@@ -747,7 +750,8 @@ pedNovos.forEach(p=>{ if(!('evento_id' in p)) p.evento_id = EVENTO_LEGADO; }); s
 
 const ctxEventoId = ()=> ctx==='perm' ? null : ctx;
 const evAtual = ()=> ctx==='perm' ? null : eventos.find(e=>e.id===ctx);
-const ctxNome = ()=> ctx==='perm' ? 'Caixa do ano todo' : (evAtual()?.nome || 'Evento');
+const ctxNome = ()=> ctx==='perm' ? 'Lojinha (dia a dia)' : (evAtual()?.nome || 'Evento');
+const lojaDireta = ()=> ctx==='perm';   // no dia a dia a livraria vende e cobra direto
 const doCtx = x => (x.evento_id||null) === ctxEventoId();
 function produtosCtx(){ const e = evAtual(); return e ? (e.produtos||[]) : prodPerm; }
 let produtos = produtosCtx();
@@ -824,7 +828,7 @@ async function sync(){
     ]);
     if(ctxPedido !== ctx) return;    // trocou de contexto no meio
     eventos = evs; save(K.evs, eventos);
-    if(ctx!=='perm'){ const e = evAtual(); if(!e || e.status!=='aberto'){ toast(e ? `O evento "${e.nome}" foi encerrado. Voltando para o caixa do ano todo.` : 'Evento não encontrado. Voltando para o caixa do ano todo.', '#b07d00', 4500); trocarCtx('perm'); return; } }
+    if(ctx!=='perm'){ const e = evAtual(); if(!e || e.status!=='aberto'){ toast(e ? `O evento "${e.nome}" foi encerrado. Voltando para a lojinha.` : 'Evento não encontrado. Voltando para a lojinha.', '#b07d00', 4500); trocarCtx('perm'); return; } }
     servidor = vs.map(v=>({...v, total:+v.total, recebido: v.recebido!=null?+v.recebido:null, troco: v.troco!=null?+v.troco:null})); save(K.s, servidor);
     pedServ = ps.map(p=>({...p, total:+p.total})); save(K.pc, pedServ);
     const cProd = (cfg||[]).find(c=>c.id==='produtos'), cLiv = (cfg||[]).find(c=>c.id==='livraria');
@@ -887,13 +891,22 @@ function trocarCtx(novo){
   produtos = produtosCtx(); periodo = 'atual';
   renderCtx(); renderCatalogo(); renderCarrinho(); atualizarTelas(); sync();
 }
+function ajustarNav(){
+  const ver = lojaDireta() ? ['venda','historico','resumo','estoque','eventos','equipe']
+            : (LIV ? ['livros','estoque'] : ['venda','livros','historico','resumo','config','estoque','eventos','equipe']);
+  $$('nav button').forEach(b=>{ b.hidden = !ver.includes(b.dataset.v) || (b.dataset.v==='equipe' && !eu?.admin); });
+  $('nav button[data-v=venda]').textContent = lojaDireta() ? 'Lojinha' : 'Caixa';
+  const atual = $$('nav button').find(b=>b.classList.contains('on'));
+  if(!atual || atual.hidden) irPara(LIV && !lojaDireta() ? 'livros' : 'venda');
+}
 function renderCtx(){
+  ajustarNav();
   const b = $('#ctxBtn'); b.textContent = (ctx==='perm' ? '🏪 ' : '🎉 ') + ctxNome() + ' ▾'; b.classList.toggle('ev', ctx!=='perm');
   $('#cfgTitulo').textContent = 'Produtos e preços · ' + ctxNome();
 }
 $('#ctxBtn').onclick = ()=>{
   const abertos = eventos.filter(e=>e.status==='aberto');
-  $('#ctxLista').innerHTML = [`<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Caixa do ano todo<small>Lojinha e caixa do dia a dia</small></span></button>`,
+  $('#ctxLista').innerHTML = [`<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Lojinha (dia a dia)<small>A livraria entrega e já cobra</small></span></button>`,
     ...abertos.map(e=>`<button type="button" class="ctxitem ${ctx===e.id?'on':''}" data-ctx="${e.id}">🎉 <span>${esc(e.nome)}<small>Evento${e.data?' · '+dataBR(e.data):''}</small></span></button>`)].join('')
     + (abertos.length ? '' : '<p class="hint" style="margin:4px 0 0">Nenhum evento aberto agora.</p>');
   $$('#ctxLista [data-ctx]').forEach(x=>x.onclick=()=>{ $('#ctxModal').classList.remove('on'); if(x.dataset.ctx!==ctx){ trocarCtx(x.dataset.ctx); toast('Vendendo em: '+ctxNome()); } });
@@ -921,6 +934,7 @@ $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
    Venda (caixa)
    ========================================================= */
 function renderCatalogo(){
+  if(lojaDireta()){ renderCatalogoLiv(); return; }
   const qtdPor = {}; carrinho.forEach(l=>{ if(!l.pedido) qtdPor[l.pid]=(qtdPor[l.pid]||0)+l.qtd; });
   const cats = [...new Set([...CATS, ...produtos.map(p=>p.cat||'Outros')])];
   $('#catalogo').innerHTML = cats.map(c=>{
@@ -1087,11 +1101,20 @@ function visiveis(tab, busca){
 function abasHtml(tab, busca, attr='data-aba'){
   return `<div class="abas" role="tablist">${CATS_LIV.map(([k,t])=>`<button type="button" role="tab" class="aba ${!busca&&tab===k?'on':''}" ${attr}="${k}">${t} <small>${catalogo.filter(c=>(c.cat||'outros')===k).length}</small></button>`).join('')}</div>`;
 }
+const livHost = ()=> lojaDireta() ? $('#catalogo') : $('#livFixos');
+const qtdLiv = id => lojaDireta() ? carrinho.filter(l=>l.pid==='liv_'+id).reduce((s,l)=>s+l.qtd,0) : (livFixos[id]||0);
+function addLivCarrinho(c, preco){
+  const key = 'liv_'+c.id+(preco!=null && preco!==c.preco ? '_'+Date.now() : '');
+  const l = carrinho.find(x=>x.key===key);
+  if(l) l.qtd++; else carrinho.push({key, pid:'liv_'+c.id, nome:c.nome, preco: preco ?? c.preco, qtd:1});
+  renderCarrinho();
+}
 function renderCatalogoLiv(){
+  const host = livHost(); if(lojaDireta()) $('#livFixos').innerHTML = '';
+  $('#catEditar').textContent = '';
   const vis = visiveis(livTab, livBusca);
   let corpo;
   if(editandoCatalogo){
-    $('#catEditar').textContent = '';
     corpo = `<div class="catedit">${vis.map(({c,i})=>`
       <div class="cfg" data-i="${i}">
         ${c.img?`<img class="mini" src="${c.img}" alt="" loading="lazy">`:''}
@@ -1105,8 +1128,7 @@ function renderCatalogoLiv(){
         <button class="link" id="catCancelar" type="button" style="color:var(--muted)">Cancelar</button>
       </div></div>`;
   } else {
-    $('#catEditar').textContent = 'Editar itens e preços';
-    corpo = `<div class="capas">${vis.map(({c})=>{ const q = livFixos[c.id]||0, s = saldoItem(c.id); return `
+    corpo = `<div class="capas">${vis.map(({c})=>{ const q = qtdLiv(c.id), s = saldoItem(c.id); return `
       <div class="capa ${q?'on':''} ${c.img?'':'semimg'}">
         <button type="button" class="cx" data-fx="${c.id}">
           ${c.img?`<img src="${c.img}" alt="" loading="lazy">`:''}
@@ -1117,29 +1139,38 @@ function renderCatalogoLiv(){
         ${q?`<span class="badge">${q}</span><div class="qty"><button type="button" data-fxm="${c.id}" aria-label="Tirar um">−</button><em>${q}</em><button type="button" data-fx="${c.id}" aria-label="Pôr mais um">+</button></div>`:''}
       </div>`; }).join('') || '<p class="hint">Nada encontrado.</p>'}</div>`;
   }
-  const sel = Object.entries(livFixos).map(([id,q])=>{ const c=catalogo.find(x=>x.id===id); return c?`<span class="chip">${q}× ${esc(c.nome)} <button type="button" data-fxm="${id}" aria-label="Tirar um">−</button></span>`:''; }).join('');
-  $('#livFixos').innerHTML = `<input id="livBusca" class="field" type="search" placeholder="Buscar livro, Bíblia ou item…" value="${esc(livBusca)}" autocomplete="off">` + abasHtml(livTab, livBusca) + (sel&&!editandoCatalogo?`<div class="sel"><b>No pedido:</b> ${sel}</div>`:'') + corpo;
+  const sel = lojaDireta() ? '' : Object.entries(livFixos).map(([id,q])=>{ const c=catalogo.find(x=>x.id===id); return c?`<span class="chip">${q}× ${esc(c.nome)} <button type="button" data-fxm="${id}" aria-label="Tirar um">−</button></span>`:''; }).join('');
+  const topo = `<div class="sub2" style="margin-top:0"><span>${lojaDireta()?'Lojinha · toque para vender':'Produtos da livraria'}</span>${editandoCatalogo?'':'<button class="link" id="catEditar2" type="button" style="color:var(--accent)">Editar itens e preços</button>'}</div>`;
+  const livres = lojaDireta() && !editandoCatalogo ? `<div class="sub2"><span>Item que não está na lista</span></div><div class="addtipos">
+      <button class="btn" type="button" data-livre="livro">+ 📚 Livro</button><button class="btn" type="button" data-livre="biblia">+ 📖 Bíblia</button><button class="btn" type="button" data-livre="diversos">+ 🧩 Itens diversos</button></div>` : '';
+  host.innerHTML = topo + `<input id="livBusca" class="field" type="search" placeholder="Buscar livro, Bíblia ou item…" value="${esc(livBusca)}" autocomplete="off">` + abasHtml(livTab, livBusca) + (sel&&!editandoCatalogo?`<div class="sel"><b>No pedido:</b> ${sel}</div>`:'') + corpo + livres;
   const inp = $('#livBusca');
   inp.oninput = ()=>{ livBusca = inp.value; const pos = inp.selectionStart; renderCatalogoLiv(); const n=$('#livBusca'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
-  $$('#livFixos [data-aba]').forEach(b=>b.onclick=()=>{ if(editandoCatalogo) lerCatalogo(); livTab=b.dataset.aba; livBusca=''; renderCatalogoLiv(); });
+  host.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ if(editandoCatalogo) lerCatalogo(); livTab=b.dataset.aba; livBusca=''; renderCatalogoLiv(); });
+  const ed = $('#catEditar2'); if(ed) ed.onclick = ()=>{ editandoCatalogo = true; renderCatalogoLiv(); };
+  host.querySelectorAll('[data-livre]').forEach(b=>b.onclick=()=>abrirModal({id:b.dataset.livre, nome:TIPOS[b.dataset.livre].nome}));
   if(editandoCatalogo){
-    $$('#livFixos [data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
+    host.querySelectorAll('[data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
     $('#catAdd').onclick = ()=>{ lerCatalogo(); livBusca=''; catalogo.push({id:'c'+Date.now(), nome:'', preco:null, cat:livTab}); renderCatalogoLiv(); $(`#catNm${catalogo.length-1}`).focus(); };
     $('#catCancelar').onclick = ()=>{ editandoCatalogo=false; catalogo = load(K.cat, []); renderCatalogoLiv(); };
     $('#catSalvar').onclick = salvarCatalogo;
     return;
   }
-  $$('#livFixos [data-fx]').forEach(b=>b.onclick=async ()=>{
+  host.querySelectorAll('[data-fx]').forEach(b=>b.onclick=async ()=>{
     const c = catalogo.find(x=>x.id===b.dataset.fx); if(!c) return;
-    const s = saldoItem(c.id), ja = livFixos[c.id]||0;
+    const s = saldoItem(c.id), ja = qtdLiv(c.id);
     if(s!=null && ja+1 > s && !(await perguntar('Sem estoque no sistema', `"${c.nome}" aparece com ${Math.max(s,0)} em estoque. Se você está com ele na mão, pode vender assim mesmo (depois ajuste o estoque com uma contagem).`, {sim:'Vender assim mesmo'}))) return;
     if(!temPreco(c)){ abrirPreco(c); return; }
+    if(lojaDireta()){ addLivCarrinho(c); return; }
     livFixos[c.id]=ja+1; renderCatalogoLiv(); livTotal();
   });
-  $$('#livFixos [data-fxm]').forEach(b=>b.onclick=()=>{ const id=b.dataset.fxm; livFixos[id]--; if(livFixos[id]<=0) delete livFixos[id]; renderCatalogoLiv(); livTotal(); });
+  host.querySelectorAll('[data-fxm]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.fxm;
+    if(lojaDireta()){ const i = carrinho.map(l=>l.pid).lastIndexOf('liv_'+id); if(i>=0){ carrinho[i].qtd--; if(carrinho[i].qtd<=0) carrinho.splice(i,1); } renderCarrinho(); return; }
+    livFixos[id]--; if(livFixos[id]<=0) delete livFixos[id]; renderCatalogoLiv(); livTotal(); });
 }
 function lerCatalogo(){
-  $$('#livFixos .cfg').forEach(row=>{ const c = catalogo[+row.dataset.i]; if(!c) return; c.nome = row.querySelector('.nm').value.trim(); const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : null; });
+  livHost().querySelectorAll('.cfg').forEach(row=>{ const c = catalogo[+row.dataset.i]; if(!c) return; c.nome = row.querySelector('.nm').value.trim(); const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : null; });
 }
 async function enviarCatalogo(msgOk){
   save(K.cat, catalogo); save(K.catp, true);
@@ -1160,6 +1191,10 @@ $('#pValor').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#pOk').click
 $('#pOk').onclick = ()=>{
   const v = num($('#pValor').value); if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
   const c = precoItem, preco = Math.round(v*100)/100;
+  if(lojaDireta()){
+    if($('#pSalvar').checked){ c.preco = preco; enviarCatalogo(`Preço de "${c.nome}" salvo`); addLivCarrinho(c); } else addLivCarrinho(c, preco);
+    fecharPreco(); return;
+  }
   if($('#pSalvar').checked){ c.preco = preco; livFixos[c.id]=(livFixos[c.id]||0)+1; enviarCatalogo(`Preço de "${c.nome}" salvo`); }
   else livLinhas.push({tipo: c.cat==='biblia'?'biblia':c.cat==='livro'?'livro':'diversos', titulo:c.nome, preco:String(preco).replace('.',',')});
   fecharPreco(); renderLivForm();
@@ -1253,7 +1288,7 @@ function renderHistorico(){
   $('#fiadosAbertos').innerHTML = htmlContas(contas); ligarReceber($('#fiadosAbertos'), contas);
   const lista = ctx==='perm' ? vendas.filter(v=>desde(v.ts, hojeISO())) : vendas;
   const el = $('#lista');
-  if(!lista.length){ el.innerHTML=`<div class="empty card">${ctx==='perm'?'Nenhuma venda hoje no caixa do ano todo.':'Nenhuma venda neste evento ainda.'}</div>`; return; }
+  if(!lista.length){ el.innerHTML=`<div class="empty card">${ctx==='perm'?'Nenhuma venda hoje na lojinha.':'Nenhuma venda neste evento ainda.'}</div>`; return; }
   el.innerHTML = (ctx==='perm'?'<p class="hint" style="margin:0 0 8px">Vendas de hoje. Para outros dias, veja o Resumo.</p>':'') + [...lista].reverse().map(v=>`
     <div class="sale ${v.cancelada?'cx':''} ${!v.cancelada&&v.metodo==='Fiado'&&!v.fiado_pago_em?'fiado':''}">
       <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${tagDe(v)}</span></div>
@@ -1467,7 +1502,7 @@ function renderEventos(){
   const ab = eventos.filter(e=>e.status==='aberto'), pas = eventos.filter(e=>e.status==='encerrado');
   $('#evAbertos').innerHTML = ab.length ? ab.map(e=>`<div class="evcard"><div class="h"><b>🎉 ${esc(e.nome)}</b><span class="tag">${e.data?dataBR(e.data):'Aberto'}</span></div>
     <div class="row">${ctx===e.id?'<span class="tag" style="background:#fff1c7">Vendendo neste evento</span>':`<button class="btn dark" data-usar="${e.id}">Vender neste evento</button>`}
-    <button class="btn red" data-encerrar="${e.id}">Encerrar evento</button></div></div>`).join('') : '<p class="hint">Nenhum evento aberto. O caixa do ano todo continua funcionando normalmente.</p>';
+    ${eu?.admin?`<button class="btn red" data-encerrar="${e.id}">Encerrar evento</button>`:'<span class="hint">Só administradores encerram o evento.</span>'}</div></div>`).join('') : '<p class="hint">Nenhum evento aberto. A lojinha do dia a dia continua funcionando normalmente.</p>';
   $('#evPassados').innerHTML = pas.length ? pas.map(e=>`<button type="button" class="evpass" data-ver="${e.id}"><span><b>${esc(e.nome)}</b><small>${e.data?dataBR(e.data)+' · ':''}${e.resumo?.vendas??'–'} vendas</small></span><span class="t">${brl(e.resumo?.total||0)} ›</span></button>`).join('') : '<p class="hint">Nenhum evento encerrado ainda.</p>';
   $$('[data-usar]').forEach(b=>b.onclick=()=>{ trocarCtx(b.dataset.usar); toast('Vendendo em: '+ctxNome()); irPara('venda'); });
   $$('[data-encerrar]').forEach(b=>b.onclick=()=>encerrarEvento(eventos.find(e=>e.id===b.dataset.encerrar)));
@@ -1487,6 +1522,7 @@ $('#evCriar').onclick = async ()=>{
   finally{ b.disabled = false; }
 };
 async function encerrarEvento(e){
+  if(!eu?.admin){ toast('Só administradores podem encerrar eventos.','var(--danger)'); return; }
   const pendEv = pendentes.filter(v=>v.evento_id===e.id).length + pedNovos.filter(p=>p.evento_id===e.id).length;
   if(pendEv){ toast(`Este aparelho ainda tem ${pendEv} lançamento(s) do evento para enviar. Espere sincronizar.`,'var(--danger)', 4500); sync(); return; }
   let vs, ps;
@@ -1503,7 +1539,7 @@ async function encerrarEvento(e){
     e.status='encerrado'; e.resumo=r; save(K.evs, eventos);
     if(ctx===e.id) trocarCtx('perm');
     toast(`Evento encerrado. Resumo salvo em Eventos passados.`); renderEventos();
-  }catch(err){ toast('Não encerrou: sem conexão. Tente de novo.','var(--danger)'); }
+  }catch(err){ toast(/42501|administrador/i.test(err.message) ? 'Só administradores podem encerrar eventos.' : 'Não encerrou: sem conexão. Tente de novo.','var(--danger)', 3500); }
 }
 async function verEvento(id){
   evDetalheId = id; const e = eventos.find(x=>x.id===id); if(!e) return;
@@ -1566,17 +1602,12 @@ $('#mCriar').onclick = async ()=>{
    ========================================================= */
 function iniciarApp(){
   $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
-  $('#navEquipe').hidden = !eu?.admin || LIV;
-  if(LIV){
-    document.body.classList.add('liv-v2'); document.title = 'Livraria · Movimento Vou Fluir';
-    $$('nav button').forEach(b=>{ b.hidden = !['livros','estoque'].includes(b.dataset.v); });
-    irPara('livros');
-  }
+  if(LIV) document.title = 'Livraria · Movimento Vou Fluir';
   renderCtx(); renderLivForm(); renderCarrinho(); atualizarTelas(); sync();
   // confere se continua na equipe
   sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(eu.email)).then(m=>{
     if(!m[0] || !m[0].ativo){ toast('Seu acesso foi removido.','var(--danger)', 4000); sair(); return; }
-    eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu); $('#navEquipe').hidden = !eu.admin || LIV; $('#userBtn').textContent = eu.nome.trim().charAt(0).toUpperCase();
+    eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu); ajustarNav(); if(evDetalheId===null && $('#v-eventos').classList.contains('on')) renderEventos(); $('#userBtn').textContent = eu.nome.trim().charAt(0).toUpperCase();
   }).catch(()=>{});
 }
 window.addEventListener('beforeunload', e=>{ if(carrinho.length || pendentes.length || pedNovos.length || Object.keys(pedPend).length){ e.preventDefault(); e.returnValue=''; } });
