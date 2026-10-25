@@ -275,6 +275,8 @@ nav button{flex:1 0 auto;padding:11px 12px}
 
 .pos > *{min-width:0}
 .abas{max-width:100%}
+
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -428,6 +430,15 @@ nav button{flex:1 0 auto;padding:11px 12px}
     </div>
   </section>
 
+  <!-- SEM EVENTO (vendedor) -->
+  <section class="view" id="v-semevento">
+    <div class="card" style="text-align:center;padding:32px 20px">
+      <div style="font-size:40px">🎉</div>
+      <h2 style="margin:8px 0 6px">Nenhum evento aberto agora</h2>
+      <p class="hint" style="margin:0 auto;max-width:360px">Seu acesso é para vender nos eventos. Quando o responsável abrir um evento, ele aparece aqui sozinho.</p>
+    </div>
+  </section>
+
   <!-- EQUIPE -->
   <section class="view" id="v-equipe">
     <div class="card">
@@ -436,7 +447,7 @@ nav button{flex:1 0 auto;padding:11px 12px}
         <div><label for="mNome">Nome</label><input id="mNome" placeholder="Ex.: Ana Paula" autocomplete="off"></div>
         <div><label for="mEmail">E-mail</label><input id="mEmail" type="email" placeholder="ana@email.com" autocomplete="off"></div>
         <div><label for="mSenha">Senha inicial (mín. 6)</label><input id="mSenha" type="text" autocomplete="off"></div>
-        <div><label for="mAdmin">Permissão</label><select id="mAdmin"><option value="0">Equipe (vende e controla estoque)</option><option value="1">Administrador / master (cadastra a equipe e encerra eventos)</option></select></div>
+        <div><label for="mAdmin">Permissão</label><select id="mAdmin"><option value="0">Vendedor (só vende no evento aberto)</option><option value="1">Master (vê resultados, lojinha do ano, estoque, eventos e equipe)</option></select></div>
       </div>
       <div class="row" style="margin-top:12px"><button class="btn dark" id="mCriar">Cadastrar</button></div>
       <p class="hint" style="margin:10px 0 0">Passe o e-mail e a senha para a pessoa. Ela pode trocar a senha depois, tocando no círculo com a inicial dela no topo.</p>
@@ -828,7 +839,8 @@ async function sync(){
     ]);
     if(ctxPedido !== ctx) return;    // trocou de contexto no meio
     eventos = evs; save(K.evs, eventos);
-    if(ctx!=='perm'){ const e = evAtual(); if(!e || e.status!=='aberto'){ toast(e ? `O evento "${e.nome}" foi encerrado. Voltando para a lojinha.` : 'Evento não encontrado. Voltando para a lojinha.', '#b07d00', 4500); trocarCtx('perm'); return; } }
+    if(garantirCtxVendedor()) return;
+    if(ctx!=='perm'){ const e = evAtual(); if(!e || e.status!=='aberto'){ if(!master()){ garantirCtxVendedor(); if(ctx==='perm'){ toast('O evento foi encerrado.','#b07d00', 4000); } return; } toast(e ? `O evento "${e.nome}" foi encerrado. Voltando para a lojinha.` : 'Evento não encontrado. Voltando para a lojinha.', '#b07d00', 4500); trocarCtx('perm'); return; } }
     servidor = vs.map(v=>({...v, total:+v.total, recebido: v.recebido!=null?+v.recebido:null, troco: v.troco!=null?+v.troco:null})); save(K.s, servidor);
     pedServ = ps.map(p=>({...p, total:+p.total})); save(K.pc, pedServ);
     const cProd = (cfg||[]).find(c=>c.id==='produtos'), cLiv = (cfg||[]).find(c=>c.id==='livraria');
@@ -891,13 +903,29 @@ function trocarCtx(novo){
   produtos = produtosCtx(); periodo = 'atual';
   renderCtx(); renderCatalogo(); renderCarrinho(); atualizarTelas(); sync();
 }
+const master = ()=> !!eu?.admin;
+function abertosVisiveis(){ return eventos.filter(e=>e.status==='aberto'); }
+/* Vendedor (não master) só trabalha em evento aberto */
+function garantirCtxVendedor(){
+  if(master()) return false;
+  if(ctx!=='perm' && abertosVisiveis().some(e=>e.id===ctx)) return false;
+  const ab = abertosVisiveis()[0];
+  if(ab){ trocarCtx(ab.id); toast('Vendendo em: '+ab.nome); return true; }
+  if(ctx!=='perm') trocarCtx('perm');
+  return false;
+}
 function ajustarNav(){
-  const ver = lojaDireta() ? ['venda','historico','resumo','estoque','eventos','equipe']
+  const semEvento = !master() && ctx==='perm';
+  $('#v-semevento').classList.toggle('on', semEvento);
+  $('nav').hidden = semEvento;
+  if(semEvento){ $$('.view').forEach(x=>{ if(x.id!=='v-semevento') x.classList.remove('on'); }); return; }
+  const ver = !master() ? (LIV ? ['livros','historico'] : ['venda','livros','historico','config'])
+            : lojaDireta() ? ['venda','historico','resumo','estoque','eventos','equipe']
             : (LIV ? ['livros','estoque'] : ['venda','livros','historico','resumo','config','estoque','eventos','equipe']);
   $$('nav button').forEach(b=>{ b.hidden = !ver.includes(b.dataset.v) || (b.dataset.v==='equipe' && !eu?.admin); });
   $('nav button[data-v=venda]').textContent = lojaDireta() ? 'Lojinha' : 'Caixa';
   const atual = $$('nav button').find(b=>b.classList.contains('on'));
-  if(!atual || atual.hidden) irPara(LIV && !lojaDireta() ? 'livros' : 'venda');
+  if(!atual || atual.hidden || !document.querySelector('.view.on')) irPara(LIV && !lojaDireta() ? 'livros' : 'venda');
 }
 function renderCtx(){
   ajustarNav();
@@ -906,7 +934,8 @@ function renderCtx(){
 }
 $('#ctxBtn').onclick = ()=>{
   const abertos = eventos.filter(e=>e.status==='aberto');
-  $('#ctxLista').innerHTML = [`<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Lojinha (dia a dia)<small>A livraria entrega e já cobra</small></span></button>`,
+  $('#ctxNovo').hidden = !master();
+  $('#ctxLista').innerHTML = [master() ? `<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Lojinha (dia a dia)<small>A livraria entrega e já cobra</small></span></button>` : '',
     ...abertos.map(e=>`<button type="button" class="ctxitem ${ctx===e.id?'on':''}" data-ctx="${e.id}">🎉 <span>${esc(e.nome)}<small>Evento${e.data?' · '+dataBR(e.data):''}</small></span></button>`)].join('')
     + (abertos.length ? '' : '<p class="hint" style="margin:4px 0 0">Nenhum evento aberto agora.</p>');
   $$('#ctxLista [data-ctx]').forEach(x=>x.onclick=()=>{ $('#ctxModal').classList.remove('on'); if(x.dataset.ctx!==ctx){ trocarCtx(x.dataset.ctx); toast('Vendendo em: '+ctxNome()); } });
@@ -1058,6 +1087,7 @@ $('#finalizar').onclick = ()=>{
 function renderTopo(){
   if(LIV){ const n = todosPedidos().filter(p=>p.status==='pago').length; $('#hojeQtd').textContent = 'Para entregar'; $('#hojeTotal').textContent = n + (n===1?' pedido':' pedidos'); return; }
   const ok = todasVendas().filter(v=>!v.cancelada && (ctx!=='perm' || desde(v.ts, hojeISO())));
+  if(!master()){ $('#hojeQtd').textContent = 'Neste evento'; $('#hojeTotal').textContent = ok.length + (ok.length===1?' venda':' vendas'); return; }
   $('#hojeQtd').textContent = (ctx==='perm'?'Hoje · ':'') + ok.length + (ok.length===1?' venda':' vendas');
   $('#hojeTotal').textContent = brl(ok.reduce((s,v)=>s+v.total,0));
 }
@@ -1485,6 +1515,7 @@ $('#eOk').onclick = async ()=>{
   finally{ b.disabled = false; }
 };
 async function carregarMovs(){
+  if(!master()) return;
   try{
     const ms = await sb('/vf_estoque_mov?select=*&order=criado_em.desc&limit=30');
     $('#estMovs').innerHTML = ms.length ? ms.map(m=>{ const c = catalogo.find(x=>x.id===m.item_id);
@@ -1603,6 +1634,7 @@ $('#mCriar').onclick = async ()=>{
 function iniciarApp(){
   $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
   if(LIV) document.title = 'Livraria · Movimento Vou Fluir';
+  if(!master() && ctx==='perm'){ const ab = abertosVisiveis()[0]; if(ab){ ctx = ab.id; save(K.ctx, ctx); produtos = produtosCtx(); } }
   renderCtx(); renderLivForm(); renderCarrinho(); atualizarTelas(); sync();
   // confere se continua na equipe
   sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(eu.email)).then(m=>{
