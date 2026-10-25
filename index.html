@@ -277,6 +277,13 @@ nav button{flex:1 0 auto;padding:11px 12px}
 .abas{max-width:100%}
 
 [hidden]{display:none!important}
+
+.fotobtn{position:relative;flex:none;cursor:pointer;display:block;width:34px;height:45px;border-radius:4px;overflow:hidden}
+.fotobtn .mini{width:34px;height:45px}
+.fotobtn .semfoto{display:grid;place-items:center;width:34px;height:45px;border:1px dashed #9fb3c4;border-radius:4px;background:#f3f6f9;font-size:16px}
+.fotobtn::after{content:"📷";position:absolute;right:-2px;bottom:-2px;font-size:11px;background:#fff;border-radius:999px;padding:0 2px}
+.fotobtn:has(.semfoto)::after{display:none}
+.fotobtn.enviando{opacity:.4;pointer-events:none}
 </style>
 </head>
 <body>
@@ -1147,7 +1154,8 @@ function renderCatalogoLiv(){
   if(editandoCatalogo){
     corpo = `<div class="catedit">${vis.map(({c,i})=>`
       <div class="cfg" data-i="${i}">
-        ${c.img?`<img class="mini" src="${c.img}" alt="" loading="lazy">`:''}
+        ${master() ? `<label class="fotobtn" title="${c.img?'Trocar foto':'Pôr foto'}">${c.img?`<img class="mini" src="${c.img}" alt="">`:'<span class="semfoto">📷</span>'}<input type="file" accept="image/*" data-foto="${i}" hidden></label>`
+                   : (c.img?`<img class="mini" src="${c.img}" alt="" loading="lazy">`:'')}
         <input class="nm" id="catNm${i}" value="${esc(c.nome)}" placeholder="Nome do item">
         <input class="pr" id="catPr${i}" inputmode="decimal" value="${temPreco(c)?String(c.preco).replace('.',','):''}" placeholder="Sem preço">
         <button class="link" data-catdel="${i}" aria-label="Apagar item">✕</button>
@@ -1181,6 +1189,7 @@ function renderCatalogoLiv(){
   host.querySelectorAll('[data-livre]').forEach(b=>b.onclick=()=>abrirModal({id:b.dataset.livre, nome:TIPOS[b.dataset.livre].nome}));
   if(editandoCatalogo){
     host.querySelectorAll('[data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
+    host.querySelectorAll('[data-foto]').forEach(inp=>inp.onchange=()=>{ const f = inp.files && inp.files[0]; if(f) enviarFoto(+inp.dataset.foto, f, inp.closest('.fotobtn')); });
     $('#catAdd').onclick = ()=>{ lerCatalogo(); livBusca=''; catalogo.push({id:'c'+Date.now(), nome:'', preco:null, cat:livTab}); renderCatalogoLiv(); $(`#catNm${catalogo.length-1}`).focus(); };
     $('#catCancelar').onclick = ()=>{ editandoCatalogo=false; catalogo = load(K.cat, []); renderCatalogoLiv(); };
     $('#catSalvar').onclick = salvarCatalogo;
@@ -1201,6 +1210,30 @@ function renderCatalogoLiv(){
 }
 function lerCatalogo(){
   livHost().querySelectorAll('.cfg').forEach(row=>{ const c = catalogo[+row.dataset.i]; if(!c) return; c.nome = row.querySelector('.nm').value.trim(); const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : null; });
+}
+/* Foto da capa: reduz no aparelho e guarda no Supabase Storage (bucket público vf-capas) */
+async function reduzirImagem(file, maxW=480, maxH=640){
+  let fonte;
+  try{ fonte = await createImageBitmap(file, {imageOrientation:'from-image'}); }
+  catch(e){ fonte = await new Promise((res,rej)=>{ const im = new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('Não consegui abrir essa imagem.')); im.src = URL.createObjectURL(file); }); }
+  const w0 = fonte.width, h0 = fonte.height, k = Math.min(1, maxW/w0, maxH/h0);
+  const cv = document.createElement('canvas'); cv.width = Math.round(w0*k); cv.height = Math.round(h0*k);
+  const g = cv.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(fonte, 0, 0, cv.width, cv.height);
+  return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error('Não consegui preparar a imagem.')), 'image/jpeg', 0.78));
+}
+async function enviarFoto(i, file, label){
+  const c = catalogo[i]; if(!c) return;
+  lerCatalogo();
+  if(label) label.classList.add('enviando');
+  try{
+    const blob = await reduzirImagem(file);
+    const nome = `${c.id}-${Date.now()}.jpg`;
+    const r = await fetch(`${SB}/storage/v1/object/vf-capas/${nome}`, {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+await tokenValido(), 'Content-Type':'image/jpeg', 'x-upsert':'true', 'cache-control':'31536000'}, body:blob});
+    if(!r.ok){ const t = await r.text(); throw new Error(r.status===403||/row-level|Unauthorized/i.test(t) ? 'Só o master pode pôr fotos.' : 'Não consegui enviar a foto ('+r.status+').'); }
+    c.img = `${SB}/storage/v1/object/public/vf-capas/${nome}`;
+    renderCatalogoLiv();
+    await enviarCatalogo(`Foto de "${c.nome||'item'}" salva`);
+  }catch(e){ toast(navigator.onLine ? e.message : 'Sem internet para enviar a foto.','var(--danger)', 4000); if(label) label.classList.remove('enviando'); }
 }
 async function enviarCatalogo(msgOk){
   save(K.cat, catalogo); save(K.catp, true);
