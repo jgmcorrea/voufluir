@@ -210,6 +210,68 @@ td.r,th.r{text-align:right}
 body.liv nav{display:none}
 body.liv header{padding-bottom:14px}
 body.liv #v-livros{max-width:640px;margin:0 auto}
+
+/* ---------- v2: login, contexto, eventos, estoque, equipe ---------- */
+nav{overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;padding:11px 12px}
+.ctxbtn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;margin-top:3px;max-width:52vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctxbtn.ev{background:#f5c04a;color:#3a2a00}
+.userbtn{background:rgba(255,255,255,.14);color:#fff;border-radius:999px;width:34px;height:34px;font-weight:700;font-size:14px;flex:none}
+.top .dir{display:flex;align-items:center;gap:10px}
+#login{position:fixed;inset:0;background:var(--bg);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+#login.on{display:flex}
+#login .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;width:100%;max-width:380px}
+#login h2{margin:12px 0 4px;font-size:22px}
+#login label{display:block;font-size:13px;color:var(--muted);margin-top:12px}
+#login .erro{color:var(--danger);font-size:14px;min-height:20px;margin-top:10px}
+.ctxlist{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px}
+.ctxitem{display:flex;align-items:center;gap:10px;padding:12px;border:2px solid var(--line);border-radius:14px;background:#fff;text-align:left;color:var(--ink);font-weight:600;font-size:15px}
+.ctxitem small{display:block;color:var(--muted);font-weight:500;font-size:12px}
+.ctxitem.on{border-color:var(--accent);background:#eefafc}
+.evcard{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;margin-top:10px}
+.evcard .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.evcard .h b{font-size:16px}
+.evcard .row{margin-top:10px}
+.evpass{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:8px;text-align:left;color:var(--ink)}
+.evpass b{display:block;font-size:15px}
+.evpass small{color:var(--muted);font-size:13px}
+.evpass .t{font-weight:800;font-size:16px;white-space:nowrap}
+.periodos{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.voltar{background:none;color:var(--accent);font-weight:600;font-size:15px;padding:4px 0;margin-bottom:8px}
+.stk{position:absolute;left:6px;top:6px;font-size:11px;font-weight:700;border-radius:999px;padding:2px 7px;background:rgba(11,31,51,.78);color:#fff}
+.stk.zero{background:var(--danger)}
+.stk.baixo{background:#e0a000}
+.esttab{width:100%;border-collapse:collapse}
+.esttab td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.esttab .nm{font-weight:600;font-size:14px}
+.esttab .q{font-weight:800;font-size:17px;text-align:right;white-space:nowrap}
+.esttab .q.zero{color:var(--danger)}
+.esttab .q.nc{color:var(--muted);font-weight:500;font-size:13px}
+.esttab img{width:34px;height:45px;object-fit:cover;border-radius:4px;display:block}
+.esttab .acts{display:flex;gap:6px;justify-content:flex-end}
+.esttab .acts .btn{padding:8px 10px;font-size:13px}
+.movs{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fchip{background:#fff4dd;border:1px solid #f5c04a;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:600;color:#5a4000}
+.fchip.on{background:#f5c04a}
+.conta{border-top:1px dashed #e7c46a;padding:8px 0}
+.conta:first-of-type{border-top:0}
+.conta .linha{display:flex;align-items:center;gap:10px}
+.conta .linha .info{flex:1;min-width:0}
+.conta .linha b{font-size:16px}
+.conta ul{margin:6px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.membro{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.membro .info{flex:1;min-width:0}
+.membro b{display:block}
+.membro small{color:var(--muted)}
+.membro.off{opacity:.5}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:520px){.formgrid{grid-template-columns:1fr}}
+.formgrid label{font-size:13px;color:var(--muted);display:block}
+.formgrid input,.formgrid select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;margin-top:3px}
+.porquem{font-size:12px;color:var(--muted)}
+.aviso{background:#fff7e0;border:1px solid #f5c04a;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -217,16 +279,22 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
   <div class="top">
     <div class="logo">
       <div class="logo-mark">VF</div>
-      <div><h1>Movimento Vou Fluir</h1><small id="subtitulo">Caixa do evento</small></div>
+      <div><h1>Movimento Vou Fluir</h1><button class="ctxbtn" id="ctxBtn" type="button">Caixa do ano todo ▾</button></div>
     </div>
-    <div class="today"><span id="hojeQtd">0 vendas</span><b id="hojeTotal">R$ 0,00</b><span class="status" id="status">Conectando…</span></div>
+    <div class="dir">
+      <div class="today"><span id="hojeQtd">0 vendas</span><b id="hojeTotal">R$ 0,00</b><span class="status" id="status">Conectando…</span></div>
+      <button class="userbtn" id="userBtn" type="button" aria-label="Minha conta">?</button>
+    </div>
   </div>
-  <nav>
+  <nav id="nav">
     <button data-v="venda" class="on">Venda</button>
     <button data-v="livros">Livraria</button>
     <button data-v="historico">Vendas</button>
     <button data-v="resumo">Resumo</button>
     <button data-v="config">Produtos</button>
+    <button data-v="estoque">Estoque</button>
+    <button data-v="eventos">Eventos</button>
+    <button data-v="equipe" id="navEquipe" hidden>Equipe</button>
   </nav>
 </header>
 
@@ -246,15 +314,17 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
           <button data-m="Crédito">💳 Crédito</button>
           <button data-m="Fiado" class="fiadobtn">📝 Fiado (pagar depois)</button>
         </div>
-        <div class="cash" id="fiadoBox">
-          <label for="fiadoNome">Nome de quem vai pagar depois</label>
-          <input id="fiadoNome" placeholder="Ex.: João Silva" autocomplete="off">
-        </div>
         <div class="cash" id="cash">
-          <label>Valor recebido</label>
+          <label for="recebido">Valor recebido</label>
           <input id="recebido" inputmode="decimal" placeholder="0,00">
           <div class="quick" id="quick"></div>
           <div class="troco" id="trocoBox"><span>Troco</span><b id="troco">R$ 0,00</b></div>
+        </div>
+        <div class="cash" id="fiadoBox">
+          <label for="fiadoNome">Nome de quem vai pagar depois</label>
+          <input id="fiadoNome" list="fiadoLista" placeholder="Digite ou escolha uma conta aberta" autocomplete="off">
+          <datalist id="fiadoLista"></datalist>
+          <div class="fchips" id="fiadoChips"></div>
         </div>
         <button class="go" id="finalizar" disabled>Finalizar venda</button>
       </aside>
@@ -266,7 +336,7 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
     <div class="card">
       <h3 style="margin:0 0 4px">Novo pedido</h3>
       <p class="hint" style="margin:0 0 6px">Anote o nome da pessoa e o que ela vai levar. O pedido aparece na hora no caixa.</p>
-      <label class="hint">Nome da pessoa</label>
+      <label class="hint" for="livCliente">Nome da pessoa</label>
       <input id="livCliente" class="field" placeholder="Ex.: Maria Souza" autocomplete="off">
       <div class="sub2"><span>Produtos da livraria</span><button class="link" id="catEditar" type="button" style="color:var(--accent)">Editar itens e preços</button></div>
       <div id="livFixos"></div>
@@ -286,26 +356,25 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
     <div class="secao">Entregues</div><div id="lEntregues"></div>
   </section>
 
-  <!-- HISTÓRICO -->
+  <!-- VENDAS -->
   <section class="view" id="v-historico">
+    <div id="fiadosAbertos"></div>
     <div id="lista"></div>
   </section>
 
   <!-- RESUMO -->
   <section class="view" id="v-resumo">
-    <div class="kpis" id="kpis"></div>
-    <div class="card"><h3 style="margin:0 0 8px">Por forma de pagamento</h3><table id="tPag"></table></div>
-    <div class="card"><h3 style="margin:0 0 8px">Por produto</h3><table id="tProd"></table></div>
+    <div class="periodos" id="periodos"></div>
+    <div id="resumoBox"></div>
     <div class="row">
       <button class="btn dark" id="csv">Baixar planilha (CSV)</button>
-      <button class="btn" onclick="window.print()">Imprimir</button>
     </div>
   </section>
 
-  <!-- CONFIG -->
+  <!-- PRODUTOS -->
   <section class="view" id="v-config">
     <div class="card">
-      <h3 style="margin:0 0 4px">Produtos e preços</h3>
+      <h3 style="margin:0 0 4px" id="cfgTitulo">Produtos e preços</h3>
       <p class="hint" style="margin:0 0 8px">Deixe o preço em branco para produtos de valor variável (o valor é digitado na hora da venda).</p>
       <div id="cfgList"></div>
       <div class="row" style="margin-top:12px">
@@ -313,24 +382,100 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
         <button class="btn dark" id="salvarCfg">Salvar alterações</button>
       </div>
     </div>
-    <p class="hint">As vendas ficam salvas na nuvem e aparecem em qualquer aparelho que abrir este link. Se a internet cair, as vendas ficam guardadas neste aparelho e são enviadas sozinhas quando a conexão voltar — não feche a aba enquanto houver pendentes. Este aparelho: <b id="aparelhoNome"></b>.</p>
+    <p class="hint">Os itens da livraria (livros, Bíblias, cadernos) ficam na aba Livraria, em “Editar itens e preços”.</p>
+  </section>
+
+  <!-- ESTOQUE -->
+  <section class="view" id="v-estoque">
+    <div class="card">
+      <h3 style="margin:0 0 4px">Estoque da lojinha</h3>
+      <p class="hint" style="margin:0 0 4px">Vale para o caixa do ano todo e para todos os eventos. Cada venda paga tira do estoque sozinha.</p>
+      <p class="hint" style="margin:0">Comece com <b>Contagem</b> (quantos tem na prateleira). Quando chegar mercadoria, use <b>Entrada</b>.</p>
+      <div id="estFiltros"></div>
+      <div id="estLista" style="overflow-x:auto"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 6px">Últimas movimentações</h3>
+      <ul class="movs" id="estMovs"></ul>
+    </div>
+  </section>
+
+  <!-- EVENTOS -->
+  <section class="view" id="v-eventos">
+    <div id="evDetalhe"></div>
+    <div id="evPrincipal">
+      <div class="card">
+        <h3 style="margin:0 0 4px">Eventos em andamento</h3>
+        <div id="evAbertos"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">Novo evento</h3>
+        <div class="formgrid">
+          <div><label for="evNome">Nome do evento</label><input id="evNome" placeholder="Ex.: Culto de Natal"></div>
+          <div><label for="evData">Data</label><input id="evData" type="date"></div>
+          <div style="grid-column:1/-1"><label for="evBase">Produtos e preços</label>
+            <select id="evBase"><option value="perm">Copiar do caixa do ano todo</option><option value="ultimo">Copiar do último evento</option></select></div>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn dark" id="evCriar">Criar e começar a vender</button></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 4px">Eventos passados</h3>
+        <div id="evPassados"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EQUIPE -->
+  <section class="view" id="v-equipe">
+    <div class="card">
+      <h3 style="margin:0 0 8px">Cadastrar pessoa da equipe</h3>
+      <div class="formgrid">
+        <div><label for="mNome">Nome</label><input id="mNome" placeholder="Ex.: Ana Paula" autocomplete="off"></div>
+        <div><label for="mEmail">E-mail</label><input id="mEmail" type="email" placeholder="ana@email.com" autocomplete="off"></div>
+        <div><label for="mSenha">Senha inicial (mín. 6)</label><input id="mSenha" type="text" autocomplete="off"></div>
+        <div><label for="mAdmin">Permissão</label><select id="mAdmin"><option value="0">Equipe (vende e controla estoque)</option><option value="1">Administrador (também cadastra a equipe)</option></select></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn dark" id="mCriar">Cadastrar</button></div>
+      <p class="hint" style="margin:10px 0 0">Passe o e-mail e a senha para a pessoa. Ela pode trocar a senha depois, tocando no círculo com a inicial dela no topo.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 4px">Equipe</h3>
+      <div id="mLista"></div>
+    </div>
   </section>
 </main>
+
+<!-- Login -->
+<div id="login">
+  <form class="box" id="loginForm">
+    <div class="logo"><div class="logo-mark" style="color:#fff">VF</div><div><b>Movimento Vou Fluir</b><br><span class="hint">Caixa e livraria</span></div></div>
+    <h2>Entrar</h2>
+    <label for="lEmail">E-mail</label>
+    <input id="lEmail" class="field" type="email" autocomplete="username" required>
+    <label for="lSenha">Senha</label>
+    <input id="lSenha" class="field" type="password" autocomplete="current-password" required>
+    <div class="erro" id="lErro"></div>
+    <button class="go" id="lBtn" type="submit">Entrar</button>
+    <p class="hint" style="margin:12px 0 0">Ainda não tem acesso? Peça ao responsável pelo caixa para cadastrar você.</p>
+  </form>
+</div>
 
 <!-- Modal valor variável -->
 <div class="modal" id="modal">
   <div class="sheet">
     <h3 id="mTitulo">Produto</h3>
-    <label>Descrição (opcional)</label>
+    <label for="mDesc">Descrição (opcional)</label>
     <input id="mDesc" placeholder="Ex.: nome do livro, tamanho M">
-    <label>Valor (R$)</label>
+    <label for="mValor">Valor (R$)</label>
     <input id="mValor" class="money" inputmode="decimal" placeholder="0,00">
     <div class="row">
-      <button class="btn" id="mCancel">Cancelar</button>
-      <button class="btn dark" id="mOk">Adicionar</button>
+      <button class="btn" id="mCancel" type="button">Cancelar</button>
+      <button class="btn dark" id="mOk" type="button">Adicionar</button>
     </div>
   </div>
 </div>
+
+<!-- Preço de item da livraria -->
 <div class="modal" id="precoModal">
   <div class="sheet">
     <div id="pImg" class="pimg"></div>
@@ -345,6 +490,8 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
     </div>
   </div>
 </div>
+
+<!-- Receber fiado (conta da pessoa) -->
 <div class="modal" id="receberModal">
   <div class="sheet">
     <h3 id="rTitulo">Receber fiado</h3>
@@ -360,12 +507,72 @@ body.liv #v-livros{max-width:640px;margin:0 auto}
     <div class="row"><button class="btn" id="rCancel" type="button">Cancelar</button></div>
   </div>
 </div>
+
+<!-- Escolher onde vender -->
+<div class="modal" id="ctxModal">
+  <div class="sheet">
+    <h3>Onde vocês estão vendendo?</h3>
+    <div class="ctxlist" id="ctxLista"></div>
+    <div class="row"><button class="btn" id="ctxNovo" type="button">+ Novo evento</button><button class="btn" id="ctxFechar" type="button">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Estoque: entrada / contagem -->
+<div class="modal" id="estModal">
+  <div class="sheet">
+    <h3 id="eTitulo">Entrada</h3>
+    <p class="hint" id="eInfo" style="margin:0"></p>
+    <label for="eQtd" id="eQtdLabel">Quantidade</label>
+    <input id="eQtd" class="money" inputmode="numeric" placeholder="0">
+    <label for="eObs">Observação (opcional)</label>
+    <input id="eObs" placeholder="Ex.: nota da editora, doação">
+    <div class="row">
+      <button class="btn" id="eCancel" type="button">Cancelar</button>
+      <button class="btn dark" id="eOk" type="button">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmação genérica -->
+<div class="modal" id="confModal">
+  <div class="sheet">
+    <h3 id="cTitulo">Confirmar</h3>
+    <p id="cTexto" style="margin:0 0 6px;line-height:1.45"></p>
+    <input id="cInput" class="field" hidden>
+    <div class="row">
+      <button class="btn" id="cNao" type="button">Cancelar</button>
+      <button class="btn dark" id="cSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minha conta -->
+<div class="modal" id="contaModal">
+  <div class="sheet">
+    <h3 id="ctNome">Minha conta</h3>
+    <p class="hint" id="ctEmail" style="margin:0 0 10px"></p>
+    <label for="ctSenha">Nova senha (mín. 6)</label>
+    <input id="ctSenha" class="field" type="password" autocomplete="new-password">
+    <div class="row">
+      <button class="btn" id="ctTrocar" type="button">Trocar senha</button>
+      <button class="btn red" id="ctSair" type="button">Sair</button>
+      <button class="btn" id="ctFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const SB_URL = 'https://wengqckoknqqgeucgubg.supabase.co/rest/v1';
+/* =========================================================
+   Caixa Movimento Vou Fluir — v2
+   Caixa do ano todo + eventos · login por pessoa · fiado por pessoa · estoque
+   ========================================================= */
+const SB = 'https://wengqckoknqqgeucgubg.supabase.co';
+const SB_URL = SB + '/rest/v1';
 const SB_KEY = 'sb_publishable_JuPHTEh530A0RGsn4CugKg_L-DaKIBm';
 const LIV = new URLSearchParams(location.search).has('livraria');
+const EVENTO_LEGADO = 'e4a8b09e-7cf6-4623-8926-08c44a59180d';   // evento de 24/10, antes da v2
 
 const DEFAULT = [
   {id:'coca',  nome:'Coca-Cola',       preco:6,  cat:'Bebidas'},
@@ -374,19 +581,9 @@ const DEFAULT = [
   {id:'tonic', nome:'Tônica',          preco:6,  cat:'Bebidas'},
   {id:'agua',  nome:'Água sem gás',    preco:5,  cat:'Bebidas'},
   {id:'aguag', nome:'Água com gás',    preco:5,  cat:'Bebidas'},
-  {id:'suco',  nome:'Suco de uva natural', preco:9, cat:'Bebidas'},
-  {id:'hamb',  nome:'Hambúrguer',      preco:25, cat:'Comida'},
-  {id:'cafe',  nome:'Café',            preco:33, cat:'Comida'},
-  {id:'pipoca',nome:'Pipoca',          preco:3,  cat:'Doces e gelados'},
-  {id:'picole',nome:'Picolé',          preco:6,  cat:'Doces e gelados'},
-  {id:'gelad', nome:'Geladinho',       preco:1,  cat:'Doces e gelados'},
-  {id:'pacoca',nome:'Paçoquinha',      preco:1.5,cat:'Doces e gelados'},
-  {id:'livro', nome:'Livro',           preco:null, cat:'Loja'},
-  {id:'camis', nome:'Camiseta',        preco:null, cat:'Loja'},
   {id:'outro', nome:'Outro item',      preco:null, cat:'Loja'}
 ];
 const CATS = ['Bebidas','Comida','Doces e gelados','Loja'];
-/* Cores dos cartões entregues no caixa: [fundo, texto, nome da cor] */
 const CORES = {
   cafe:['#ffffff','#1d2a36','branco'], hamb:['#EE7B4F','#ffffff','laranja'],
   coca:['#A9A7AD','#ffffff','cinza'], cocaz:['#A9A7AD','#ffffff','cinza'], guara:['#A9A7AD','#ffffff','cinza'], tonic:['#A9A7AD','#ffffff','cinza'],
@@ -406,39 +603,47 @@ const tipoDe = i => TIPOS[i.tipo] || TIPOS.livro;
 const rotulo = i => (i.qtd>1 ? i.qtd+'× ' : '') + (i.tipo==='fixo' || i.tipo==='livro' || !i.tipo ? '' : TIPOS[i.tipo].ico+' '+(i.tipo==='diversos'?'':TIPOS[i.tipo].nome+' ')) + i.titulo;
 const nomeCaixa = i => i.tipo==='fixo' ? i.titulo : `${tipoDe(i).nome} – ${i.titulo}`;
 const pidCaixa = i => i.tipo==='fixo' ? 'liv_'+i.cid : tipoDe(i).pid;
-const K = {p:'vf4_produtos', s:'vf2_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', d:'vf2_aparelho',
-           pc:'vf3_pedidos_cache', fp:'vf7_fiado_pend', cat:'vf6_catalogo_livraria', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend'};
+const CATS_LIV = [['livro','📚 Livros'],['biblia','📖 Bíblias'],['caderno','📓 Cadernos'],['outros','🧩 Outros']];
+const FORMAS = ['Dinheiro','Pix','Débito','Crédito'];
+
+const K = {sess:'vf8_sess', eu:'vf8_eu', ctx:'vf8_ctx', evs:'vf8_eventos', perm:'vf8_prod_perm',
+  s:'vf8_vendas_cache', q:'vf2_pendentes', c:'vf2_cancel_pend', fp:'vf7_fiado_pend', d:'vf2_aparelho',
+  pc:'vf8_pedidos_cache', pn:'vf3_pedidos_novos', pp:'vf3_pedidos_pend', cat:'vf6_catalogo_livraria', catp:'vf6_cat_pendente', est:'vf8_estoque'};
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 const uuid = ()=> (crypto.randomUUID ? crypto.randomUUID() :
   'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return (c==='x'?r:(r&3|8)).toString(16);}));
-
-let produtos = load(K.p, DEFAULT);
-let servidor = load(K.s, []);      // vendas confirmadas no Supabase
-let pendentes = load(K.q, []);     // vendas ainda não enviadas
-let cancelPend = load(K.c, {});
-let fiadoPend = load(K.fp, {});   // {vendaId: {fiado_pago_em, fiado_pago_metodo}}    // {vendaId: true/false}
-let pedServ = load(K.pc, []);      // pedidos de livro no Supabase
-let pedNovos = load(K.pn, []);     // pedidos criados aqui e ainda não enviados
-let pedPend = load(K.pp, {});      // {pedidoId: {status,...}} alterações não enviadas
-let aparelho = load(K.d, null); if(!aparelho){ aparelho = 'Caixa-'+Math.random().toString(36).slice(2,6).toUpperCase(); save(K.d, aparelho); }
-let carrinho = [];
-let metodo = null;
-let online = null;
-let vistos = null;                 // {pedidoId: status} para detectar novidades
-
 const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const brl = v => (+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const num = s => { if(s==null) return NaN; s = String(s).trim().replace(/\s|R\$/g,''); if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); return parseFloat(s); };
 const hora = ts => new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const dataBR = d => d ? new Date(String(d).length===10 ? d+'T12:00' : d).toLocaleDateString('pt-BR') : '';
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const chaveNome = s => semAcento(s).replace(/\s+/g,' ').trim();
+const limpaNome = s => String(s||'').replace(/\s+/g,' ').trim();
+const hojeISO = ()=>{ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString(); };
+const desde = (ts, iso)=> !iso || new Date(ts) >= new Date(iso);
 
-function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2200); }
+function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2400); }
+
+/* Confirmação na própria página */
+function perguntar(titulo, texto, {sim='Confirmar', perigo=false, input=null}={}){
+  return new Promise(res=>{
+    $('#cTitulo').textContent = titulo; $('#cTexto').textContent = texto;
+    const inp = $('#cInput'); inp.hidden = !input; inp.value = input?.valor || ''; inp.placeholder = input?.ph || ''; inp.type = input?.tipo || 'text';
+    const b = $('#cSim'); b.textContent = sim; b.className = 'btn ' + (perigo?'red':'dark');
+    $('#confModal').classList.add('on'); if(input) setTimeout(()=>inp.focus(),50);
+    const fim = v=>{ $('#confModal').classList.remove('on'); b.onclick = $('#cNao').onclick = null; res(v); };
+    b.onclick = ()=>fim(input ? inp.value : true); $('#cNao').onclick = ()=>fim(input ? null : false);
+  });
+}
 
 /* ---------- Aviso sonoro ---------- */
 let actx = null;
-document.addEventListener('pointerdown', ()=>{ try{ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }, {once:false});
+document.addEventListener('pointerdown', ()=>{ try{ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} });
 function bip(vezes=2){
   try{
     if(!actx) return; let t = actx.currentTime;
@@ -451,25 +656,115 @@ function bip(vezes=2){
   try{ navigator.vibrate && navigator.vibrate([200,100,200]); }catch(e){}
 }
 
-/* ---------- Supabase (REST) ---------- */
-async function sb(path, opt={}){
-  const r = await fetch(SB_URL+path, { ...opt, headers:{ apikey:SB_KEY, 'Content-Type':'application/json', ...(opt.headers||{}) } });
+/* =========================================================
+   Login (Supabase Auth via REST)
+   ========================================================= */
+let sess = load(K.sess, null);
+let eu = load(K.eu, null);           // {email, nome, admin}
+async function authReq(path, body, metodo='POST', tok){
+  const r = await fetch(SB+'/auth/v1/'+path, {method:metodo, headers:{apikey:SB_KEY,'Content-Type':'application/json', ...(tok?{Authorization:'Bearer '+tok}:{})}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.error_description||j.msg||j.message||('Erro '+r.status)), {status:r.status, j});
+  return j;
+}
+function guardaSessao(j){ sess = {access_token:j.access_token, refresh_token:j.refresh_token, expires_at: j.expires_at || (Math.floor(Date.now()/1000)+(j.expires_in||3600)), email:(j.user?.email||sess?.email||'').toLowerCase()}; save(K.sess, sess); }
+let renovando = null;
+async function renovar(){
+  if(!sess?.refresh_token) throw new Error('sem sessão');
+  if(!renovando) renovando = authReq('token?grant_type=refresh_token', {refresh_token:sess.refresh_token})
+    .then(j=>{ guardaSessao(j); }).catch(e=>{ if(e.status===400||e.status===401){ sair(true); } throw e; }).finally(()=>{ renovando=null; });
+  return renovando;
+}
+async function tokenValido(){
+  if(!sess) throw new Error('sem sessão');
+  if(sess.expires_at*1000 - Date.now() < 90000) await renovar();
+  return sess.access_token;
+}
+async function sb(path, opt={}, tentativa=0){
+  const tok = await tokenValido();
+  const r = await fetch(SB_URL+path, { ...opt, headers:{ apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json', ...(opt.headers||{}) } });
+  if(r.status===401 && !tentativa){ await renovar(); return sb(path, opt, 1); }
   if(!r.ok) throw new Error(r.status+' '+await r.text());
   const t = await r.text(); return t ? JSON.parse(t) : null;
 }
+async function entrar(email, senha){
+  const j = await authReq('token?grant_type=password', {email, password:senha});
+  guardaSessao(j);
+  const m = await sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(sess.email));
+  if(!m || !m[0] || !m[0].ativo){ const e = new Error('Seu e-mail ainda não tem acesso ao caixa. Peça ao responsável para cadastrar você.'); sair(true); throw e; }
+  eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu);
+}
+function sair(silencioso){
+  sess = null; eu = null; save(K.sess, null); save(K.eu, null);
+  mostrarLogin(silencioso ? '' : '');
+}
+function mostrarLogin(msg){ $('#login').classList.add('on'); $('#lErro').textContent = msg||''; }
+$('#loginForm').onsubmit = async e=>{
+  e.preventDefault(); $('#lErro').textContent=''; const b=$('#lBtn'); b.disabled=true; b.textContent='Entrando…';
+  try{
+    await entrar($('#lEmail').value.trim().toLowerCase(), $('#lSenha').value);
+    $('#login').classList.remove('on'); $('#lSenha').value=''; iniciarApp();
+  }catch(err){
+    $('#lErro').textContent = /invalid login|invalid_grant|credentials/i.test(err.message) ? 'E-mail ou senha incorretos.' : (navigator.onLine ? err.message : 'Sem internet. O login precisa de conexão.');
+  }finally{ b.disabled=false; b.textContent='Entrar'; }
+};
+
+/* Minha conta */
+$('#userBtn').onclick = ()=>{ $('#ctNome').textContent = eu?.nome||'Minha conta'; $('#ctEmail').textContent = (eu?.email||'') + (eu?.admin?' · administrador':''); $('#ctSenha').value=''; $('#contaModal').classList.add('on'); };
+$('#ctFechar').onclick = ()=>$('#contaModal').classList.remove('on');
+$('#ctSair').onclick = async ()=>{
+  const pend = totalPendencias();
+  if(pend && !(await perguntar('Sair agora?', `Este aparelho ainda tem ${pend} lançamento(s) esperando internet para enviar. Se sair, eles continuam guardados aqui e são enviados no próximo login.`, {sim:'Sair', perigo:true}))) return;
+  $('#contaModal').classList.remove('on'); sair();
+};
+$('#ctTrocar').onclick = async ()=>{
+  const s = $('#ctSenha').value; if(s.length<6){ toast('A senha precisa ter pelo menos 6 caracteres','var(--danger)'); return; }
+  try{ await authReq('user', {password:s}, 'PUT', await tokenValido()); toast('Senha trocada'); $('#contaModal').classList.remove('on'); }
+  catch(e){ toast('Não consegui trocar: '+e.message,'var(--danger)', 4000); }
+};
+
+/* =========================================================
+   Estado
+   ========================================================= */
+let ctx = load(K.ctx, 'perm');                 // 'perm' ou id do evento
+let eventos = load(K.evs, []);
+let prodPerm = load(K.perm, DEFAULT);
+let servidor = load(K.s, []);                  // vendas do contexto atual vindas do banco
+let pendentes = load(K.q, []);
+let cancelPend = load(K.c, {});
+let fiadoPend = load(K.fp, {});
+let pedServ = load(K.pc, []);
+let pedNovos = load(K.pn, []);
+let pedPend = load(K.pp, {});
+let catalogo = load(K.cat, []);
+let estoque = load(K.est, {});                 // {item_id: saldo}
+let aparelho = load(K.d, null); if(!aparelho){ aparelho = 'Caixa-'+Math.random().toString(36).slice(2,6).toUpperCase(); save(K.d, aparelho); }
+let carrinho = [], metodo = null, online = null, vistos = null, destacar = new Set();
+
+// lançamentos antigos (antes da v2) pertencem ao evento de 24/10
+pendentes.forEach(v=>{ if(!('evento_id' in v)) v.evento_id = EVENTO_LEGADO; }); save(K.q, pendentes);
+pedNovos.forEach(p=>{ if(!('evento_id' in p)) p.evento_id = EVENTO_LEGADO; }); save(K.pn, pedNovos);
+
+const ctxEventoId = ()=> ctx==='perm' ? null : ctx;
+const evAtual = ()=> ctx==='perm' ? null : eventos.find(e=>e.id===ctx);
+const ctxNome = ()=> ctx==='perm' ? 'Caixa do ano todo' : (evAtual()?.nome || 'Evento');
+const doCtx = x => (x.evento_id||null) === ctxEventoId();
+function produtosCtx(){ const e = evAtual(); return e ? (e.produtos||[]) : prodPerm; }
+let produtos = produtosCtx();
+
+function totalPendencias(){ return pendentes.length + Object.keys(cancelPend).length + Object.keys(fiadoPend).length + pedNovos.length + Object.keys(pedPend).length + (load(K.catp,false)?1:0); }
 
 function todasVendas(){
   const ids = new Set(servidor.map(v=>v.id));
-  const lista = [...servidor, ...pendentes.filter(v=>!ids.has(v.id)).map(v=>({...v, pendente:true}))];
+  const lista = [...servidor.filter(doCtx), ...pendentes.filter(v=>doCtx(v) && !ids.has(v.id)).map(v=>({...v, pendente:true}))];
   return lista.map(v=> v.id in cancelPend ? {...v, cancelada:cancelPend[v.id]} : v)
               .map(v=> fiadoPend[v.id] ? {...v, ...fiadoPend[v.id]} : v)
               .sort((a,b)=> new Date(a.ts)-new Date(b.ts));
 }
 function todosPedidos(){
   const ids = new Set(pedServ.map(p=>p.id));
-  const lista = [...pedServ, ...pedNovos.filter(p=>!ids.has(p.id)).map(p=>({...p, pendente:true}))];
-  return lista.map(p=> pedPend[p.id] ? {...p, ...pedPend[p.id]} : p)
-              .sort((a,b)=> new Date(a.criado_em)-new Date(b.criado_em));
+  const lista = [...pedServ.filter(doCtx), ...pedNovos.filter(p=>doCtx(p) && !ids.has(p.id)).map(p=>({...p, pendente:true}))];
+  return lista.map(p=> pedPend[p.id] ? {...p, ...pedPend[p.id]} : p).sort((a,b)=> new Date(a.criado_em)-new Date(b.criado_em));
 }
 function setPedido(id, patch){
   const novo = pedNovos.find(p=>p.id===id);
@@ -477,14 +772,23 @@ function setPedido(id, patch){
   else { pedPend[id] = {...(pedPend[id]||{}), ...patch}; save(K.pp, pedPend); }
 }
 
+/* =========================================================
+   Sincronização
+   ========================================================= */
+function filtroVendas(){
+  if(ctx==='perm') return `evento_id=is.null&or=(ts.gte.${hojeISO()},and(metodo.eq.Fiado,fiado_pago_em.is.null,cancelada.is.false))`;
+  return `evento_id=eq.${ctx}`;
+}
+function filtroPedidos(){
+  if(ctx==='perm') return `evento_id=is.null&or=(criado_em.gte.${hojeISO()},status.in.(aguardando,pago))`;
+  return `evento_id=eq.${ctx}`;
+}
 let syncando = false;
 async function sync(){
-  if(syncando) return; syncando = true;
+  if(syncando || !sess) return; syncando = true;
   try{
     for(const p of [...pedNovos]){
-      const {pendente, ...row} = p;
-      // um pedido criado offline pode já ter sido cobrado; insere como aguardando e manda o resto como alteração
-      const {status, venda_id, pago_em, entregue_em, ...base} = row;
+      const {pendente, status, venda_id, pago_em, entregue_em, ...base} = p;
       await sb('/vf_caixa_pedidos', {method:'POST', headers:{Prefer:'resolution=ignore-duplicates,return=minimal'}, body:JSON.stringify({...base, status:'aguardando'})});
       if(status && status!=='aguardando'){ pedPend[p.id] = {...(pedPend[p.id]||{}), status, venda_id, pago_em, entregue_em}; save(K.pp, pedPend); }
       pedNovos = pedNovos.filter(x=>x.id!==p.id); save(K.pn, pedNovos);
@@ -506,41 +810,45 @@ async function sync(){
       await sb('/vf_caixa_pedidos?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(patch)});
       delete pedPend[id]; save(K.pp, pedPend);
     }
-    if(load('vf6_cat_pendente', false)){
-      await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-        body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
-      save('vf6_cat_pendente', false);
+    if(load(K.catp, false)){
+      await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
+      save(K.catp, false);
     }
-    const [vs, ps, cfg] = await Promise.all([
-      sb('/vf_caixa_vendas?select=*&order=ts.asc'),
-      sb('/vf_caixa_pedidos?select=*&order=criado_em.asc'),
-      sb('/vf_caixa_config?select=id,valor')
+    const ctxPedido = ctx;
+    const [evs, vs, ps, cfg, est] = await Promise.all([
+      sb('/vf_eventos?select=id,nome,data,status,produtos,resumo,criado_em,encerrado_em&order=data.desc.nullslast,criado_em.desc'),
+      sb('/vf_caixa_vendas?select=*&order=ts.asc&'+filtroVendas()),
+      sb('/vf_caixa_pedidos?select=*&order=criado_em.asc&'+filtroPedidos()),
+      sb('/vf_caixa_config?select=id,valor'),
+      sb('/vf_estoque_saldo?select=item_id,saldo')
     ]);
-    servidor = vs; servidor.forEach(v=>{ v.total=+v.total; if(v.recebido!=null) v.recebido=+v.recebido; if(v.troco!=null) v.troco=+v.troco; });
-    save(K.s, servidor);
-    pedServ = ps; pedServ.forEach(p=>{ p.total=+p.total; }); save(K.pc, pedServ);
+    if(ctxPedido !== ctx) return;    // trocou de contexto no meio
+    eventos = evs; save(K.evs, eventos);
+    if(ctx!=='perm'){ const e = evAtual(); if(!e || e.status!=='aberto'){ toast(e ? `O evento "${e.nome}" foi encerrado. Voltando para o caixa do ano todo.` : 'Evento não encontrado. Voltando para o caixa do ano todo.', '#b07d00', 4500); trocarCtx('perm'); return; } }
+    servidor = vs.map(v=>({...v, total:+v.total, recebido: v.recebido!=null?+v.recebido:null, troco: v.troco!=null?+v.troco:null})); save(K.s, servidor);
+    pedServ = ps.map(p=>({...p, total:+p.total})); save(K.pc, pedServ);
     const cProd = (cfg||[]).find(c=>c.id==='produtos'), cLiv = (cfg||[]).find(c=>c.id==='livraria');
-    if(cProd && Array.isArray(cProd.valor) && !document.querySelector('#v-config.on')){
-      if(JSON.stringify(cProd.valor)!==JSON.stringify(produtos)){ produtos = cProd.valor; save(K.p, produtos); renderCatalogo(); }
-    }
-    if(cLiv && Array.isArray(cLiv.valor) && !editandoCatalogo && !precoItem && !load('vf6_cat_pendente', false)){
+    if(cProd && Array.isArray(cProd.valor)){ prodPerm = cProd.valor; save(K.perm, prodPerm); }
+    if(cLiv && Array.isArray(cLiv.valor) && !editandoCatalogo && !precoItem && !load(K.catp,false)){
       if(JSON.stringify(cLiv.valor)!==JSON.stringify(catalogo)){ catalogo = cLiv.valor; save(K.cat, catalogo); renderCatalogoLiv(); livTotal(); }
     }
+    const novoEst = {}; (est||[]).forEach(r=>novoEst[r.item_id] = +r.saldo);
+    if(JSON.stringify(novoEst)!==JSON.stringify(estoque)){
+      estoque = novoEst; save(K.est, estoque);
+      if(!editandoCatalogo){ const foco = document.activeElement?.id==='livBusca'; renderCatalogoLiv(); if(foco){ const n=$('#livBusca'); n.focus(); try{ n.setSelectionRange(n.value.length,n.value.length); }catch(e){} } }
+    }
+    if(!$('#v-config').classList.contains('on')){ const np = produtosCtx(); if(JSON.stringify(np)!==JSON.stringify(produtos)){ produtos = np; renderCatalogo(); } }
     setOnline(true);
-  }catch(e){ console.warn('sync', e); setOnline(false); }
+  }catch(e){ console.warn('sync', e); if(sess) setOnline(false); }
   finally{ syncando = false; avisos(); atualizarTelas(); }
 }
 function setOnline(v){ online = v; renderStatus(); }
 function renderStatus(){
-  const pend = pendentes.length + Object.keys(cancelPend).length + Object.keys(fiadoPend).length + pedNovos.length + Object.keys(pedPend).length;
+  const pend = totalPendencias();
   const el = $('#status');
   el.className = 'status ' + (online===false ? 'off' : pend ? 'wait' : 'on');
-  el.textContent = online===false ? `Sem conexão${pend?` · ${pend} pendente${pend>1?'s':''}`:''}`
-                 : pend ? `Enviando ${pend}…` : online ? 'Sincronizado' : 'Conectando…';
+  el.textContent = online===false ? `Sem conexão${pend?` · ${pend} pendente${pend>1?'s':''}`:''}` : pend ? `Enviando ${pend}…` : online ? 'Sincronizado' : 'Conectando…';
 }
-
-/* Detecta pedidos novos (caixa) e pedidos pagos (livraria) */
-let destacar = new Set();
 function avisos(){
   const peds = todosPedidos();
   if(vistos===null){ vistos = {}; peds.forEach(p=>vistos[p.id]=p.status); return; }
@@ -548,43 +856,70 @@ function avisos(){
   peds.forEach(p=>{
     const antes = vistos[p.id];
     if(antes===undefined && p.status==='aguardando') novos.push(p);
-    if(antes!=='pago' && antes!==undefined && p.status==='pago') pagos.push(p);
-    if(antes===undefined && p.status==='pago') pagos.push(p);
+    if((antes!=='pago' && antes!==undefined && p.status==='pago') || (antes===undefined && p.status==='pago')) pagos.push(p);
     vistos[p.id] = p.status;
   });
-  if(!LIV && novos.length){
-    novos.forEach(p=>destacar.add(p.id)); bip(2);
-    toast(novos.length===1 ? `📚 Novo pedido da livraria: ${novos[0].cliente} · ${brl(novos[0].total)}` : `📚 ${novos.length} novos pedidos da livraria`, '#b07d00', 3500);
-  }
-  if(LIV && pagos.length){
-    pagos.forEach(p=>destacar.add(p.id)); bip(3);
-    toast(pagos.length===1 ? `✅ PAGO: ${pagos[0].cliente} — pode entregar` : `✅ ${pagos.length} pedidos pagos — pode entregar`, 'var(--ok)', 4000);
-  }
+  if(!LIV && novos.length){ novos.forEach(p=>destacar.add(p.id)); bip(2);
+    toast(novos.length===1 ? `📚 Novo pedido da livraria: ${novos[0].cliente} · ${brl(novos[0].total)}` : `📚 ${novos.length} novos pedidos da livraria`, '#b07d00', 3500); }
+  if(LIV && pagos.length){ pagos.forEach(p=>destacar.add(p.id)); bip(3);
+    toast(pagos.length===1 ? `✅ PAGO: ${pagos[0].cliente} — pode entregar` : `✅ ${pagos.length} pedidos pagos — pode entregar`, 'var(--ok)', 4000); }
 }
-
 function atualizarTelas(){
   renderTopo(); renderStatus(); renderPedidosCaixa();
-  if($('#v-livros').classList.contains('on')) renderLivrosListas();
-  if($('#v-historico').classList.contains('on')) renderHistorico();
-  if($('#v-resumo').classList.contains('on')) renderResumo();
+  const v = $$('.view').find(x=>x.classList.contains('on'))?.id;
+  if(v==='v-livros') renderLivrosListas();
+  if(v==='v-historico') renderHistorico();
+  if(v==='v-resumo' && periodo==='atual') renderResumo();
+  if(v==='v-estoque' && !estAberto) renderEstoque();
+  if(v==='v-eventos' && !evDetalheId) renderEventos();
 }
-setInterval(sync, 4000);
+setInterval(sync, 5000);
 window.addEventListener('online', sync);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) sync(); });
 
+/* =========================================================
+   Contexto: caixa do ano todo × evento
+   ========================================================= */
+function trocarCtx(novo){
+  if(carrinho.length){ resetPedido(); }
+  ctx = novo; save(K.ctx, ctx);
+  servidor = []; pedServ = []; save(K.s, servidor); save(K.pc, pedServ); vistos = null;
+  produtos = produtosCtx(); periodo = 'atual';
+  renderCtx(); renderCatalogo(); renderCarrinho(); atualizarTelas(); sync();
+}
+function renderCtx(){
+  const b = $('#ctxBtn'); b.textContent = (ctx==='perm' ? '🏪 ' : '🎉 ') + ctxNome() + ' ▾'; b.classList.toggle('ev', ctx!=='perm');
+  $('#cfgTitulo').textContent = 'Produtos e preços · ' + ctxNome();
+}
+$('#ctxBtn').onclick = ()=>{
+  const abertos = eventos.filter(e=>e.status==='aberto');
+  $('#ctxLista').innerHTML = [`<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Caixa do ano todo<small>Lojinha e caixa do dia a dia</small></span></button>`,
+    ...abertos.map(e=>`<button type="button" class="ctxitem ${ctx===e.id?'on':''}" data-ctx="${e.id}">🎉 <span>${esc(e.nome)}<small>Evento${e.data?' · '+dataBR(e.data):''}</small></span></button>`)].join('')
+    + (abertos.length ? '' : '<p class="hint" style="margin:4px 0 0">Nenhum evento aberto agora.</p>');
+  $$('#ctxLista [data-ctx]').forEach(x=>x.onclick=()=>{ $('#ctxModal').classList.remove('on'); if(x.dataset.ctx!==ctx){ trocarCtx(x.dataset.ctx); toast('Vendendo em: '+ctxNome()); } });
+  $('#ctxModal').classList.add('on');
+};
+$('#ctxFechar').onclick = ()=>$('#ctxModal').classList.remove('on');
+$('#ctxNovo').onclick = ()=>{ $('#ctxModal').classList.remove('on'); irPara('eventos'); setTimeout(()=>$('#evNome').focus(),100); };
+
 /* ---------- Navegação ---------- */
 function irPara(v){
-  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
-  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  $$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
+  $$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   if(v==='livros') renderLivrosListas();
   if(v==='historico') renderHistorico();
   if(v==='resumo') renderResumo();
   if(v==='config') renderConfig();
+  if(v==='estoque'){ renderEstoque(); carregarMovs(); }
+  if(v==='eventos'){ evDetalheId=null; renderEventos(); }
+  if(v==='equipe') carregarEquipe();
   window.scrollTo(0,0);
 }
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
+$$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 
-/* ---------- Catálogo ---------- */
+/* =========================================================
+   Venda (caixa)
+   ========================================================= */
 function renderCatalogo(){
   const qtdPor = {}; carrinho.forEach(l=>{ if(!l.pedido) qtdPor[l.pid]=(qtdPor[l.pid]||0)+l.qtd; });
   const cats = [...new Set([...CATS, ...produtos.map(p=>p.cat||'Outros')])];
@@ -596,10 +931,9 @@ function renderCatalogo(){
         <span class="n">${esc(p.nome)}</span>
         <span class="p">${p.preco==null?'Digitar valor':brl(p.preco)}</span>
       </button>`).join('')}</div></div>`;
-  }).join('');
-  document.querySelectorAll('.prod').forEach(b=>b.onclick=()=>addProduto(b.dataset.id));
+  }).join('') || '<p class="hint">Nenhum produto cadastrado aqui. Cadastre na aba Produtos.</p>';
+  $$('.prod').forEach(b=>b.onclick=()=>addProduto(b.dataset.id));
 }
-
 function addProduto(id){
   const p = produtos.find(x=>x.id===id); if(!p) return;
   if(p.preco==null){ abrirModal(p); return; }
@@ -607,8 +941,114 @@ function addProduto(id){
   if(l) l.qtd++; else carrinho.push({key:p.id, pid:p.id, nome:p.nome, preco:p.preco, qtd:1});
   renderCarrinho();
 }
+let modalProd = null;
+function abrirModal(p){ modalProd = p; $('#mTitulo').textContent = p.nome; $('#mDesc').value=''; $('#mValor').value=''; $('#modal').classList.add('on'); setTimeout(()=>$('#mValor').focus(),50); }
+function fecharModal(){ $('#modal').classList.remove('on'); modalProd=null; }
+$('#mCancel').onclick = fecharModal;
+$('#modal').onclick = e=>{ if(e.target.id==='modal') fecharModal(); };
+$('#mOk').onclick = ()=>{
+  const v = num($('#mValor').value);
+  if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
+  const d = $('#mDesc').value.trim();
+  carrinho.push({key:modalProd.id+'_'+Date.now(), pid:modalProd.id, nome:modalProd.nome + (d?` – ${d}`:''), preco:Math.round(v*100)/100, qtd:1});
+  fecharModal(); renderCarrinho();
+};
+$('#mValor').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#mOk').click(); });
 
-/* ---------- Pedidos de livro no caixa ---------- */
+const totalCarrinho = ()=> carrinho.reduce((s,l)=>s+l.preco*l.qtd,0);
+function renderCarrinho(){
+  const el = $('#linhas');
+  el.innerHTML = !carrinho.length ? '<div class="empty">Toque nos produtos para adicionar</div>' : carrinho.map((l,i)=>`
+    <div class="line">
+      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:corChip(l.pid)}${esc(l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
+      ${l.pedido ? `<div class="qty"><button data-rmped="${l.pedido}" title="Tirar pedido do caixa">×</button></div>`
+                 : `<div class="qty"><button data-i="${i}" data-d="-1">−</button><em>${l.qtd}</em><button data-i="${i}" data-d="1">+</button></div>`}
+      <div class="sub">${brl(l.preco*l.qtd)}</div>
+    </div>`).join('');
+  el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{ const l = carrinho[+b.dataset.i]; l.qtd += +b.dataset.d; if(l.qtd<=0) carrinho.splice(+b.dataset.i,1); renderCarrinho(); });
+  el.querySelectorAll('[data-rmped]').forEach(b=>b.onclick=()=>{ carrinho = carrinho.filter(l=>l.pedido!==b.dataset.rmped); renderCarrinho(); renderPedidosCaixa(); });
+  const t = totalCarrinho(); $('#total').textContent = brl(t);
+  renderQuick(t); calcTroco(); $('#finalizar').disabled = !podeFinalizar(); renderCatalogo();
+}
+$('#limpar').onclick = async ()=>{ if(carrinho.length && await perguntar('Limpar o pedido?', 'Os itens do pedido atual saem do caixa.', {sim:'Limpar', perigo:true})){ resetPedido(); renderPedidosCaixa(); } };
+function resetPedido(){
+  carrinho=[]; metodo=null; $('#recebido').value=''; $$('#pay button').forEach(x=>x.classList.remove('on'));
+  $('#cash').classList.remove('on'); $('#fiadoBox').classList.remove('on'); $('#fiadoNome').value=''; renderCarrinho();
+}
+$$('#pay button').forEach(b=>b.onclick=()=>{
+  metodo = b.dataset.m; $$('#pay button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#cash').classList.toggle('on', metodo==='Dinheiro'); $('#fiadoBox').classList.toggle('on', metodo==='Fiado');
+  if(metodo==='Fiado') renderFiadoChips();
+  renderCarrinho();
+  if(metodo==='Dinheiro') setTimeout(()=>$('#recebido').focus(),50);
+  if(metodo==='Fiado') setTimeout(()=>$('#fiadoNome').focus(),50);
+});
+function renderQuick(t){
+  const opts = new Set(); [5,10,20,50,100,200].forEach(n=>{ if(n>=t && opts.size<4) opts.add(n); });
+  $('#quick').innerHTML = `<button data-v="${t}">Exato</button>` + [...opts].filter(n=>n!==t).map(n=>`<button data-v="${n}">${brl(n).replace(',00','')}</button>`).join('');
+  $$('#quick button').forEach(b=>b.onclick=()=>{ $('#recebido').value = (+b.dataset.v).toFixed(2).replace('.',','); calcTroco(); renderCarrinho(); });
+}
+function trocoInvalido(){ const r = num($('#recebido').value); return isNaN(r) || r < totalCarrinho()-0.001; }
+function calcTroco(){
+  const r = num($('#recebido').value), t = totalCarrinho(), box = $('#trocoBox');
+  if(isNaN(r)){ $('#troco').textContent='—'; box.classList.remove('neg'); return; }
+  const d = r - t; box.classList.toggle('neg', d<0); box.firstElementChild.textContent = d<0 ? 'Falta' : 'Troco'; $('#troco').textContent = brl(Math.abs(d));
+}
+function podeFinalizar(){
+  if(!carrinho.length || !metodo) return false;
+  if(metodo==='Dinheiro') return !trocoInvalido();
+  if(metodo==='Fiado') return limpaNome($('#fiadoNome').value).length>0;
+  return true;
+}
+$('#recebido').addEventListener('input',()=>{ calcTroco(); $('#finalizar').disabled = !podeFinalizar(); });
+$('#fiadoNome').addEventListener('input',()=>{ $('#finalizar').disabled = !podeFinalizar(); renderFiadoChips(); });
+
+/* Contas de fiado abertas no contexto atual */
+function contasAbertas(){
+  const m = new Map();
+  todasVendas().filter(v=>!v.cancelada && v.metodo==='Fiado' && !v.fiado_pago_em).forEach(v=>{
+    const k = chaveNome(v.fiado_nome); if(!k) return;
+    if(!m.has(k)) m.set(k, {chave:k, nome:limpaNome(v.fiado_nome), vendas:[], total:0, ultima:v.ts});
+    const c = m.get(k); c.vendas.push(v); c.total += v.total; if(v.ts>c.ultima) c.ultima=v.ts;
+  });
+  return [...m.values()].sort((a,b)=> a.nome.localeCompare(b.nome,'pt-BR'));
+}
+function renderFiadoChips(){
+  const contas = contasAbertas(); const k = chaveNome($('#fiadoNome').value);
+  $('#fiadoLista').innerHTML = contas.map(c=>`<option value="${esc(c.nome)}">`).join('');
+  $('#fiadoChips').innerHTML = contas.length ? `<span class="hint" style="width:100%">Contas abertas — toque para lançar na conta:</span>` + contas.map(c=>`<button type="button" class="fchip ${k===c.chave?'on':''}" data-conta="${esc(c.nome)}">${esc(c.nome)} · ${brl(c.total)}</button>`).join('') : '';
+  $$('#fiadoChips [data-conta]').forEach(b=>b.onclick=()=>{ $('#fiadoNome').value = b.dataset.conta; renderFiadoChips(); $('#finalizar').disabled = !podeFinalizar(); });
+}
+
+$('#finalizar').onclick = ()=>{
+  if(!podeFinalizar()) return;
+  const total = Math.round(totalCarrinho()*100)/100;
+  const peds = [...new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido))];
+  const venda = { id: uuid(), ts: new Date().toISOString(), evento_id: ctxEventoId(), usuario: eu?.nome || null,
+    itens: carrinho.map(l=>({pid:l.pid, nome:l.nome, preco:l.preco, qtd:l.qtd, ...(l.pedido?{pedido:l.pedido}:{})})),
+    total, metodo, cancelada:false, aparelho, recebido:null, troco:null, pedidos:peds, fiado_nome:null };
+  if(metodo==='Dinheiro'){ venda.recebido = num($('#recebido').value); venda.troco = Math.round((venda.recebido-total)*100)/100; }
+  if(metodo==='Fiado'){
+    const nome = limpaNome($('#fiadoNome').value); const ex = contasAbertas().find(c=>c.chave===chaveNome(nome));
+    venda.fiado_nome = ex ? ex.nome : nome;            // mesma conta, mesma grafia
+  }
+  pendentes.push(venda); save(K.q, pendentes);
+  const agora = new Date().toISOString();
+  peds.forEach(id=>{ setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}); if(vistos) vistos[id]='pago'; });
+  const cart = {}; carrinho.forEach(l=>{ const c=CORES[l.pid]; if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
+  const txtCart = Object.entries(cart).map(([n,q])=>`${q} ${n}`).join(', ');
+  toast((metodo==='Fiado' ? `📝 Fiado na conta de ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2400);
+  resetPedido(); atualizarTelas(); sync();
+};
+
+function renderTopo(){
+  if(LIV){ const n = todosPedidos().filter(p=>p.status==='pago').length; $('#hojeQtd').textContent = 'Para entregar'; $('#hojeTotal').textContent = n + (n===1?' pedido':' pedidos'); return; }
+  const ok = todasVendas().filter(v=>!v.cancelada && (ctx!=='perm' || desde(v.ts, hojeISO())));
+  $('#hojeQtd').textContent = (ctx==='perm'?'Hoje · ':'') + ok.length + (ok.length===1?' venda':' vendas');
+  $('#hojeTotal').textContent = brl(ok.reduce((s,v)=>s+v.total,0));
+}
+
+/* ---------- Pedidos da livraria no caixa ---------- */
 function renderPedidosCaixa(){
   const el = $('#pedidosCaixa'); if(LIV){ el.innerHTML=''; return; }
   const noCarrinho = new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido));
@@ -617,9 +1057,7 @@ function renderPedidosCaixa(){
   el.innerHTML = `<div class="pedbox"><h3>📚 Livraria aguardando pagamento <span class="cnt">${ag.length}</span></h3>
     ${ag.map(p=>`<div class="ped ${destacar.has(p.id)?'novo':''}">
       <div class="info"><b>${esc(p.cliente)}</b><small>${p.n?'#'+p.n+' · ':''}${hora(p.criado_em)} · ${p.itens.map(i=>esc(rotulo(i))).join(', ')}</small></div>
-      <span class="val">${brl(p.total)}</span>
-      <button class="btn dark" data-cobrar="${p.id}">Cobrar</button>
-    </div>`).join('')}</div>`;
+      <span class="val">${brl(p.total)}</span><button class="btn dark" data-cobrar="${p.id}">Cobrar</button></div>`).join('')}</div>`;
   el.querySelectorAll('[data-cobrar]').forEach(b=>b.onclick=()=>cobrarPedido(b.dataset.cobrar));
   destacar.clear();
 }
@@ -630,152 +1068,27 @@ function cobrarPedido(id){
   if(window.innerWidth<860) $('.cart').scrollIntoView({behavior:'smooth'});
 }
 
-/* ---------- Modal valor variável ---------- */
-let modalProd = null;
-function abrirModal(p){
-  modalProd = p; $('#mTitulo').textContent = p.nome; $('#mDesc').value=''; $('#mValor').value='';
-  $('#modal').classList.add('on'); setTimeout(()=>$('#mValor').focus(),50);
-}
-function fecharModal(){ $('#modal').classList.remove('on'); modalProd=null; }
-$('#mCancel').onclick = fecharModal;
-$('#modal').onclick = e=>{ if(e.target.id==='modal') fecharModal(); };
-$('#mOk').onclick = ()=>{
-  const v = num($('#mValor').value);
-  if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
-  const d = $('#mDesc').value.trim();
-  const nome = modalProd.nome + (d?` – ${d}`:'');
-  carrinho.push({key:modalProd.id+'_'+Date.now(), pid:modalProd.id, nome, preco:Math.round(v*100)/100, qtd:1});
-  fecharModal(); renderCarrinho();
-};
-$('#mValor').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#mOk').click(); });
-
-/* ---------- Carrinho ---------- */
-const totalCarrinho = ()=> carrinho.reduce((s,l)=>s+l.preco*l.qtd,0);
-
-function renderCarrinho(){
-  const el = $('#linhas');
-  if(!carrinho.length){ el.innerHTML = '<div class="empty">Toque nos produtos para adicionar</div>'; }
-  else el.innerHTML = carrinho.map((l,i)=>`
-    <div class="line">
-      <div class="info"><b>${l.pedido?`<span class="pedtag">📚 ${esc(l.cliente)}</span>`:corChip(l.pid)}${esc(l.nome)}</b><span>${brl(l.preco)} un.${l.pedido&&l.qtd>1?` × ${l.qtd}`:''}</span></div>
-      ${l.pedido ? `<div class="qty"><button data-rmped="${l.pedido}" title="Tirar pedido do caixa">×</button></div>`
-                 : `<div class="qty"><button data-i="${i}" data-d="-1">−</button><em>${l.qtd}</em><button data-i="${i}" data-d="1">+</button></div>`}
-      <div class="sub">${brl(l.preco*l.qtd)}</div>
-    </div>`).join('');
-  el.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{
-    const l = carrinho[+b.dataset.i]; l.qtd += +b.dataset.d;
-    if(l.qtd<=0) carrinho.splice(+b.dataset.i,1);
-    renderCarrinho();
-  });
-  el.querySelectorAll('[data-rmped]').forEach(b=>b.onclick=()=>{
-    carrinho = carrinho.filter(l=>l.pedido!==b.dataset.rmped); renderCarrinho(); renderPedidosCaixa();
-  });
-  const t = totalCarrinho();
-  $('#total').textContent = brl(t);
-  renderQuick(t); calcTroco();
-  $('#finalizar').disabled = !podeFinalizar();
-  renderCatalogo();
-}
-
-$('#limpar').onclick = ()=>{ if(carrinho.length && confirm('Limpar o pedido atual?')){ resetPedido(); renderPedidosCaixa(); } };
-
-function resetPedido(){
-  carrinho=[]; metodo=null; $('#recebido').value='';
-  document.querySelectorAll('#pay button').forEach(x=>x.classList.remove('on'));
-  $('#cash').classList.remove('on'); $('#fiadoBox').classList.remove('on'); $('#fiadoNome').value=''; renderCarrinho();
-}
-
-/* ---------- Pagamento ---------- */
-document.querySelectorAll('#pay button').forEach(b=>b.onclick=()=>{
-  metodo = b.dataset.m;
-  document.querySelectorAll('#pay button').forEach(x=>x.classList.toggle('on',x===b));
-  $('#cash').classList.toggle('on', metodo==='Dinheiro');
-  $('#fiadoBox').classList.toggle('on', metodo==='Fiado');
-  renderCarrinho();
-  if(metodo==='Dinheiro') setTimeout(()=>$('#recebido').focus(),50);
-  if(metodo==='Fiado') setTimeout(()=>$('#fiadoNome').focus(),50);
-});
-
-function renderQuick(t){
-  const opts = new Set();
-  [5,10,20,50,100,200].forEach(n=>{ if(n>=t && opts.size<4) opts.add(n); });
-  $('#quick').innerHTML = `<button data-v="${t}">Exato</button>` + [...opts].filter(n=>n!==t).map(n=>`<button data-v="${n}">${brl(n).replace(',00','')}</button>`).join('');
-  $('#quick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ $('#recebido').value = (+b.dataset.v).toFixed(2).replace('.',','); calcTroco(); renderCarrinho(); });
-}
-function trocoInvalido(){ const r = num($('#recebido').value); return isNaN(r) || r < totalCarrinho()-0.001; }
-function calcTroco(){
-  const r = num($('#recebido').value), t = totalCarrinho();
-  const box = $('#trocoBox');
-  if(isNaN(r)){ $('#troco').textContent='—'; box.classList.remove('neg'); return; }
-  const d = r - t;
-  box.classList.toggle('neg', d<0);
-  box.firstElementChild.textContent = d<0 ? 'Falta' : 'Troco';
-  $('#troco').textContent = brl(Math.abs(d));
-}
-function podeFinalizar(){
-  if(!carrinho.length || !metodo) return false;
-  if(metodo==='Dinheiro') return !trocoInvalido();
-  if(metodo==='Fiado') return $('#fiadoNome').value.trim().length>0;
-  return true;
-}
-$('#recebido').addEventListener('input',()=>{ calcTroco(); $('#finalizar').disabled = !podeFinalizar(); });
-$('#fiadoNome').addEventListener('input',()=>{ $('#finalizar').disabled = !podeFinalizar(); });
-
-$('#finalizar').onclick = ()=>{
-  if(!carrinho.length || !metodo) return;
-  const total = Math.round(totalCarrinho()*100)/100;
-  const peds = [...new Set(carrinho.filter(l=>l.pedido).map(l=>l.pedido))];
-  const venda = { id: uuid(), ts: new Date().toISOString(),
-    itens: carrinho.map(l=>({pid:l.pid, nome:l.nome, preco:l.preco, qtd:l.qtd, ...(l.pedido?{pedido:l.pedido}:{})})),
-    total, metodo, cancelada:false, aparelho, recebido:null, troco:null, pedidos:peds };
-  if(metodo==='Dinheiro'){ venda.recebido = num($('#recebido').value); venda.troco = Math.round((venda.recebido-total)*100)/100; }
-  if(metodo==='Fiado'){ venda.fiado_nome = $('#fiadoNome').value.trim(); }
-  pendentes.push(venda); save(K.q, pendentes);
-  const agora = new Date().toISOString();
-  peds.forEach(id=>setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}));
-  peds.forEach(id=>{ if(vistos) vistos[id]='pago'; });
-  const cart = {}; carrinho.forEach(l=>{ const c=CORES[l.pid]; if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
-  const txtCart = Object.entries(cart).map(([n,q])=>`${q} ${n}`).join(', ');
-  toast((metodo==='Fiado' ? `📝 Fiado anotado para ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2200);
-  resetPedido(); atualizarTelas(); sync();
-};
-
-/* ---------- Topo ---------- */
-function renderTopo(){
-  if(LIV){
-    const n = todosPedidos().filter(p=>p.status==='pago').length;
-    $('#hojeQtd').textContent = 'Para entregar';
-    $('#hojeTotal').textContent = n + (n===1?' pedido':' pedidos');
-    return;
-  }
-  const ok = todasVendas().filter(v=>!v.cancelada);
-  $('#hojeQtd').textContent = ok.length + (ok.length===1?' venda':' vendas');
-  $('#hojeTotal').textContent = brl(ok.reduce((s,v)=>s+v.total,0));
-}
-
-/* ---------- Livraria ---------- */
-const CATALOGO_PADRAO = [{"id": "l04", "nome": "Sermões de Spurgeon sobre os milagres de Jesus", "preco": null, "cat": "livro", "img": "capas/l04.jpg"}, {"id": "l05", "nome": "A oração – Watchman Nee", "preco": null, "cat": "livro", "img": "capas/l05.jpg"}, {"id": "l06", "nome": "A voz que clama – John Bevere", "preco": null, "cat": "livro", "img": "capas/l06.jpg"}, {"id": "l07", "nome": "O vinho novo é melhor – Robert Thom", "preco": null, "cat": "livro", "img": "capas/l07.jpg"}, {"id": "l08", "nome": "Depressão – Ismael Sobrinho", "preco": null, "cat": "livro", "img": "capas/l08.jpg"}, {"id": "l09", "nome": "O homem completo – Larry Titus", "preco": null, "cat": "livro", "img": "capas/l09.jpg"}, {"id": "l10", "nome": "O mensageiro da cruz – Watchman Nee", "preco": null, "cat": "livro", "img": "capas/l10.jpg"}, {"id": "l11", "nome": "A dama, seu amado e seu Senhor – T. D. Jakes", "preco": null, "cat": "livro", "img": "capas/l11.jpg"}, {"id": "l12", "nome": "Ego transformado – Timothy Keller", "preco": null, "cat": "livro", "img": "capas/l12.jpg"}, {"id": "l13", "nome": "Encontros com Deus no jardim – Telmo Martinello", "preco": null, "cat": "livro", "img": "capas/l13.jpg"}, {"id": "l14", "nome": "O Deus esquecido – Francis Chan", "preco": null, "cat": "livro", "img": "capas/l14.jpg"}, {"id": "l15", "nome": "A presença relacional de Deus", "preco": null, "cat": "livro", "img": "capas/l15.jpg"}, {"id": "l16", "nome": "O fim da ansiedade – Max Lucado", "preco": null, "cat": "livro", "img": "capas/l16.jpg"}, {"id": "l18", "nome": "Perdoar – Timothy Keller", "preco": null, "cat": "livro", "img": "capas/l18.jpg"}, {"id": "l19", "nome": "Voz de muitas águas – Luciano Subirá", "preco": null, "cat": "livro", "img": "capas/l19.jpg"}, {"id": "l20", "nome": "Para um momento como este – Max Lucado", "preco": null, "cat": "livro", "img": "capas/l20.jpg"}, {"id": "l21", "nome": "O agir invisível de Deus – Luciano Subirá", "preco": null, "cat": "livro", "img": "capas/l21.jpg"}, {"id": "l22", "nome": "As 5 linguagens do amor (luxo) – Gary Chapman", "preco": null, "cat": "livro", "img": "capas/l22.jpg"}, {"id": "l23", "nome": "Uma vida com propósitos (capa escura) – Rick Warren", "preco": null, "cat": "livro", "img": "capas/l23.jpg"}, {"id": "l36", "nome": "Uma vida com propósitos (capa clara) – Rick Warren", "preco": null, "cat": "livro", "img": "capas/l36.jpg"}, {"id": "l24", "nome": "Mentiras em que as mulheres acreditam", "preco": null, "cat": "livro", "img": "capas/l24.jpg"}, {"id": "l37", "nome": "Kit Mentiras em que as meninas acreditam", "preco": null, "cat": "livro", "img": "capas/l37.jpg"}, {"id": "l25", "nome": "De todo o coração – Luciano Subirá", "preco": null, "cat": "livro", "img": "capas/l25.jpg"}, {"id": "l26", "nome": "As chaves do Reino – Larry Titus", "preco": null, "cat": "livro", "img": "capas/l26.jpg"}, {"id": "l27", "nome": "Uma mulher segundo o coração de Deus", "preco": null, "cat": "livro", "img": "capas/l27.jpg"}, {"id": "l28", "nome": "Cristianismo puro e simples – C. S. Lewis", "preco": null, "cat": "livro", "img": "capas/l28.jpg"}, {"id": "l29", "nome": "Dia a dia com Spurgeon – manhã e noite", "preco": null, "cat": "livro", "img": "capas/l29.jpg"}, {"id": "l30", "nome": "Bases da fé cristã – Wayne Grudem", "preco": null, "cat": "livro", "img": "capas/l30.jpg"}, {"id": "l31", "nome": "O poder secreto da oração e do jejum", "preco": null, "cat": "livro", "img": "capas/l31.jpg"}, {"id": "l33", "nome": "Bom dia, Espírito Santo – Benny Hinn", "preco": null, "cat": "livro", "img": "capas/l33.jpg"}, {"id": "l34", "nome": "Por que tarda o pleno avivamento? – Ravenhill", "preco": null, "cat": "livro", "img": "capas/l34.jpg"}, {"id": "l35", "nome": "O pequeno peregrino ilustrado", "preco": null, "cat": "livro", "img": "capas/l35.jpg"}, {"id": "l38", "nome": "Moldado por Deus – Max Lucado", "preco": null, "cat": "livro", "img": "capas/l38.jpg"}, {"id": "l39", "nome": "Praticando o caminho – John Mark Comer", "preco": null, "cat": "livro", "img": "capas/l39.jpg"}, {"id": "l40", "nome": "O poder latente da alma – Watchman Nee", "preco": null, "cat": "livro", "img": "capas/l40.jpg"}, {"id": "l41", "nome": "A cultura do jejum parcial – Luciano Subirá", "preco": null, "cat": "livro", "img": "capas/l41.jpg"}, {"id": "l42", "nome": "Abençoados no caos – Joyce Meyer", "preco": null, "cat": "livro", "img": "capas/l42.jpg"}, {"id": "l43", "nome": "Orando a Palavra – Valnice Milhomens", "preco": null, "cat": "livro", "img": "capas/l43.jpg"}, {"id": "l44", "nome": "O poder da esposa que ora – Stormie Omartian", "preco": null, "cat": "livro", "img": "capas/l44.jpg"}, {"id": "l45", "nome": "A mulher sábia edifica o lar – Devi Titus", "preco": null, "cat": "livro", "img": "capas/l45.jpg"}, {"id": "l46", "nome": "O rei do semáforo – Talitha Pereira", "preco": null, "cat": "livro", "img": "capas/l46.jpg"}, {"id": "l47", "nome": "A medalha de papel – Talitha Pereira", "preco": null, "cat": "livro", "img": "capas/l47.jpg"}, {"id": "l57", "nome": "Preciosas palavras de vida – Lodemar Schlemper", "preco": null, "cat": "livro", "img": "capas/l57.jpg"}, {"id": "l61", "nome": "Devocional Mulheres (capa laranja)", "preco": null, "cat": "livro", "img": "capas/l61.jpg"}, {"id": "l80", "nome": "Devocional Mulheres 365 dias (capa vinho)", "preco": null, "cat": "livro", "img": "capas/l80.jpg"}, {"id": "l63", "nome": "Forte – Lisa Bevere", "preco": null, "cat": "livro", "img": "capas/l63.jpg"}, {"id": "l74", "nome": "Mulheres improváveis – Viviane Martinello", "preco": null, "cat": "livro", "img": "capas/l74.jpg"}, {"id": "b01", "nome": "NTLH Have Faith in the Lord (dourada)", "preco": null, "cat": "biblia", "img": "capas/b01.jpg"}, {"id": "b48", "nome": "NTLH azul com pássaros", "preco": null, "cat": "biblia", "img": "capas/b48.jpg"}, {"id": "b69", "nome": "NTLH rosa com tulipa", "preco": null, "cat": "biblia", "img": "capas/b69.jpg"}, {"id": "b71", "nome": "NTLH God is good (prateada)", "preco": null, "cat": "biblia", "img": "capas/b71.jpg"}, {"id": "b51", "nome": "Bíblia Bilíngue NTLH (ovelha)", "preco": null, "cat": "biblia", "img": "capas/b51.jpg"}, {"id": "b53", "nome": "A Bíblia das descobertas", "preco": null, "cat": "biblia", "img": "capas/b53.jpg"}, {"id": "b54", "nome": "Minha Bíblia de atividades", "preco": null, "cat": "biblia", "img": "capas/b54.jpg"}, {"id": "b49", "nome": "Bíblia da garota cristã", "preco": null, "cat": "biblia", "img": "capas/b49.jpg"}, {"id": "b50", "nome": "Bíblia Garota segundo o coração de Deus (rosa)", "preco": null, "cat": "biblia", "img": "capas/b50.jpg"}, {"id": "b52", "nome": "Bíblia Garota segundo o coração de Deus (azul)", "preco": null, "cat": "biblia", "img": "capas/b52.jpg"}, {"id": "b55", "nome": "Bíblia Garota segundo o coração de Deus (colorida)", "preco": null, "cat": "biblia", "img": "capas/b55.jpg"}, {"id": "b56", "nome": "NVI marrom", "preco": null, "cat": "biblia", "img": "capas/b56.jpg"}, {"id": "b58", "nome": "NVI Jesus Leão de Judá", "preco": null, "cat": "biblia", "img": "capas/b58.jpg"}, {"id": "b59", "nome": "NAA preta", "preco": null, "cat": "biblia", "img": "capas/b59.jpg"}, {"id": "b60", "nome": "NVT peixes (Romanos 12:2)", "preco": null, "cat": "biblia", "img": "capas/b60.jpg"}, {"id": "b62", "nome": "Vida – Bíblia de estudo (ARA)", "preco": null, "cat": "biblia", "img": "capas/b62.jpg"}, {"id": "b68", "nome": "Para um tempo como este (vermelha)", "preco": null, "cat": "biblia", "img": "capas/b68.jpg"}, {"id": "b78", "nome": "Bíblia Mulheres – Viviane Martinello (vinho)", "preco": null, "cat": "biblia", "img": "capas/b78.jpg"}, {"id": "b79", "nome": "Bíblia capa marrom com flor", "preco": null, "cat": "biblia", "img": "capas/b79.jpg"}, {"id": "c02", "nome": "Caderno Eis que estou à porta e bato", "preco": 60, "cat": "caderno", "img": "capas/c02.jpg"}, {"id": "c03", "nome": "Caderno Das minhas feridas flores fez nascer", "preco": 60, "cat": "caderno", "img": "capas/c03.jpg"}, {"id": "c64", "nome": "Caderno Ide por todo o mundo", "preco": null, "cat": "caderno", "img": "capas/c64.jpg"}, {"id": "c65", "nome": "Caderno Leão", "preco": null, "cat": "caderno", "img": "capas/c65.jpg"}, {"id": "c66", "nome": "Caderno Eu ouvi a tua voz", "preco": null, "cat": "caderno", "img": "capas/c66.jpg"}, {"id": "c70", "nome": "Caderno rosa com lírio", "preco": null, "cat": "caderno", "img": "capas/c70.jpg"}, {"id": "c73", "nome": "Caderno Estações", "preco": null, "cat": "caderno", "img": "capas/c73.jpg"}, {"id": "c75", "nome": "Caderno Floresça onde Deus te plantou", "preco": null, "cat": "caderno", "img": "capas/c75.jpg"}, {"id": "c76", "nome": "Planner Estações", "preco": null, "cat": "caderno", "img": "capas/c76.jpg"}, {"id": "c77", "nome": "Caderno floral creme", "preco": null, "cat": "caderno", "img": "capas/c77.jpg"}, {"id": "chav_cor", "nome": "Chaveiro coração", "preco": 10, "cat": "outros"}, {"id": "chav_jes", "nome": "Chaveiro Amo Jesus", "preco": 10, "cat": "outros"}, {"id": "chav_met", "nome": "Chaveiro metal", "preco": 20, "cat": "outros"}, {"id": "cam_pa", "nome": "Camiseta preta adulto", "preco": 75, "cat": "outros"}, {"id": "cam_pi", "nome": "Camiseta preta infantil", "preco": 65, "cat": "outros"}, {"id": "cam_br", "nome": "Camiseta branca (festa)", "preco": 55, "cat": "outros"}, {"id": "caneta", "nome": "Caneta marca-texto gel", "preco": 45, "cat": "outros"}, {"id": "pulseira", "nome": "Pulseira", "preco": 26, "cat": "outros"}];
-const CATS_LIV = [['livro','📚 Livros'],['biblia','📖 Bíblias'],['caderno','📓 Cadernos'],['outros','🧩 Outros']];
-let catalogo = load(K.cat, CATALOGO_PADRAO);
-let editandoCatalogo = false;
-let livTab = 'livro', livBusca = '';
-const novaLinha = (tipo='livro')=>({tipo, titulo:'', preco:''});
-let livLinhas = [];               // itens livres (livro, bíblia, diversos)
-let livFixos = {};                // {catalogoId: qtd}
+/* =========================================================
+   Livraria
+   ========================================================= */
+let editandoCatalogo = false, livTab = 'livro', livBusca = '', livLinhas = [], livFixos = {}, precoItem = null;
 const temPreco = c => c && c.preco > 0;
-const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-
-function sugestoes(tipo){
-  const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo && (i.tipo||'livro')===tipo) m[i.titulo.trim()] = +i.preco; })); return m;
+const novaLinha = (tipo='livro')=>({tipo, titulo:'', preco:''});
+function saldoItem(id){
+  if(!(id in estoque)) return null;
+  const pend = pendentes.filter(v=>!v.cancelada).reduce((s,v)=>s+v.itens.filter(i=>i.pid==='liv_'+id).reduce((a,i)=>a+i.qtd,0),0);
+  return estoque[id] - pend;
 }
-function visiveis(){
-  const b = semAcento(livBusca.trim());
-  return catalogo.map((c,i)=>({c,i})).filter(({c})=> b ? semAcento(c.nome).includes(b) : (c.cat||'outros')===livTab);
+function sugestoes(tipo){ const m = {}; todosPedidos().forEach(p=>p.itens.forEach(i=>{ if(i.titulo && (i.tipo||'livro')===tipo) m[i.titulo.trim()] = +i.preco; })); return m; }
+function visiveis(tab, busca){
+  const b = semAcento((busca||'').trim());
+  return catalogo.map((c,i)=>({c,i})).filter(({c})=> b ? semAcento(c.nome).includes(b) : (c.cat||'outros')===tab);
+}
+function abasHtml(tab, busca, attr='data-aba'){
+  return `<div class="abas" role="tablist">${CATS_LIV.map(([k,t])=>`<button type="button" role="tab" class="aba ${!busca&&tab===k?'on':''}" ${attr}="${k}">${t} <small>${catalogo.filter(c=>(c.cat||'outros')===k).length}</small></button>`).join('')}</div>`;
 }
 function renderCatalogoLiv(){
-  const busca = `<input id="livBusca" class="field" type="search" placeholder="Buscar livro, Bíblia ou item…" value="${esc(livBusca)}" autocomplete="off">`;
-  const abas = `<div class="abas" role="tablist">${CATS_LIV.map(([k,t])=>`<button type="button" role="tab" class="aba ${!livBusca&&livTab===k?'on':''}" data-aba="${k}">${t} <small>${catalogo.filter(c=>(c.cat||'outros')===k).length}</small></button>`).join('')}</div>`;
-  const vis = visiveis();
+  const vis = visiveis(livTab, livBusca);
   let corpo;
   if(editandoCatalogo){
     $('#catEditar').textContent = '';
@@ -793,10 +1106,11 @@ function renderCatalogoLiv(){
       </div></div>`;
   } else {
     $('#catEditar').textContent = 'Editar itens e preços';
-    corpo = `<div class="capas">${vis.map(({c})=>{ const q = livFixos[c.id]||0; return `
+    corpo = `<div class="capas">${vis.map(({c})=>{ const q = livFixos[c.id]||0, s = saldoItem(c.id); return `
       <div class="capa ${q?'on':''} ${c.img?'':'semimg'}">
         <button type="button" class="cx" data-fx="${c.id}">
           ${c.img?`<img src="${c.img}" alt="" loading="lazy">`:''}
+          ${s!=null?`<span class="stk ${s<=0?'zero':s<=2?'baixo':''}">${s<=0?'Esgotado':s+' em estoque'}</span>`:''}
           <span class="n">${esc(c.nome)}</span>
           <span class="p ${temPreco(c)?'':'sem'}">${temPreco(c)?brl(c.preco):'Sem preço'}</span>
         </button>
@@ -804,73 +1118,52 @@ function renderCatalogoLiv(){
       </div>`; }).join('') || '<p class="hint">Nada encontrado.</p>'}</div>`;
   }
   const sel = Object.entries(livFixos).map(([id,q])=>{ const c=catalogo.find(x=>x.id===id); return c?`<span class="chip">${q}× ${esc(c.nome)} <button type="button" data-fxm="${id}" aria-label="Tirar um">−</button></span>`:''; }).join('');
-  $('#livFixos').innerHTML = busca + abas + (sel&&!editandoCatalogo?`<div class="sel"><b>No pedido:</b> ${sel}</div>`:'') + corpo;
+  $('#livFixos').innerHTML = `<input id="livBusca" class="field" type="search" placeholder="Buscar livro, Bíblia ou item…" value="${esc(livBusca)}" autocomplete="off">` + abasHtml(livTab, livBusca) + (sel&&!editandoCatalogo?`<div class="sel"><b>No pedido:</b> ${sel}</div>`:'') + corpo;
   const inp = $('#livBusca');
   inp.oninput = ()=>{ livBusca = inp.value; const pos = inp.selectionStart; renderCatalogoLiv(); const n=$('#livBusca'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
-  $('#livFixos').querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{ if(editandoCatalogo) lerCatalogo(); livTab=b.dataset.aba; livBusca=''; renderCatalogoLiv(); });
+  $$('#livFixos [data-aba]').forEach(b=>b.onclick=()=>{ if(editandoCatalogo) lerCatalogo(); livTab=b.dataset.aba; livBusca=''; renderCatalogoLiv(); });
   if(editandoCatalogo){
-    $('#livFixos').querySelectorAll('[data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
+    $$('#livFixos [data-catdel]').forEach(b=>b.onclick=()=>{ lerCatalogo(); catalogo.splice(+b.dataset.catdel,1); renderCatalogoLiv(); });
     $('#catAdd').onclick = ()=>{ lerCatalogo(); livBusca=''; catalogo.push({id:'c'+Date.now(), nome:'', preco:null, cat:livTab}); renderCatalogoLiv(); $(`#catNm${catalogo.length-1}`).focus(); };
-    $('#catCancelar').onclick = ()=>{ editandoCatalogo=false; catalogo = load(K.cat, CATALOGO_PADRAO); renderCatalogoLiv(); };
+    $('#catCancelar').onclick = ()=>{ editandoCatalogo=false; catalogo = load(K.cat, []); renderCatalogoLiv(); };
     $('#catSalvar').onclick = salvarCatalogo;
     return;
   }
-  $('#livFixos').querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{
+  $$('#livFixos [data-fx]').forEach(b=>b.onclick=async ()=>{
     const c = catalogo.find(x=>x.id===b.dataset.fx); if(!c) return;
+    const s = saldoItem(c.id), ja = livFixos[c.id]||0;
+    if(s!=null && ja+1 > s && !(await perguntar('Sem estoque no sistema', `"${c.nome}" aparece com ${Math.max(s,0)} em estoque. Se você está com ele na mão, pode vender assim mesmo (depois ajuste o estoque com uma contagem).`, {sim:'Vender assim mesmo'}))) return;
     if(!temPreco(c)){ abrirPreco(c); return; }
-    livFixos[c.id]=(livFixos[c.id]||0)+1; renderCatalogoLiv(); livTotal();
+    livFixos[c.id]=ja+1; renderCatalogoLiv(); livTotal();
   });
-  $('#livFixos').querySelectorAll('[data-fxm]').forEach(b=>b.onclick=()=>{ const id=b.dataset.fxm; livFixos[id]--; if(livFixos[id]<=0) delete livFixos[id]; renderCatalogoLiv(); livTotal(); });
+  $$('#livFixos [data-fxm]').forEach(b=>b.onclick=()=>{ const id=b.dataset.fxm; livFixos[id]--; if(livFixos[id]<=0) delete livFixos[id]; renderCatalogoLiv(); livTotal(); });
 }
 function lerCatalogo(){
-  document.querySelectorAll('#livFixos .cfg').forEach(row=>{
-    const c = catalogo[+row.dataset.i]; if(!c) return;
-    c.nome = row.querySelector('.nm').value.trim();
-    const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : null;
-  });
+  $$('#livFixos .cfg').forEach(row=>{ const c = catalogo[+row.dataset.i]; if(!c) return; c.nome = row.querySelector('.nm').value.trim(); const v = num(row.querySelector('.pr').value); c.preco = v>0 ? Math.round(v*100)/100 : null; });
 }
 async function enviarCatalogo(msgOk){
-  save(K.cat, catalogo); save('vf6_cat_pendente', true);
-  try{
-    await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
-    save('vf6_cat_pendente', false);
-    if(msgOk) toast(msgOk);
-  }catch(e){ console.warn('catalogo', e); toast('Guardado neste aparelho. Envio automático assim que der.','#b07d00', 3500); }
+  save(K.cat, catalogo); save(K.catp, true);
+  try{ await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:'livraria', valor:catalogo, atualizado_em:new Date().toISOString()})});
+    save(K.catp, false); if(msgOk) toast(msgOk); }
+  catch(e){ console.warn('catalogo', e); toast('Guardado neste aparelho. Envio automático assim que der.','#b07d00', 3500); }
 }
 async function salvarCatalogo(){
-  lerCatalogo();
-  if(catalogo.some(c=>!c.nome)){ toast('Um item está sem nome','var(--danger)'); return; }
-  editandoCatalogo=false; renderCatalogoLiv();
-  await enviarCatalogo('Itens salvos para todos os aparelhos');
+  lerCatalogo(); if(catalogo.some(c=>!c.nome)){ toast('Um item está sem nome','var(--danger)'); return; }
+  editandoCatalogo=false; renderCatalogoLiv(); await enviarCatalogo('Itens salvos para todos os aparelhos');
 }
 $('#catEditar').onclick = ()=>{ editandoCatalogo = true; renderCatalogoLiv(); };
-
-/* Preço na hora, para item sem preço */
-let precoItem = null;
-function abrirPreco(c){
-  precoItem = c; $('#pTitulo').textContent = c.nome; $('#pValor').value = ''; $('#pSalvar').checked = true;
-  $('#pImg').innerHTML = c.img ? `<img src="${c.img}" alt="">` : '';
-  $('#precoModal').classList.add('on'); setTimeout(()=>$('#pValor').focus(),50);
-}
+function abrirPreco(c){ precoItem = c; $('#pTitulo').textContent = c.nome; $('#pValor').value = ''; $('#pSalvar').checked = true; $('#pImg').innerHTML = c.img ? `<img src="${c.img}" alt="">` : ''; $('#precoModal').classList.add('on'); setTimeout(()=>$('#pValor').focus(),50); }
 function fecharPreco(){ $('#precoModal').classList.remove('on'); precoItem=null; }
 $('#pCancel').onclick = fecharPreco;
 $('#precoModal').onclick = e=>{ if(e.target.id==='precoModal') fecharPreco(); };
 $('#pValor').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#pOk').click(); });
 $('#pOk').onclick = ()=>{
-  const v = num($('#pValor').value);
-  if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
+  const v = num($('#pValor').value); if(!(v>0)){ toast('Informe um valor válido','var(--danger)'); return; }
   const c = precoItem, preco = Math.round(v*100)/100;
-  if($('#pSalvar').checked){
-    c.preco = preco; livFixos[c.id]=(livFixos[c.id]||0)+1;
-    enviarCatalogo(`Preço de "${c.nome}" salvo`);
-  } else {
-    livLinhas.push({tipo: c.cat==='biblia'?'biblia':c.cat==='livro'?'livro':'diversos', titulo:c.nome, preco:String(preco).replace('.',',')});
-  }
+  if($('#pSalvar').checked){ c.preco = preco; livFixos[c.id]=(livFixos[c.id]||0)+1; enviarCatalogo(`Preço de "${c.nome}" salvo`); }
+  else livLinhas.push({tipo: c.cat==='biblia'?'biblia':c.cat==='livro'?'livro':'diversos', titulo:c.nome, preco:String(preco).replace('.',',')});
   fecharPreco(); renderLivForm();
 };
-
-
 function renderLivForm(){
   $('#livTitulos').innerHTML = Object.keys(sugestoes('livro')).sort().map(t=>`<option value="${esc(t)}">`).join('');
   $('#livBiblias').innerHTML = Object.keys(sugestoes('biblia')).sort().map(t=>`<option value="${esc(t)}">`).join('');
@@ -887,34 +1180,23 @@ function renderLivForm(){
         <input class="pp" id="livPp${i}" data-i="${i}" inputmode="decimal" placeholder="R$ 0,00" value="${esc(l.preco)}">
       </div>
     </div>`).join('');
-  $('#livLinhas').querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ livLinhas[+b.dataset.i].tipo = b.dataset.tipo; renderLivForm(); });
-  $('#livLinhas').querySelectorAll('.tt').forEach(inp=>{
+  $$('#livLinhas [data-tipo]').forEach(b=>b.onclick=()=>{ livLinhas[+b.dataset.i].tipo = b.dataset.tipo; renderLivForm(); });
+  $$('#livLinhas .tt').forEach(inp=>{
     inp.oninput = ()=>{ livLinhas[+inp.dataset.i].titulo = inp.value; };
-    inp.onchange = ()=>{
-      const l = livLinhas[+inp.dataset.i]; const s = sugestoes(l.tipo)[inp.value.trim()];
-      if(s && !l.preco){ l.preco = String(s.toFixed(2)).replace('.',','); renderLivForm(); }
-      livTotal();
-    };
+    inp.onchange = ()=>{ const l = livLinhas[+inp.dataset.i]; const s = sugestoes(l.tipo)[inp.value.trim()]; if(s && !l.preco){ l.preco = String(s.toFixed(2)).replace('.',','); renderLivForm(); } livTotal(); };
   });
-  $('#livLinhas').querySelectorAll('.pp').forEach(inp=>inp.oninput = ()=>{ livLinhas[+inp.dataset.i].preco = inp.value; livTotal(); });
-  $('#livLinhas').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ livLinhas.splice(+b.dataset.rm,1); renderLivForm(); });
-  renderCatalogoLiv();
-  livTotal();
+  $$('#livLinhas .pp').forEach(inp=>inp.oninput = ()=>{ livLinhas[+inp.dataset.i].preco = inp.value; livTotal(); });
+  $$('#livLinhas [data-rm]').forEach(b=>b.onclick=()=>{ livLinhas.splice(+b.dataset.rm,1); renderLivForm(); });
+  renderCatalogoLiv(); livTotal();
 }
-function itensFixos(){
-  return Object.entries(livFixos).map(([id,q])=>{ const c = catalogo.find(x=>x.id===id); return c && {tipo:'fixo', cid:c.id, titulo:c.nome, preco:c.preco, qtd:q}; }).filter(Boolean);
-}
+function itensFixos(){ return Object.entries(livFixos).map(([id,q])=>{ const c = catalogo.find(x=>x.id===id); return c && {tipo:'fixo', cid:c.id, titulo:c.nome, preco:c.preco, qtd:q}; }).filter(Boolean); }
 function livTotal(){
-  const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0)
-          + itensFixos().reduce((s,i)=>s+i.preco*i.qtd,0);
+  const t = livLinhas.reduce((s,l)=>{ const v=num(l.preco); return s + (v>0?v:0); },0) + itensFixos().reduce((s,i)=>s+i.preco*i.qtd,0);
   $('#livTotal').textContent = brl(t); return t;
 }
-document.querySelectorAll('[data-addtipo]').forEach(b=>b.onclick=()=>{
-  livLinhas.push(novaLinha(b.dataset.addtipo)); renderLivForm();
-  const ts=document.querySelectorAll('#livLinhas .tt'); ts[ts.length-1].focus();
-});
+$$('[data-addtipo]').forEach(b=>b.onclick=()=>{ livLinhas.push(novaLinha(b.dataset.addtipo)); renderLivForm(); const ts=$$('#livLinhas .tt'); ts[ts.length-1].focus(); });
 $('#livEnviar').onclick = ()=>{
-  const cliente = $('#livCliente').value.trim();
+  const cliente = limpaNome($('#livCliente').value);
   if(!cliente){ toast('Escreva o nome da pessoa','var(--danger)'); $('#livCliente').focus(); return; }
   const itens = itensFixos();
   for(const l of livLinhas){
@@ -926,12 +1208,10 @@ $('#livEnviar').onclick = ()=>{
   }
   if(!itens.length){ toast('Adicione pelo menos um item','var(--danger)'); return; }
   const total = Math.round(itens.reduce((s,i)=>s+i.preco*i.qtd,0)*100)/100;
-  const p = {id:uuid(), criado_em:new Date().toISOString(), cliente, itens, total, status:'aguardando'};
-  pedNovos.push(p); save(K.pn, pedNovos);
-  if(vistos) vistos[p.id] = 'aguardando';
+  const p = {id:uuid(), criado_em:new Date().toISOString(), cliente, itens, total, status:'aguardando', evento_id:ctxEventoId(), usuario:eu?.nome||null};
+  pedNovos.push(p); save(K.pn, pedNovos); if(vistos) vistos[p.id] = 'aguardando';
   livLinhas = []; livFixos = {}; $('#livCliente').value='';
-  renderLivForm(); toast(`Pedido de ${cliente} enviado ao caixa · ${brl(total)}`);
-  atualizarTelas(); sync();
+  renderLivForm(); toast(`Pedido de ${cliente} enviado ao caixa · ${brl(total)}`); atualizarTelas(); sync();
 };
 function renderLivrosListas(){
   const peds = todosPedidos();
@@ -940,167 +1220,367 @@ function renderLivrosListas(){
       <div class="h"><b>${esc(p.cliente)} · ${brl(p.total)}</b>
         <span class="tag ${p.status==='aguardando'?'aguard':''}">${p.status==='pago'?'PAGO':p.status==='aguardando'?'Aguardando caixa':p.status==='entregue'?'Entregue':'Cancelado'}</span></div>
       <ul>${p.itens.map(i=>`<li>${esc(rotulo(i))} — ${brl(i.preco*(i.qtd||1))}</li>`).join('')}</ul>
-      <div class="acts"><span>${p.n?'#'+p.n+' · ':''}pedido ${hora(p.criado_em)}${p.pago_em?' · pago '+hora(p.pago_em):''}${p.entregue_em?' · entregue '+hora(p.entregue_em):''}${p.pendente?' · enviando…':''}</span>${acoes}</div>
+      <div class="acts"><span>${p.n?'#'+p.n+' · ':''}pedido ${hora(p.criado_em)}${p.pago_em?' · pago '+hora(p.pago_em):''}${p.entregue_em?' · entregue '+hora(p.entregue_em):''}${p.usuario?' · por '+esc(p.usuario):''}${p.pendente?' · enviando…':''}</span>${acoes}</div>
     </div>`;
-  const pagos = peds.filter(p=>p.status==='pago');
-  const ag = peds.filter(p=>p.status==='aguardando');
-  const ent = peds.filter(p=>p.status==='entregue').reverse().slice(0,20);
+  const pagos = peds.filter(p=>p.status==='pago'), ag = peds.filter(p=>p.status==='aguardando'), ent = peds.filter(p=>p.status==='entregue').reverse().slice(0,20);
   $('#lPagos').innerHTML = pagos.length ? pagos.map(p=>card(p, `<button class="btn ok" data-ent="${p.id}">Entregue ✓</button>`)).join('') : '<p class="hint">Nenhum pedido pago esperando entrega.</p>';
   $('#lAguard').innerHTML = ag.length ? ag.map(p=>card(p, `<button class="link" data-cx="${p.id}">Cancelar pedido</button>`)).join('') : '<p class="hint">Nenhum pedido aguardando.</p>';
   $('#lEntregues').innerHTML = ent.length ? ent.map(p=>card(p, `<button class="link" style="color:var(--muted)" data-volta="${p.id}">Desfazer</button>`)).join('') : '<p class="hint">Nenhum ainda.</p>';
-  document.querySelectorAll('[data-ent]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.ent,{status:'entregue', entregue_em:new Date().toISOString()}); atualizarTelas(); sync(); });
-  document.querySelectorAll('[data-volta]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.volta,{status:'pago', entregue_em:null}); atualizarTelas(); sync(); });
-  document.querySelectorAll('[data-cx]').forEach(b=>b.onclick=()=>{
-    const p = peds.find(x=>x.id===b.dataset.cx);
-    if(confirm(`Cancelar o pedido de ${p.cliente} (${brl(p.total)})?`)){ setPedido(p.id,{status:'cancelado'}); atualizarTelas(); sync(); }
-  });
+  $$('[data-ent]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.ent,{status:'entregue', entregue_em:new Date().toISOString()}); atualizarTelas(); sync(); });
+  $$('[data-volta]').forEach(b=>b.onclick=()=>{ setPedido(b.dataset.volta,{status:'pago', entregue_em:null}); atualizarTelas(); sync(); });
+  $$('[data-cx]').forEach(b=>b.onclick=async ()=>{ const p = peds.find(x=>x.id===b.dataset.cx);
+    if(await perguntar('Cancelar pedido?', `Pedido de ${p.cliente} (${brl(p.total)}).`, {sim:'Cancelar pedido', perigo:true})){ setPedido(p.id,{status:'cancelado'}); atualizarTelas(); sync(); } });
   destacar.clear();
 }
 
-/* ---------- Histórico ---------- */
+/* =========================================================
+   Vendas + contas de fiado
+   ========================================================= */
+const tagDe = v => v.cancelada ? 'Cancelada' : v.metodo!=='Fiado' ? esc(v.metodo) : v.fiado_pago_em ? `Fiado pago · ${esc(v.fiado_pago_metodo)}` : `📝 Fiado · ${esc(v.fiado_nome)}`;
+function htmlContas(contas){
+  if(!contas.length) return '';
+  return `<div class="fiadobox"><h3>📝 Contas de fiado em aberto <span class="cnt">${contas.length}</span> <span class="ftot">${brl(contas.reduce((s,c)=>s+c.total,0))}</span></h3>
+    ${contas.map(c=>`<div class="conta"><div class="linha"><div class="info"><b>${esc(c.nome)}</b><small class="hint"> · ${c.vendas.length} compra${c.vendas.length>1?'s':''}</small></div>
+      <span class="val">${brl(c.total)}</span><button class="btn dark" data-receber="${esc(c.chave)}">Receber tudo</button></div>
+      <ul>${c.vendas.map(v=>`<li>${dataBR(v.ts)} ${hora(v.ts)} — ${v.itens.map(i=>`${i.qtd}× ${esc(i.nome)}`).join(', ')} — <b>${brl(v.total)}</b></li>`).join('')}</ul></div>`).join('')}</div>`;
+}
+function ligarReceber(raiz, contas){
+  raiz.querySelectorAll('[data-receber]').forEach(b=>b.onclick=()=>abrirReceber(contas.find(c=>c.chave===b.dataset.receber)));
+}
 function renderHistorico(){
-  const el = $('#lista'); const vendas = todasVendas();
-  if(!vendas.length){ el.innerHTML='<div class="empty card">Nenhuma venda registrada ainda.</div>'; return; }
-  const abertos = vendas.filter(v=>!v.cancelada && v.metodo==='Fiado' && !v.fiado_pago_em);
-  const tagDe = v => v.cancelada ? 'Cancelada' : v.metodo!=='Fiado' ? esc(v.metodo)
-                   : v.fiado_pago_em ? `Fiado pago · ${esc(v.fiado_pago_metodo)}` : `📝 Fiado · ${esc(v.fiado_nome)}`;
-  const blocoFiado = abertos.length ? `<div class="fiadobox">
-      <h3>📝 Fiados em aberto <span class="cnt">${abertos.length}</span> <span class="ftot">${brl(abertos.reduce((s,v)=>s+v.total,0))}</span></h3>
-      ${abertos.map(v=>`<div class="ped"><div class="info"><b>${esc(v.fiado_nome)}</b><small>${v.n?'#'+v.n+' · ':''}${hora(v.ts)} · ${v.itens.map(i=>`${i.qtd}× ${esc(i.nome)}`).join(', ')}</small></div>
-        <span class="val">${brl(v.total)}</span><button class="btn dark" data-receber="${v.id}">Receber</button></div>`).join('')}
-    </div>` : '';
-  el.innerHTML = blocoFiado + [...vendas].reverse().map(v=>`
+  const vendas = todasVendas();
+  const contas = contasAbertas();
+  $('#fiadosAbertos').innerHTML = htmlContas(contas); ligarReceber($('#fiadosAbertos'), contas);
+  const lista = ctx==='perm' ? vendas.filter(v=>desde(v.ts, hojeISO())) : vendas;
+  const el = $('#lista');
+  if(!lista.length){ el.innerHTML=`<div class="empty card">${ctx==='perm'?'Nenhuma venda hoje no caixa do ano todo.':'Nenhuma venda neste evento ainda.'}</div>`; return; }
+  el.innerHTML = (ctx==='perm'?'<p class="hint" style="margin:0 0 8px">Vendas de hoje. Para outros dias, veja o Resumo.</p>':'') + [...lista].reverse().map(v=>`
     <div class="sale ${v.cancelada?'cx':''} ${!v.cancelada&&v.metodo==='Fiado'&&!v.fiado_pago_em?'fiado':''}">
       <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${tagDe(v)}</span></div>
       <ul>${v.itens.map(i=>`<li>${i.qtd}× ${esc(i.nome)} — ${brl(i.preco*i.qtd)}</li>`).join('')}</ul>
-      <div class="acts"><span>${hora(v.ts)}${v.metodo==='Dinheiro'&&v.recebido?` · recebido ${brl(v.recebido)} · troco ${brl(v.troco)}`:''}</span>
+      <div class="acts"><span>${hora(v.ts)}${v.usuario?' · por '+esc(v.usuario):''}${v.metodo==='Dinheiro'&&v.recebido?` · recebido ${brl(v.recebido)} · troco ${brl(v.troco)}`:''}</span>
       ${v.cancelada?`<button class="link" style="color:var(--accent)" data-r="${v.id}">Reativar</button>`:`<button class="link" data-c="${v.id}">Cancelar</button>`}</div>
     </div>`).join('');
   const marcar = (v, val)=>{
     const p = pendentes.find(x=>x.id===v.id);
     if(p){ p.cancelada = val; save(K.q, pendentes); } else { cancelPend[v.id] = val; save(K.c, cancelPend); }
-    (v.pedidos||[]).forEach(id=> setPedido(id, val ? {status:'aguardando', venda_id:null, pago_em:null}
-                                                   : {status:'pago', venda_id:v.id, pago_em:new Date().toISOString()}));
+    (v.pedidos||[]).forEach(id=> setPedido(id, val ? {status:'aguardando', venda_id:null, pago_em:null} : {status:'pago', venda_id:v.id, pago_em:new Date().toISOString()}));
     atualizarTelas(); sync();
   };
-  el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+  el.querySelectorAll('[data-c]').forEach(b=>b.onclick=async ()=>{
     const v=vendas.find(x=>x.id===b.dataset.c);
-    const aviso = (v.pedidos||[]).length ? '\n\nOs livros desta venda voltam para "aguardando pagamento".' : '';
-    if(confirm(`Cancelar a venda ${v.n?'#'+v.n+' ':''}de ${brl(v.total)}?${aviso}`)) marcar(v,true);
+    if(await perguntar('Cancelar venda?', `Venda ${v.n?'#'+v.n+' ':''}de ${brl(v.total)}.${(v.pedidos||[]).length?' Os itens da livraria desta venda voltam para "aguardando pagamento".':''}`, {sim:'Cancelar venda', perigo:true})) marcar(v,true);
   });
   el.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>marcar(vendas.find(x=>x.id===b.dataset.r),false));
-  el.querySelectorAll('[data-receber]').forEach(b=>b.onclick=()=>abrirReceber(vendas.find(x=>x.id===b.dataset.receber)));
 }
-let receberVenda = null;
-function abrirReceber(v){
-  receberVenda = v; $('#rTitulo').textContent = `Receber de ${v.fiado_nome}`; $('#rValor').textContent = brl(v.total);
-  $('#rItens').textContent = v.itens.map(i=>`${i.qtd}× ${i.nome}`).join(', ');
+let receberConta = null, receberDepois = null;
+function abrirReceber(conta, depois){
+  receberConta = conta; receberDepois = depois||null;
+  $('#rTitulo').textContent = `Receber de ${conta.nome}`; $('#rValor').textContent = brl(conta.total);
+  $('#rItens').textContent = `${conta.vendas.length} compra${conta.vendas.length>1?'s':''}: ` + conta.vendas.map(v=>v.itens.map(i=>`${i.qtd}× ${i.nome}`).join(', ')).join(' · ');
   $('#receberModal').classList.add('on');
 }
-function fecharReceber(){ $('#receberModal').classList.remove('on'); receberVenda=null; }
+function fecharReceber(){ $('#receberModal').classList.remove('on'); receberConta=null; }
 $('#rCancel').onclick = fecharReceber;
 $('#receberModal').onclick = e=>{ if(e.target.id==='receberModal') fecharReceber(); };
-document.querySelectorAll('#receberModal [data-rm]').forEach(b=>b.onclick=()=>{
-  const v = receberVenda; if(!v) return;
+$$('#receberModal [data-rm]').forEach(b=>b.onclick=()=>{
+  const c = receberConta; if(!c) return;
   const patch = {fiado_pago_em:new Date().toISOString(), fiado_pago_metodo:b.dataset.rm};
-  const p = pendentes.find(x=>x.id===v.id);
-  if(p){ Object.assign(p, patch); save(K.q, pendentes); } else { fiadoPend[v.id] = patch; save(K.fp, fiadoPend); }
-  toast(`Fiado de ${v.fiado_nome} recebido · ${brl(v.total)} no ${b.dataset.rm}`);
-  fecharReceber(); atualizarTelas(); sync();
+  c.vendas.forEach(v=>{ const p = pendentes.find(x=>x.id===v.id); if(p){ Object.assign(p, patch); } else { fiadoPend[v.id] = patch; } });
+  save(K.q, pendentes); save(K.fp, fiadoPend);
+  toast(`Conta de ${c.nome} recebida · ${brl(c.total)} no ${b.dataset.rm}`);
+  const depois = receberDepois; fecharReceber(); atualizarTelas(); sync().then(()=>depois && depois());
 });
 
-/* ---------- Resumo ---------- */
-function agregados(){
-  const ok = todasVendas().filter(v=>!v.cancelada);
-  const pag = {}, prod = {};
+/* =========================================================
+   Resumo
+   ========================================================= */
+function calcResumo(vendas, prods){
+  const ok = vendas.filter(v=>!v.cancelada);
+  const pag = {}, prod = {}, pessoas = {}, fiados = new Map();
   ok.forEach(v=>{
     const m = v.metodo==='Fiado' ? (v.fiado_pago_em ? v.fiado_pago_metodo : 'Fiado') : v.metodo;
     pag[m] = pag[m]||{q:0,t:0}; pag[m].q++; pag[m].t+=v.total;
+    if(v.usuario){ pessoas[v.usuario] = pessoas[v.usuario]||{q:0,t:0}; pessoas[v.usuario].q++; pessoas[v.usuario].t+=v.total; }
+    if(m==='Fiado'){ const k=chaveNome(v.fiado_nome); const f = fiados.get(k)||{nome:limpaNome(v.fiado_nome), t:0}; f.t+=v.total; fiados.set(k,f); }
     v.itens.forEach(i=>{
-      const p = produtos.find(x=>x.id===i.pid); const nome = p? p.nome : i.nome.split(' – ')[0];
+      const nome = String(i.pid).startsWith('liv_') ? i.nome : ((prods||[]).find(x=>x.id===i.pid)?.nome || i.nome.split(' – ')[0]);
       prod[nome] = prod[nome]||{q:0,t:0}; prod[nome].q+=i.qtd; prod[nome].t+=i.preco*i.qtd;
     });
   });
-  const total = ok.reduce((s,v)=>s+v.total,0);
-  return {ok,pag,prod,total};
+  const r2 = x=>Math.round(x*100)/100;
+  return {
+    total: r2(ok.reduce((s,v)=>s+v.total,0)), vendas: ok.length, itens: Object.values(prod).reduce((s,x)=>s+x.q,0),
+    canceladas: vendas.length-ok.length,
+    por_pagamento: Object.entries(pag).map(([forma,x])=>({forma, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
+    por_produto: Object.entries(prod).map(([nome,x])=>({nome, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
+    por_pessoa: Object.entries(pessoas).map(([nome,x])=>({nome, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
+    fiados_abertos: [...fiados.values()].map(f=>({nome:f.nome, t:r2(f.t)})),
+    gerado_em: new Date().toISOString()
+  };
 }
-function renderResumo(){
-  const {ok,pag,prod,total} = agregados();
-  const itens = Object.values(prod).reduce((s,x)=>s+x.q,0);
-  const dinheiro = (pag['Dinheiro']||{t:0}).t;
-  $('#kpis').innerHTML = `
-    <div class="kpi big"><span>Total vendido</span><b>${brl(total)}</b></div>
-    <div class="kpi"><span>Vendas</span><b>${ok.length}</b></div>
-    <div class="kpi"><span>Itens vendidos</span><b>${itens}</b></div>
-    <div class="kpi"><span>Dinheiro em caixa</span><b>${brl(dinheiro)}</b></div>
-    <div class="kpi"><span>Fiado a receber</span><b>${brl((pag['Fiado']||{t:0}).t)}</b></div>
-    <div class="kpi"><span>Ticket médio</span><b>${brl(ok.length?total/ok.length:0)}</b></div>`;
-  const ordem = ['Dinheiro','Pix','Débito','Crédito'];
-  $('#tPag').innerHTML = `<tr><th>Forma</th><th class="r">Vendas</th><th class="r">Valor</th></tr>` +
-    [...ordem,'Fiado'].map(m=>`<tr><td>${m==='Fiado'?'Fiado (a receber)':m}</td><td class="r">${(pag[m]||{q:0}).q}</td><td class="r"><b>${brl((pag[m]||{t:0}).t)}</b></td></tr>`).join('') +
-    `<tr><td><b>Total</b></td><td class="r"><b>${ok.length}</b></td><td class="r"><b>${brl(total)}</b></td></tr>`;
-  const linhas = Object.entries(prod).sort((a,b)=>b[1].t-a[1].t);
-  $('#tProd').innerHTML = `<tr><th>Produto</th><th class="r">Qtd</th><th class="r">Valor</th></tr>` +
-    (linhas.length ? linhas.map(([n,x])=>`<tr><td>${esc(n)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('') : `<tr><td colspan="3" class="hint">Sem vendas ainda</td></tr>`);
+function htmlResumo(r){
+  const pg = Object.fromEntries((r.por_pagamento||[]).map(x=>[x.forma,x]));
+  const fiadoAb = (r.fiados_abertos||[]).reduce((s,f)=>s+f.t,0);
+  return `<div class="kpis">
+      <div class="kpi big"><span>Total vendido</span><b>${brl(r.total)}</b></div>
+      <div class="kpi"><span>Vendas</span><b>${r.vendas}</b></div>
+      <div class="kpi"><span>Itens vendidos</span><b>${r.itens}</b></div>
+      <div class="kpi"><span>Dinheiro em caixa</span><b>${brl(pg['Dinheiro']?.t||0)}</b></div>
+      <div class="kpi"><span>Fiado a receber</span><b>${brl(fiadoAb)}</b></div>
+      <div class="kpi"><span>Ticket médio</span><b>${brl(r.vendas?r.total/r.vendas:0)}</b></div>
+    </div>
+    <div class="card"><h3 style="margin:0 0 8px">Por forma de pagamento</h3><table>
+      <tr><th>Forma</th><th class="r">Vendas</th><th class="r">Valor</th></tr>
+      ${[...FORMAS,'Fiado'].map(m=>`<tr><td>${m==='Fiado'?'Fiado (a receber)':m}</td><td class="r">${pg[m]?.q||0}</td><td class="r"><b>${brl(pg[m]?.t||0)}</b></td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td class="r"><b>${r.vendas}</b></td><td class="r"><b>${brl(r.total)}</b></td></tr></table></div>
+    ${(r.por_pessoa||[]).length?`<div class="card"><h3 style="margin:0 0 8px">Por quem vendeu</h3><table><tr><th>Pessoa</th><th class="r">Vendas</th><th class="r">Valor</th></tr>
+      ${r.por_pessoa.map(x=>`<tr><td>${esc(x.nome)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('')}</table></div>`:''}
+    <div class="card"><h3 style="margin:0 0 8px">Por produto</h3><div style="overflow-x:auto"><table><tr><th>Produto</th><th class="r">Qtd</th><th class="r">Valor</th></tr>
+      ${(r.por_produto||[]).length ? r.por_produto.map(x=>`<tr><td>${esc(x.nome)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('') : '<tr><td colspan="3" class="hint">Sem vendas</td></tr>'}</table></div></div>`;
 }
-
-$('#csv').onclick = ()=>{
-  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Fiado – nome','Fiado – situação','Aparelho']];
-  todasVendas().forEach(v=>{
-    const d = new Date(v.ts);
-    v.itens.forEach(i=>linhas.push([v.n||'pendente', d.toLocaleDateString('pt-BR'), hora(v.ts), i.nome, i.qtd,
-      (+i.preco).toFixed(2).replace('.',','), (i.preco*i.qtd).toFixed(2).replace('.',','), v.metodo,
+let periodo = 'atual', periodoVendas = null;
+const PERIODOS = [['atual','Hoje'],['7','7 dias'],['mes','Este mês'],['tudo','Tudo']];
+function inicioPeriodo(p){ const d = new Date(); d.setHours(0,0,0,0); if(p==='7') d.setDate(d.getDate()-6); if(p==='mes') d.setDate(1); return p==='tudo' ? null : d.toISOString(); }
+async function carregarPeriodo(p){
+  const ini = inicioPeriodo(p);
+  const vs = await sb('/vf_caixa_vendas?select=*&order=ts.asc&evento_id=is.null'+(ini?'&ts=gte.'+ini:''));
+  const ids = new Set(vs.map(v=>v.id));
+  return [...vs.map(v=>({...v,total:+v.total})), ...pendentes.filter(v=>!v.evento_id && !ids.has(v.id) && desde(v.ts, ini))];
+}
+function vendasResumoAtual(){ return ctx==='perm' ? todasVendas().filter(v=>desde(v.ts, hojeISO())) : todasVendas(); }
+async function renderResumo(){
+  $('#periodos').innerHTML = ctx==='perm' ? PERIODOS.map(([k,t])=>`<button type="button" class="aba ${periodo===k?'on':''}" data-per="${k}">${t}</button>`).join('') : `<p class="hint" style="margin:0">Resumo do evento <b>${esc(ctxNome())}</b>. Ao encerrar o evento (aba Eventos), este resumo fica salvo em “Eventos passados”.</p>`;
+  $$('#periodos [data-per]').forEach(b=>b.onclick=async ()=>{ periodo=b.dataset.per; periodoVendas=null; await renderResumo(); });
+  let vendas;
+  if(ctx!=='perm' || periodo==='atual') vendas = vendasResumoAtual();
+  else {
+    if(!periodoVendas){ $('#resumoBox').innerHTML = '<p class="hint">Carregando…</p>'; try{ periodoVendas = await carregarPeriodo(periodo); }catch(e){ $('#resumoBox').innerHTML = '<p class="hint">Sem conexão para buscar esse período.</p>'; return; } }
+    vendas = periodoVendas;
+  }
+  $('#resumoBox').innerHTML = htmlResumo(calcResumo(vendas, produtos));
+}
+function baixarCSV(vendas, nomeArq){
+  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Fiado – nome','Fiado – situação','Vendido por','Aparelho']];
+  vendas.forEach(v=>{ const d = new Date(v.ts);
+    v.itens.forEach(i=>linhas.push([v.n||'pendente', d.toLocaleDateString('pt-BR'), hora(v.ts), i.nome, i.qtd, (+i.preco).toFixed(2).replace('.',','), (i.preco*i.qtd).toFixed(2).replace('.',','), v.metodo,
       (+v.total).toFixed(2).replace('.',','), v.cancelada?'Cancelada':'OK', v.fiado_nome||'',
-      v.metodo==='Fiado' ? (v.fiado_pago_em ? `Pago (${v.fiado_pago_metodo}) ${new Date(v.fiado_pago_em).toLocaleString('pt-BR')}` : 'Em aberto') : '', v.aparelho||'']));
-  });
+      v.metodo==='Fiado' ? (v.fiado_pago_em ? `Pago (${v.fiado_pago_metodo}) ${new Date(v.fiado_pago_em).toLocaleString('pt-BR')}` : 'Em aberto') : '', v.usuario||'', v.aparelho||''])); });
   const csv = '﻿' + linhas.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  a.download = `vendas-vou-fluir-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download = nomeArq; document.body.appendChild(a); a.click(); a.remove();
+}
+const slug = s => semAcento(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+$('#csv').onclick = async ()=>{
+  const vendas = ctx==='perm' && periodo!=='atual' ? (periodoVendas||[]) : vendasResumoAtual();
+  baixarCSV(vendas, `vendas-${slug(ctxNome())}-${ctx==='perm'?PERIODOS.find(p=>p[0]===periodo)[1].toLowerCase().replace(/\s/g,'-'):''}${new Date().toISOString().slice(0,10)}.csv`);
 };
 
-/* ---------- Configuração ---------- */
+/* =========================================================
+   Produtos (do contexto atual)
+   ========================================================= */
+let cfgProdutos = [];
 function renderConfig(){
-  const cats = [...new Set([...CATS, ...produtos.map(p=>p.cat||'Outros')])];
-  $('#cfgList').innerHTML = produtos.map((p,i)=>`
+  cfgProdutos = JSON.parse(JSON.stringify(produtosCtx()));
+  desenharCfg();
+}
+function desenharCfg(){
+  const cats = [...new Set([...CATS, ...cfgProdutos.map(p=>p.cat||'Outros')])];
+  $('#cfgList').innerHTML = cfgProdutos.map((p,i)=>`
     <div class="cfg" data-i="${i}">
+      ${corChip(p.id)}
       <input class="nm" value="${esc(p.nome)}" placeholder="Nome">
       <input class="pr" inputmode="decimal" value="${p.preco==null?'':String(p.preco).replace('.',',')}" placeholder="Variável">
       <select>${cats.map(c=>`<option ${c===(p.cat||'Outros')?'selected':''}>${esc(c)}</option>`).join('')}</select>
-      <button class="link" data-del="${i}">✕</button>
+      <button class="link" data-del="${i}" aria-label="Apagar produto">✕</button>
     </div>`).join('');
-  $('#cfgList').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ lerConfig(); produtos.splice(+b.dataset.del,1); renderConfig(); });
-  $('#aparelhoNome').textContent = aparelho;
+  $$('#cfgList [data-del]').forEach(b=>b.onclick=()=>{ lerConfig(); cfgProdutos.splice(+b.dataset.del,1); desenharCfg(); });
 }
 function lerConfig(){
-  document.querySelectorAll('#cfgList .cfg').forEach(row=>{
-    const p = produtos[+row.dataset.i]; if(!p) return;
-    p.nome = row.querySelector('.nm').value.trim() || p.nome;
-    const v = num(row.querySelector('.pr').value); p.preco = isNaN(v) ? null : Math.round(v*100)/100;
-    p.cat = row.querySelector('select').value;
-  });
+  $$('#cfgList .cfg').forEach(row=>{ const p = cfgProdutos[+row.dataset.i]; if(!p) return;
+    p.nome = row.querySelector('.nm').value.trim() || p.nome; const v = num(row.querySelector('.pr').value); p.preco = isNaN(v) ? null : Math.round(v*100)/100; p.cat = row.querySelector('select').value; });
 }
-$('#addProd').onclick = ()=>{ lerConfig(); produtos.push({id:'p'+Date.now(), nome:'Novo produto', preco:null, cat:'Loja'}); renderConfig(); };
+$('#addProd').onclick = ()=>{ lerConfig(); cfgProdutos.push({id:'p'+Date.now(), nome:'Novo produto', preco:null, cat:'Comida'}); desenharCfg(); };
 $('#salvarCfg').onclick = async ()=>{
-  lerConfig(); save(K.p, produtos); renderCatalogo();
+  lerConfig();
   try{
-    await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'},
-      body:JSON.stringify({id:'produtos', valor:produtos, atualizado_em:new Date().toISOString()})});
-    toast('Produtos salvos em todos os aparelhos');
-  }catch(e){ toast('Salvo só neste aparelho (sem conexão)','var(--danger)'); }
+    if(ctx==='perm') await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:'produtos', valor:cfgProdutos, atualizado_em:new Date().toISOString()})});
+    else await sb('/vf_eventos?id=eq.'+ctx, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({produtos:cfgProdutos})});
+    if(ctx==='perm'){ prodPerm = cfgProdutos; save(K.perm, prodPerm); } else { const e = evAtual(); if(e) e.produtos = cfgProdutos; save(K.evs, eventos); }
+    produtos = produtosCtx(); renderCatalogo(); toast('Produtos salvos para todos os aparelhos');
+  }catch(e){ toast('Não salvou: sem conexão. Tente de novo.','var(--danger)', 3500); }
 };
 
-/* ---------- Init ---------- */
-if(LIV){
-  document.body.classList.add('liv');
-  $('#subtitulo').textContent = 'Livraria';
-  document.title = 'Livraria · Movimento Vou Fluir';
-  irPara('livros');
+/* =========================================================
+   Estoque da lojinha
+   ========================================================= */
+let estTab = 'livro', estBusca = '', estAberto = null;
+function renderEstoque(){
+  $('#estFiltros').innerHTML = `<input id="estBusca" class="field" type="search" placeholder="Buscar item…" value="${esc(estBusca)}" autocomplete="off" style="margin-top:10px">` + abasHtml(estTab, estBusca, 'data-eaba');
+  const inp = $('#estBusca'); inp.oninput = ()=>{ estBusca = inp.value; const pos=inp.selectionStart; renderEstoque(); const n=$('#estBusca'); n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} };
+  $$('[data-eaba]').forEach(b=>b.onclick=()=>{ estTab=b.dataset.eaba; estBusca=''; renderEstoque(); });
+  const vis = visiveis(estTab, estBusca);
+  $('#estLista').innerHTML = vis.length ? `<table class="esttab">${vis.map(({c})=>{ const s = saldoItem(c.id); return `<tr>
+    <td style="width:40px">${c.img?`<img src="${c.img}" alt="" loading="lazy">`:''}</td>
+    <td><div class="nm">${esc(c.nome)}</div><div class="hint">${temPreco(c)?brl(c.preco):'Sem preço'}</div></td>
+    <td class="q ${s==null?'nc':s<=0?'zero':''}">${s==null?'não contado':s}</td>
+    <td><div class="acts"><button class="btn" data-eent="${c.id}">+ Entrada</button><button class="btn" data-econt="${c.id}">Contagem</button></div></td></tr>`; }).join('')}</table>` : '<p class="hint">Nada encontrado.</p>';
+  $$('[data-eent]').forEach(b=>b.onclick=()=>abrirEst(b.dataset.eent,'entrada'));
+  $$('[data-econt]').forEach(b=>b.onclick=()=>abrirEst(b.dataset.econt,'contagem'));
 }
-renderLivForm();
-renderCarrinho(); atualizarTelas(); sync();
+let estItem = null, estTipo = null;
+function abrirEst(id, tipo){
+  estItem = catalogo.find(c=>c.id===id); estTipo = tipo; estAberto = true; const s = saldoItem(id);
+  $('#eTitulo').textContent = (tipo==='entrada'?'Entrada · ':'Contagem · ') + estItem.nome;
+  $('#eInfo').textContent = tipo==='entrada' ? `Quantos chegaram? ${s==null?'':'Hoje o sistema mostra '+s+'.'}` : 'Quantos tem agora, contando na prateleira? O sistema passa a mostrar exatamente esse número.';
+  $('#eQtdLabel').textContent = tipo==='entrada' ? 'Quantidade que chegou' : 'Quantidade contada';
+  $('#eQtd').value=''; $('#eObs').value=''; $('#estModal').classList.add('on'); setTimeout(()=>$('#eQtd').focus(),50);
+}
+function fecharEst(){ $('#estModal').classList.remove('on'); estAberto = null; }
+$('#eCancel').onclick = fecharEst;
+$('#estModal').onclick = e=>{ if(e.target.id==='estModal') fecharEst(); };
+$('#eOk').onclick = async ()=>{
+  const q = parseInt($('#eQtd').value,10);
+  if(isNaN(q) || q<0 || (estTipo==='entrada' && q===0)){ toast('Informe uma quantidade válida','var(--danger)'); return; }
+  const b = $('#eOk'); b.disabled = true;
+  try{
+    await sb('/vf_estoque_mov', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({id:uuid(), item_id:estItem.id, tipo:estTipo, qtd:q, obs:$('#eObs').value.trim()||null, usuario:eu?.nome||null})});
+    toast(estTipo==='entrada' ? `+${q} ${estItem.nome}` : `${estItem.nome}: ${q} em estoque`);
+    fecharEst(); await sync(); renderEstoque(); carregarMovs();
+  }catch(e){ toast('Não salvou: sem conexão. Tente de novo.','var(--danger)', 3500); }
+  finally{ b.disabled = false; }
+};
+async function carregarMovs(){
+  try{
+    const ms = await sb('/vf_estoque_mov?select=*&order=criado_em.desc&limit=30');
+    $('#estMovs').innerHTML = ms.length ? ms.map(m=>{ const c = catalogo.find(x=>x.id===m.item_id);
+      return `<li>${new Date(m.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} — ${m.tipo==='entrada'?'Entrada de <b>'+(+m.qtd)+'</b>':m.tipo==='contagem'?'Contagem: <b>'+(+m.qtd)+'</b>':'Ajuste '+(+m.qtd)} · ${esc(c?.nome||m.item_id)}${m.usuario?' · '+esc(m.usuario):''}${m.obs?' · '+esc(m.obs):''}</li>`; }).join('') : '<li>Nenhuma movimentação ainda.</li>';
+  }catch(e){ $('#estMovs').innerHTML = '<li>Sem conexão.</li>'; }
+}
+
+/* =========================================================
+   Eventos
+   ========================================================= */
+let evDetalheId = null;
+function renderEventos(){
+  $('#evDetalhe').innerHTML = ''; $('#evPrincipal').hidden = false;
+  if(!$('#evData').value) $('#evData').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const ab = eventos.filter(e=>e.status==='aberto'), pas = eventos.filter(e=>e.status==='encerrado');
+  $('#evAbertos').innerHTML = ab.length ? ab.map(e=>`<div class="evcard"><div class="h"><b>🎉 ${esc(e.nome)}</b><span class="tag">${e.data?dataBR(e.data):'Aberto'}</span></div>
+    <div class="row">${ctx===e.id?'<span class="tag" style="background:#fff1c7">Vendendo neste evento</span>':`<button class="btn dark" data-usar="${e.id}">Vender neste evento</button>`}
+    <button class="btn red" data-encerrar="${e.id}">Encerrar evento</button></div></div>`).join('') : '<p class="hint">Nenhum evento aberto. O caixa do ano todo continua funcionando normalmente.</p>';
+  $('#evPassados').innerHTML = pas.length ? pas.map(e=>`<button type="button" class="evpass" data-ver="${e.id}"><span><b>${esc(e.nome)}</b><small>${e.data?dataBR(e.data)+' · ':''}${e.resumo?.vendas??'–'} vendas</small></span><span class="t">${brl(e.resumo?.total||0)} ›</span></button>`).join('') : '<p class="hint">Nenhum evento encerrado ainda.</p>';
+  $$('[data-usar]').forEach(b=>b.onclick=()=>{ trocarCtx(b.dataset.usar); toast('Vendendo em: '+ctxNome()); irPara('venda'); });
+  $$('[data-encerrar]').forEach(b=>b.onclick=()=>encerrarEvento(eventos.find(e=>e.id===b.dataset.encerrar)));
+  $$('[data-ver]').forEach(b=>b.onclick=()=>verEvento(b.dataset.ver));
+}
+$('#evCriar').onclick = async ()=>{
+  const nome = limpaNome($('#evNome').value); if(!nome){ toast('Dê um nome ao evento','var(--danger)'); $('#evNome').focus(); return; }
+  const base = $('#evBase').value; const ult = eventos.find(e=>e.produtos && e.produtos.length);
+  const prods = base==='ultimo' && ult ? ult.produtos : prodPerm;
+  const ev = {id:uuid(), nome, data:$('#evData').value||null, status:'aberto', produtos:prods, criado_por:eu?.email||null};
+  const b = $('#evCriar'); b.disabled = true;
+  try{
+    await sb('/vf_eventos', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(ev)});
+    eventos.unshift({...ev, criado_em:new Date().toISOString()}); save(K.evs, eventos);
+    $('#evNome').value=''; trocarCtx(ev.id); toast(`Evento "${nome}" criado. Vendendo nele agora.`); irPara('venda');
+  }catch(e){ toast('Não criou: sem conexão. Tente de novo.','var(--danger)', 3500); }
+  finally{ b.disabled = false; }
+};
+async function encerrarEvento(e){
+  const pendEv = pendentes.filter(v=>v.evento_id===e.id).length + pedNovos.filter(p=>p.evento_id===e.id).length;
+  if(pendEv){ toast(`Este aparelho ainda tem ${pendEv} lançamento(s) do evento para enviar. Espere sincronizar.`,'var(--danger)', 4500); sync(); return; }
+  let vs, ps;
+  try{ [vs, ps] = await Promise.all([sb('/vf_caixa_vendas?select=*&evento_id=eq.'+e.id), sb('/vf_caixa_pedidos?select=status&evento_id=eq.'+e.id)]); }
+  catch(err){ toast('Sem conexão para encerrar. Tente de novo.','var(--danger)'); return; }
+  const aguard = ps.filter(p=>p.status==='aguardando'||p.status==='pago').length;
+  const r = calcResumo(vs.map(v=>({...v,total:+v.total})), e.produtos);
+  r.pedidos_livraria = ps.filter(p=>p.status==='pago'||p.status==='entregue').length;
+  const fa = r.fiados_abertos.reduce((s,f)=>s+f.t,0);
+  const txt = `Total: ${brl(r.total)} em ${r.vendas} vendas.` + (fa?` Ainda há ${brl(fa)} em fiado para receber (dá para receber depois, em Eventos passados).`:'') + (aguard?` Atenção: ${aguard} pedido(s) da livraria ainda não foram entregues/pagos.`:'') + ' Depois de encerrar não dá para lançar novas vendas neste evento.';
+  if(!(await perguntar(`Encerrar "${e.nome}"?`, txt, {sim:'Encerrar evento', perigo:true}))) return;
+  try{
+    await sb('/vf_eventos?id=eq.'+e.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({status:'encerrado', resumo:r, encerrado_em:new Date().toISOString(), encerrado_por:eu?.email||null})});
+    e.status='encerrado'; e.resumo=r; save(K.evs, eventos);
+    if(ctx===e.id) trocarCtx('perm');
+    toast(`Evento encerrado. Resumo salvo em Eventos passados.`); renderEventos();
+  }catch(err){ toast('Não encerrou: sem conexão. Tente de novo.','var(--danger)'); }
+}
+async function verEvento(id){
+  evDetalheId = id; const e = eventos.find(x=>x.id===id); if(!e) return;
+  $('#evPrincipal').hidden = true;
+  const box = $('#evDetalhe');
+  box.innerHTML = `<button class="voltar" id="evVoltar" type="button">‹ Voltar para eventos</button>
+    <h2 style="margin:0 0 2px">${esc(e.nome)}</h2><p class="hint" style="margin:0 0 12px">${e.data?dataBR(e.data)+' · ':''}encerrado${e.encerrado_em?' em '+new Date(e.encerrado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
+    <div id="evFiados"></div>${e.resumo ? htmlResumo(e.resumo) : '<p class="hint">Sem resumo salvo.</p>'}
+    <div class="row"><button class="btn dark" id="evCsv" type="button">Baixar planilha do evento (CSV)</button></div>`;
+  $('#evVoltar').onclick = ()=>{ evDetalheId=null; renderEventos(); };
+  window.scrollTo(0,0);
+  let vs = null;
+  const carregar = async ()=>{ vs = (await sb('/vf_caixa_vendas?select=*&order=ts.asc&evento_id=eq.'+id)).map(v=>({...v,total:+v.total})).map(v=> fiadoPend[v.id] ? {...v, ...fiadoPend[v.id]} : v); };
+  const desenharFiados = ()=>{
+    const m = new Map();
+    vs.filter(v=>!v.cancelada && v.metodo==='Fiado' && !v.fiado_pago_em).forEach(v=>{ const k=chaveNome(v.fiado_nome); if(!m.has(k)) m.set(k,{chave:k,nome:limpaNome(v.fiado_nome),vendas:[],total:0}); const c=m.get(k); c.vendas.push(v); c.total+=v.total; });
+    const contas = [...m.values()];
+    $('#evFiados').innerHTML = htmlContas(contas); ligarReceber($('#evFiados'), contas.map(c=>c));
+    $$('#evFiados [data-receber]').forEach(b=>{ const c = contas.find(x=>x.chave===b.dataset.receber); b.onclick=()=>abrirReceber(c, async ()=>{ await carregar(); desenharFiados(); }); });
+  };
+  try{ await carregar(); desenharFiados(); }catch(err){ $('#evFiados').innerHTML = '<p class="hint">Sem conexão para ver fiados deste evento.</p>'; }
+  $('#evCsv').onclick = async ()=>{ try{ if(!vs) await carregar(); baixarCSV(vs, `vendas-${slug(e.nome)}.csv`); }catch(err){ toast('Sem conexão para baixar.','var(--danger)'); } };
+}
+
+/* =========================================================
+   Equipe (administradores)
+   ========================================================= */
+async function chamarEquipe(body){
+  const r = await fetch(SB+'/functions/v1/vf-equipe', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+await tokenValido(), 'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erro || 'Erro '+r.status); return j;
+}
+async function carregarEquipe(){
+  try{
+    const ms = await sb('/vf_membros?select=*&order=nome.asc');
+    $('#mLista').innerHTML = ms.map(m=>`<div class="membro ${m.ativo?'':'off'}"><div class="info"><b>${esc(m.nome)}${m.admin?' · <span class="tag">admin</span>':''}</b><small>${esc(m.email)}${m.ativo?'':' · sem acesso'}</small></div>
+      <button class="btn" data-msenha="${esc(m.email)}">Nova senha</button>
+      ${m.email!==eu?.email?`<button class="btn ${m.ativo?'red':''}" data-mativo="${esc(m.email)}" data-v="${m.ativo?0:1}">${m.ativo?'Tirar acesso':'Devolver acesso'}</button>`:''}</div>`).join('');
+    $$('[data-msenha]').forEach(b=>b.onclick=async ()=>{
+      const s = await perguntar('Nova senha', `Digite a nova senha para ${b.dataset.msenha} (mínimo 6 caracteres).`, {sim:'Trocar senha', input:{ph:'Nova senha', tipo:'text'}});
+      if(s==null) return; if(s.length<6){ toast('A senha precisa ter pelo menos 6 caracteres','var(--danger)'); return; }
+      try{ const j = await chamarEquipe({acao:'senha', email:b.dataset.msenha, senha:s}); toast(j.msg); }catch(e){ toast(e.message,'var(--danger)', 4000); }
+    });
+    $$('[data-mativo]').forEach(b=>b.onclick=async ()=>{
+      try{ await sb('/vf_membros?email=eq.'+encodeURIComponent(b.dataset.mativo), {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({ativo: b.dataset.v==='1'})}); carregarEquipe(); }
+      catch(e){ toast('Não consegui alterar.','var(--danger)'); }
+    });
+  }catch(e){ $('#mLista').innerHTML = '<p class="hint">Sem conexão.</p>'; }
+}
+$('#mCriar').onclick = async ()=>{
+  const body = {acao:'criar', nome:limpaNome($('#mNome').value), email:$('#mEmail').value.trim().toLowerCase(), senha:$('#mSenha').value, admin:$('#mAdmin').value==='1'};
+  if(!body.nome || !body.email){ toast('Preencha nome e e-mail','var(--danger)'); return; }
+  const b = $('#mCriar'); b.disabled = true;
+  try{ const j = await chamarEquipe(body); toast(j.msg, undefined, 4500); $('#mNome').value=''; $('#mEmail').value=''; $('#mSenha').value=''; carregarEquipe(); }
+  catch(e){ toast(e.message,'var(--danger)', 4500); }
+  finally{ b.disabled = false; }
+};
+
+/* =========================================================
+   Início
+   ========================================================= */
+function iniciarApp(){
+  $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
+  $('#navEquipe').hidden = !eu?.admin || LIV;
+  if(LIV){
+    document.body.classList.add('liv-v2'); document.title = 'Livraria · Movimento Vou Fluir';
+    $$('nav button').forEach(b=>{ b.hidden = !['livros','estoque'].includes(b.dataset.v); });
+    irPara('livros');
+  }
+  renderCtx(); renderLivForm(); renderCarrinho(); atualizarTelas(); sync();
+  // confere se continua na equipe
+  sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(eu.email)).then(m=>{
+    if(!m[0] || !m[0].ativo){ toast('Seu acesso foi removido.','var(--danger)', 4000); sair(); return; }
+    eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu); $('#navEquipe').hidden = !eu.admin || LIV; $('#userBtn').textContent = eu.nome.trim().charAt(0).toUpperCase();
+  }).catch(()=>{});
+}
 window.addEventListener('beforeunload', e=>{ if(carrinho.length || pendentes.length || pedNovos.length || Object.keys(pedPend).length){ e.preventDefault(); e.returnValue=''; } });
+if(sess && eu) iniciarApp(); else mostrarLogin();
 </script>
 </body>
 </html>
