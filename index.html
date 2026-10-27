@@ -288,6 +288,10 @@ nav button{flex:1 0 auto;padding:11px 12px}
 .fotobtn.enviando{opacity:.4;pointer-events:none}
 
 .logo-img{width:40px;height:40px;border-radius:50%;flex:none;display:block;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+
+.pay .doabtn{grid-column:1/-1;background:#f1ecfb}
+.pay .doabtn.on{border-color:#7a55c7;background:#e4daf7}
+.tag.doa{background:#efe7ff;color:#5b3aa8}
 </style>
 </head>
 <body>
@@ -329,12 +333,18 @@ nav button{flex:1 0 auto;padding:11px 12px}
           <button data-m="Débito">💳 Débito</button>
           <button data-m="Crédito">💳 Crédito</button>
           <button data-m="Fiado" class="fiadobtn">📝 Fiado (pagar depois)</button>
+          <button data-m="Doação" class="doabtn">🎁 Doação (a igreja doa)</button>
         </div>
         <div class="cash" id="cash">
           <label for="recebido">Valor recebido</label>
           <input id="recebido" inputmode="decimal" placeholder="0,00">
           <div class="quick" id="quick"></div>
           <div class="troco" id="trocoBox"><span>Troco</span><b id="troco">R$ 0,00</b></div>
+        </div>
+        <div class="cash" id="doacaoBox">
+          <label for="doacaoObs">Para quem / motivo (opcional)</label>
+          <input id="doacaoObs" placeholder="Ex.: visitante, missionário, sorteio" autocomplete="off">
+          <p class="hint" style="margin:6px 0 0">Os itens saem do estoque, mas o valor não entra no total vendido.</p>
         </div>
         <div class="cash" id="fiadoBox">
           <label for="fiadoNome">Nome de quem vai pagar depois</label>
@@ -1027,11 +1037,11 @@ function renderCarrinho(){
 $('#limpar').onclick = async ()=>{ if(carrinho.length && await perguntar('Limpar o pedido?', 'Os itens do pedido atual saem do caixa.', {sim:'Limpar', perigo:true})){ resetPedido(); renderPedidosCaixa(); } };
 function resetPedido(){
   carrinho=[]; metodo=null; $('#recebido').value=''; $$('#pay button').forEach(x=>x.classList.remove('on'));
-  $('#cash').classList.remove('on'); $('#fiadoBox').classList.remove('on'); $('#fiadoNome').value=''; renderCarrinho();
+  $('#cash').classList.remove('on'); $('#fiadoBox').classList.remove('on'); $('#fiadoNome').value=''; $('#doacaoBox').classList.remove('on'); $('#doacaoObs').value=''; renderCarrinho();
 }
 $$('#pay button').forEach(b=>b.onclick=()=>{
   metodo = b.dataset.m; $$('#pay button').forEach(x=>x.classList.toggle('on',x===b));
-  $('#cash').classList.toggle('on', metodo==='Dinheiro'); $('#fiadoBox').classList.toggle('on', metodo==='Fiado');
+  $('#cash').classList.toggle('on', metodo==='Dinheiro'); $('#fiadoBox').classList.toggle('on', metodo==='Fiado'); $('#doacaoBox').classList.toggle('on', metodo==='Doação');
   if(metodo==='Fiado') renderFiadoChips();
   renderCarrinho();
   if(metodo==='Dinheiro') setTimeout(()=>$('#recebido').focus(),50);
@@ -1082,6 +1092,7 @@ $('#finalizar').onclick = ()=>{
     itens: carrinho.map(l=>({pid:l.pid, nome:l.nome, preco:l.preco, qtd:l.qtd, ...(l.pedido?{pedido:l.pedido}:{})})),
     total, metodo, cancelada:false, aparelho, recebido:null, troco:null, pedidos:peds, fiado_nome:null };
   if(metodo==='Dinheiro'){ venda.recebido = num($('#recebido').value); venda.troco = Math.round((venda.recebido-total)*100)/100; }
+  if(metodo==='Doação'){ venda.doacao_obs = limpaNome($('#doacaoObs').value) || null; }
   if(metodo==='Fiado'){
     const nome = limpaNome($('#fiadoNome').value); const ex = contasAbertas().find(c=>c.chave===chaveNome(nome));
     venda.fiado_nome = ex ? ex.nome : nome;            // mesma conta, mesma grafia
@@ -1091,13 +1102,13 @@ $('#finalizar').onclick = ()=>{
   peds.forEach(id=>{ setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}); if(vistos) vistos[id]='pago'; });
   const cart = {}; carrinho.forEach(l=>{ const c=CORES[l.pid]; if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
   const txtCart = Object.entries(cart).map(([n,q])=>`${q} ${n}`).join(', ');
-  toast((metodo==='Fiado' ? `📝 Fiado na conta de ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2400);
+  toast((metodo==='Doação' ? `🎁 Doação registrada · ${brl(total)} em itens${venda.doacao_obs?' · '+venda.doacao_obs:''}` : metodo==='Fiado' ? `📝 Fiado na conta de ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2400);
   resetPedido(); atualizarTelas(); sync();
 };
 
 function renderTopo(){
   if(LIV){ const n = todosPedidos().filter(p=>p.status==='pago').length; $('#hojeQtd').textContent = 'Para entregar'; $('#hojeTotal').textContent = n + (n===1?' pedido':' pedidos'); return; }
-  const ok = todasVendas().filter(v=>!v.cancelada && (ctx!=='perm' || desde(v.ts, hojeISO())));
+  const ok = todasVendas().filter(v=>!v.cancelada && v.metodo!=='Doação' && (ctx!=='perm' || desde(v.ts, hojeISO())));
   if(!master()){ $('#hojeQtd').textContent = 'Neste evento'; $('#hojeTotal').textContent = ok.length + (ok.length===1?' venda':' vendas'); return; }
   $('#hojeQtd').textContent = (ctx==='perm'?'Hoje · ':'') + ok.length + (ok.length===1?' venda':' vendas');
   $('#hojeTotal').textContent = brl(ok.reduce((s,v)=>s+v.total,0));
@@ -1338,7 +1349,7 @@ function renderLivrosListas(){
 /* =========================================================
    Vendas + contas de fiado
    ========================================================= */
-const tagDe = v => v.cancelada ? 'Cancelada' : v.metodo!=='Fiado' ? esc(v.metodo) : v.fiado_pago_em ? `Fiado pago · ${esc(v.fiado_pago_metodo)}` : `📝 Fiado · ${esc(v.fiado_nome)}`;
+const tagDe = v => v.cancelada ? 'Cancelada' : v.metodo==='Doação' ? `🎁 Doação${v.doacao_obs?' · '+esc(v.doacao_obs):''}` : v.metodo!=='Fiado' ? esc(v.metodo) : v.fiado_pago_em ? `Fiado pago · ${esc(v.fiado_pago_metodo)}` : `📝 Fiado · ${esc(v.fiado_nome)}`;
 function htmlContas(contas){
   if(!contas.length) return '';
   return `<div class="fiadobox"><h3>📝 Contas de fiado em aberto <span class="cnt">${contas.length}</span> <span class="ftot">${brl(contas.reduce((s,c)=>s+c.total,0))}</span></h3>
@@ -1358,7 +1369,7 @@ function renderHistorico(){
   if(!lista.length){ el.innerHTML=`<div class="empty card">${ctx==='perm'?'Nenhuma venda hoje na lojinha.':'Nenhuma venda neste evento ainda.'}</div>`; return; }
   el.innerHTML = (ctx==='perm'?'<p class="hint" style="margin:0 0 8px">Vendas de hoje. Para outros dias, veja o Resumo.</p>':'') + [...lista].reverse().map(v=>`
     <div class="sale ${v.cancelada?'cx':''} ${!v.cancelada&&v.metodo==='Fiado'&&!v.fiado_pago_em?'fiado':''}">
-      <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag">${tagDe(v)}</span></div>
+      <div class="h"><b>${v.n?'#'+v.n:'<span class="hint">enviando…</span>'} · ${brl(v.total)}</b><span class="tag ${!v.cancelada&&v.metodo==='Doação'?'doa':''}">${tagDe(v)}</span></div>
       <ul>${v.itens.map(i=>`<li>${i.qtd}× ${esc(i.nome)} — ${brl(i.preco*i.qtd)}</li>`).join('')}</ul>
       <div class="acts"><span>${hora(v.ts)}${v.usuario?' · por '+esc(v.usuario):''}${v.metodo==='Dinheiro'&&v.recebido?` · recebido ${brl(v.recebido)} · troco ${brl(v.troco)}`:''}</span>
       ${v.cancelada?`<button class="link" style="color:var(--accent)" data-r="${v.id}">Reativar</button>`:`<button class="link" data-c="${v.id}">Cancelar</button>`}</div>
@@ -1398,8 +1409,11 @@ $$('#receberModal [data-rm]').forEach(b=>b.onclick=()=>{
    Resumo
    ========================================================= */
 function calcResumo(vendas, prods){
-  const ok = vendas.filter(v=>!v.cancelada);
-  const pag = {}, prod = {}, pessoas = {}, fiados = new Map();
+  const validas = vendas.filter(v=>!v.cancelada);
+  const ok = validas.filter(v=>v.metodo!=='Doação'), doadas = validas.filter(v=>v.metodo==='Doação');
+  const pag = {}, prod = {}, pessoas = {}, fiados = new Map(), doados = {};
+  const nomeItem = i => String(i.pid).startsWith('liv_') ? i.nome : ((prods||[]).find(x=>x.id===i.pid)?.nome || i.nome.split(' – ')[0]);
+  doadas.forEach(v=>v.itens.forEach(i=>{ const n = nomeItem(i); doados[n] = doados[n]||{q:0,t:0}; doados[n].q+=i.qtd; doados[n].t+=i.preco*i.qtd; }));
   ok.forEach(v=>{
     const m = v.metodo==='Fiado' ? (v.fiado_pago_em ? v.fiado_pago_metodo : 'Fiado') : v.metodo;
     pag[m] = pag[m]||{q:0,t:0}; pag[m].q++; pag[m].t+=v.total;
@@ -1413,7 +1427,10 @@ function calcResumo(vendas, prods){
   const r2 = x=>Math.round(x*100)/100;
   return {
     total: r2(ok.reduce((s,v)=>s+v.total,0)), vendas: ok.length, itens: Object.values(prod).reduce((s,x)=>s+x.q,0),
-    canceladas: vendas.length-ok.length,
+    canceladas: vendas.length-validas.length,
+    doacoes: doadas.length, doado_total: r2(doadas.reduce((s,v)=>s+v.total,0)),
+    doados: Object.entries(doados).map(([nome,x])=>({nome, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
+    doacoes_lista: doadas.map(v=>({ts:v.ts, t:r2(v.total), obs:v.doacao_obs||'', por:v.usuario||'', itens:v.itens.map(i=>`${i.qtd}× ${i.nome}`).join(', ')})),
     por_pagamento: Object.entries(pag).map(([forma,x])=>({forma, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
     por_produto: Object.entries(prod).map(([nome,x])=>({nome, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
     por_pessoa: Object.entries(pessoas).map(([nome,x])=>({nome, q:x.q, t:r2(x.t)})).sort((a,b)=>b.t-a.t),
@@ -1431,6 +1448,7 @@ function htmlResumo(r){
       <div class="kpi"><span>Dinheiro em caixa</span><b>${brl(pg['Dinheiro']?.t||0)}</b></div>
       <div class="kpi"><span>Fiado a receber</span><b>${brl(fiadoAb)}</b></div>
       <div class="kpi"><span>Ticket médio</span><b>${brl(r.vendas?r.total/r.vendas:0)}</b></div>
+      ${r.doacoes?`<div class="kpi"><span>🎁 Doado (valor dos itens)</span><b>${brl(r.doado_total)}</b></div>`:''}
     </div>
     <div class="card"><h3 style="margin:0 0 8px">Por forma de pagamento</h3><table>
       <tr><th>Forma</th><th class="r">Vendas</th><th class="r">Valor</th></tr>
@@ -1438,6 +1456,9 @@ function htmlResumo(r){
       <tr><td><b>Total</b></td><td class="r"><b>${r.vendas}</b></td><td class="r"><b>${brl(r.total)}</b></td></tr></table></div>
     ${(r.por_pessoa||[]).length?`<div class="card"><h3 style="margin:0 0 8px">Por quem vendeu</h3><table><tr><th>Pessoa</th><th class="r">Vendas</th><th class="r">Valor</th></tr>
       ${r.por_pessoa.map(x=>`<tr><td>${esc(x.nome)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('')}</table></div>`:''}
+    ${r.doacoes?`<div class="card"><h3 style="margin:0 0 4px">🎁 Doações</h3><p class="hint" style="margin:0 0 8px">${r.doacoes} doaç${r.doacoes>1?'ões':'ão'} · ${brl(r.doado_total)} em itens. Não entram no total vendido.</p>
+      <table><tr><th>Item doado</th><th class="r">Qtd</th><th class="r">Valor</th></tr>${(r.doados||[]).map(x=>`<tr><td>${esc(x.nome)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('')}</table>
+      ${(r.doacoes_lista||[]).some(d=>d.obs)?`<ul class="movs" style="margin-top:8px">${r.doacoes_lista.filter(d=>d.obs).map(d=>`<li>${dataBR(d.ts)} · ${esc(d.obs)} — ${esc(d.itens)}${d.por?' · por '+esc(d.por):''}</li>`).join('')}</ul>`:''}</div>`:''}
     <div class="card"><h3 style="margin:0 0 8px">Por produto</h3><div style="overflow-x:auto"><table><tr><th>Produto</th><th class="r">Qtd</th><th class="r">Valor</th></tr>
       ${(r.por_produto||[]).length ? r.por_produto.map(x=>`<tr><td>${esc(x.nome)}</td><td class="r">${x.q}</td><td class="r">${brl(x.t)}</td></tr>`).join('') : '<tr><td colspan="3" class="hint">Sem vendas</td></tr>'}</table></div></div>`;
 }
@@ -1463,11 +1484,11 @@ async function renderResumo(){
   $('#resumoBox').innerHTML = htmlResumo(calcResumo(vendas, produtos));
 }
 function baixarCSV(vendas, nomeArq){
-  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Fiado – nome','Fiado – situação','Vendido por','Aparelho']];
+  const linhas = [['Venda','Data','Hora','Item','Qtd','Preço unit.','Subtotal','Pagamento','Total da venda','Status','Fiado – nome','Fiado – situação','Doação – para quem/motivo','Vendido por','Aparelho']];
   vendas.forEach(v=>{ const d = new Date(v.ts);
     v.itens.forEach(i=>linhas.push([v.n||'pendente', d.toLocaleDateString('pt-BR'), hora(v.ts), i.nome, i.qtd, (+i.preco).toFixed(2).replace('.',','), (i.preco*i.qtd).toFixed(2).replace('.',','), v.metodo,
       (+v.total).toFixed(2).replace('.',','), v.cancelada?'Cancelada':'OK', v.fiado_nome||'',
-      v.metodo==='Fiado' ? (v.fiado_pago_em ? `Pago (${v.fiado_pago_metodo}) ${new Date(v.fiado_pago_em).toLocaleString('pt-BR')}` : 'Em aberto') : '', v.usuario||'', v.aparelho||''])); });
+      v.metodo==='Fiado' ? (v.fiado_pago_em ? `Pago (${v.fiado_pago_metodo}) ${new Date(v.fiado_pago_em).toLocaleString('pt-BR')}` : 'Em aberto') : '', v.doacao_obs||'', v.usuario||'', v.aparelho||''])); });
   const csv = '﻿' + linhas.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download = nomeArq; document.body.appendChild(a); a.click(); a.remove();
 }
