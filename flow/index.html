@@ -178,6 +178,16 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .agitem:last-child{border-bottom:0}
 .agitem .info{flex:1;min-width:0;font-size:15px}
 .agitem.edit{display:block}
+
+.msec{scroll-margin-top:118px}
+.pular{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+.pular .ir{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600;color:var(--ink);border-left:5px solid var(--accent)}
+.pular .ir.m-hospitalidade{border-left-color:#e98a5a}.pular .ir.m-louvor{border-left-color:#7a55c7}.pular .ir.m-som{border-left-color:#2a9d8f}.pular .ir.m-transmissao{border-left-color:#3a7bd5}.pular .ir.m-programa{border-left-color:var(--brand)}
+.pular .ir.meu{background:var(--brand);color:#fff;border-color:var(--brand)}
+.voz{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:8px}
+.voz input{width:18px;height:18px}
+.chipsel small{font-weight:500;opacity:.7}
+.chipsel small.habs{font-size:12px}
 </style>
 </head>
 <body>
@@ -251,6 +261,7 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <input id="pNome" class="field" placeholder="Ex.: H. Welter" autocomplete="off">
       <div class="lb">Ministérios</div>
       <div class="chips" id="pMins"></div>
+      <div id="pHabs"></div>
       <button class="go" id="pAdd" type="button">Adicionar</button>
     </div>
     <div class="card">
@@ -286,6 +297,7 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <input id="peTel" class="field" inputmode="tel" autocomplete="off">
     <div class="lb">Ministérios</div>
     <div class="chips" id="peMins"></div>
+    <div id="peHabs"></div>
     <div class="card" style="margin:14px 0 0;background:#f7fafc">
       <b>Acesso ao app</b>
       <div id="peAcesso"></div>
@@ -344,9 +356,7 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 
 <div id="render" style="position:fixed;left:-10000px;top:0"></div>
 <div class="toast" id="toast"></div>
-
-<script>
-/* =========================================================
+<script>/* =========================================================
    Flow · Cultos — Movimento Vou Fluir
    Cada ministério preenche a sua parte do culto; a pastora completa
    a programação e gera o PDF no formato do Flow.
@@ -359,6 +369,8 @@ const MOMENTOS = [['louvor','Louvor (início)'],['ceia','Santa Ceia'],['oferta',
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
+const HABS = [['bateria','Bateria'],['violao','Violão'],['baixo','Baixo'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
+const habNome = h => (HABS.find(x=>x[0]===h)||[h,h])[1];
 const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
@@ -475,6 +487,9 @@ if(!D.agenda) D.agenda = [];
 const minis = ()=> [...D.ministerios].sort((a,b)=>a.ordem-b.ordem);
 const minNome = id => D.ministerios.find(m=>m.id===id)?.nome || id;
 const membrosDe = mid => D.mp.filter(x=>x.ministerio_id===mid).map(x=>D.pessoas.find(p=>p.id===x.pessoa_id)).filter(p=>p && p.ativo).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+const habsDe = (pid, mid) => D.mp.find(x=>x.pessoa_id===pid && x.ministerio_id===mid)?.habilidades || [];
+const usaHabs = mid => (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).some(f=>f.hab);
+const rotuloFn = (fn, f) => fn.nome + (fn.voz_opcional && f?.voz ? ' / Voz' : '');
 const minsDe = pid => D.mp.filter(x=>x.pessoa_id===pid).map(x=>x.ministerio_id);
 const euPessoa = ()=> D.pessoas.find(p=>p.email && p.email===eu?.email);
 const meusMins = ()=> { const p = euPessoa(); return p ? minsDe(p.id) : []; };
@@ -562,7 +577,7 @@ $('#addCulto').onclick = async ()=>{
 /* =========================================================
    Detalhe do culto
    ========================================================= */
-let rasc = {};   // rascunho em edição: {programa, [mid]: dados}
+let rasc = {}, verTodos = new Set();   // rascunho em edição: {programa, [mid]: dados}
 function programaPadrao(data){
   const ant = [...D.cultos].filter(c=>c.programa && c.data<data).sort((a,b)=>b.data.localeCompare(a.data))[0];
   const base = ant?.programa ? JSON.parse(JSON.stringify(ant.programa)) : {
@@ -587,7 +602,7 @@ function dadosVazios(mid){
   return mid==='louvor' ? {funcoes:f, responsavel:'', musicas:[]} : {funcoes:f, obs:''};
 }
 async function abrirCulto(data){
-  dataAberta = data; sujo = false;
+  dataAberta = data; sujo = false; verTodos = new Set();
   try{ await carregarTudo(); }catch(e){}
   rasc = {programa: JSON.parse(JSON.stringify(cultoDe(data)?.programa || programaPadrao(data)))};
   rasc.programa.blocos.forEach(b=>{ if(b.tipo==='avisos' && !Array.isArray(b.agenda)) b.agenda = agendaPadrao(data); });
@@ -604,7 +619,9 @@ function renderCulto(){
   const ordem = ['programa', ...minis().map(m=>m.id)];
   // quem não é admin vê primeiro o próprio ministério
   if(!eu.admin){ const meus = meusMins(); ordem.sort((a,b)=> (meus.includes(b)?1:0) - (meus.includes(a)?1:0)); }
-  $('#dSecoes').innerHTML = ordem.map(id=> id==='programa' ? secPrograma() : secMinisterio(id)).join('');
+  const meus = meusMins();
+  const atalhos = `<div class="pular"><span class="hint">Ir para:</span>${ordem.map(id=>{ const nm = id==='programa' ? 'Programação' : minNome(id); const meu = meus.includes(id) || (id==='programa' && eu.admin); return `<button type="button" class="ir ${meu?'meu':''} m-${id}" data-ir="${id}">${meu&&id!=='programa'?'★ ':''}${esc(nm)}</button>`; }).join('')}</div>`;
+  $('#dSecoes').innerHTML = atalhos + ordem.map(id=> id==='programa' ? secPrograma() : secMinisterio(id)).join('');
   ligarCulto();
   const tt = $('#tipoToggle'); if(tt) tt.onclick = trocarTipo;
 }
@@ -629,10 +646,17 @@ function secMinisterio(mid){
         <div class="outro"><input data-respoutro placeholder="Outra pessoa (digite o nome)" value=""><button type="button" class="btn" data-respok>Usar</button></div></div>`;
     }
     corpo += (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
+      // quem tem a habilidade (ou ainda não tem nada marcado) aparece direto; o resto fica em "ver todos"
+      const serve = p => !fn.hab || !habsDe(p.id, mid).length || habsDe(p.id, mid).includes(fn.hab);
+      const todos = verTodos.has(mid+':'+fn.id);
+      const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
+      const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !hs.includes(fn.hab) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
       return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${mid!=='hospitalidade'?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
-        <div class="chips">${membros.map(p=>`<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
+        <div class="chips">${vis.map(chip).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
-        <button type="button" class="chipsel add" data-outro="${fn.id}">+ outro</button></div></div>`; }).join('');
+        ${escondidos ? `<button type="button" class="chipsel add" data-todos="${fn.id}">ver todos (+${escondidos})</button>` : (todos && membros.some(p=>!serve(p)) ? `<button type="button" class="chipsel add" data-todos="${fn.id}">só quem toca</button>` : '')}
+        <button type="button" class="chipsel add" data-outro="${fn.id}">+ outro</button></div>
+        ${fn.voz_opcional ? `<label class="voz"><input type="checkbox" data-voz="${fn.id}" ${f.voz?'checked':''}> Também canta (fica “${esc(fn.nome)} / Voz” no Flow)</label>` : ''}</div>`; }).join('');
     if(mid==='louvor'){
       corpo += `<div class="func"><div class="fh"><b>Músicas</b><span class="hint">com o tom</span></div>
         ${(r.musicas||[]).map((mu,i)=>`<div class="mus">
@@ -651,7 +675,7 @@ function secMinisterio(mid){
 }
 function leituraMin(mid, r){
   const m = D.ministerios.find(x=>x.id===mid);
-  const linhas = (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id]||{pessoas:[]}; return `<tr><td><b>${esc(fn.nome)}</b></td><td>${f.pessoas.length?esc(f.pessoas.join(' / ')):'<span class="vazio">—</span>'}</td><td class="r">${esc(f.chegada||'')}</td></tr>`; }).join('');
+  const linhas = (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id]||{pessoas:[]}; return `<tr><td><b>${esc(rotuloFn(fn, f))}</b></td><td>${f.pessoas.length?esc(f.pessoas.join(' / ')):'<span class="vazio">—</span>'}</td><td class="r">${esc(f.chegada||'')}</td></tr>`; }).join('');
   let h = '';
   if(mid==='louvor') h += `<p class="leit" style="margin:0 0 6px"><b>Responsável do dia:</b> ${r.responsavel?esc(r.responsavel):'<span class="vazio">—</span>'}</p>`;
   h += `<table class="leitab">${linhas}</table>`;
@@ -665,7 +689,7 @@ function secPrograma(){
   const p = rasc.programa, reg = cultoDe(dataAberta)?.programa ? cultoDe(dataAberta) : null, ceia = tipoDe(dataAberta)==='ceia';
   if(!eu.admin){
     const ativos = p.blocos.filter(b=>b.ativo!==false && (b.tipo!=='ceia' || ceia));
-    return `<div class="card msec m-programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
+    return `<div class="card msec m-programa" data-sec="programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
       ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}${b.tipo==='avisos'?linhasAvisos(b,dataAberta).map(t=>`<div class="hint">• ${esc(t)}</div>`).join(''):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
   }
   const blocos = p.blocos.map((b,i)=>{
@@ -711,7 +735,13 @@ function ligarCulto(){
   box.querySelectorAll('input,textarea,select').forEach(x=>x.addEventListener('input', marcarSujo));
   // escalas
   box.querySelectorAll('[data-fn]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const f = rasc[mid].funcoes[b.dataset.fn]; const n = b.dataset.p;
-    f.pessoas = f.pessoas.includes(n) ? f.pessoas.filter(x=>x!==n) : [...f.pessoas, n]; marcarSujo(); redesenhar(mid); });
+    const entra = !f.pessoas.includes(n); f.pessoas = entra ? [...f.pessoas, n] : f.pessoas.filter(x=>x!==n);
+    const fn = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).find(x=>x.id===b.dataset.fn);
+    if(fn?.voz_opcional && entra && f.pessoas.length===1){ const p = membrosDe(mid).find(x=>x.nome===n); f.voz = !!p && habsDe(p.id, mid).includes('voz'); }
+    marcarSujo(); redesenhar(mid); });
+  box.querySelectorAll('[data-todos]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const k = mid+':'+b.dataset.todos; verTodos.has(k) ? verTodos.delete(k) : verTodos.add(k); redesenhar(mid); });
+  box.querySelectorAll('[data-voz]').forEach(c=>c.onchange=()=>marcarSujo());
+  box.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>$(`[data-sec="${b.dataset.ir}"]`)?.scrollIntoView({behavior:'smooth', block:'start'}));
   box.querySelectorAll('[data-outro]').forEach(b=>b.onclick=async ()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid);
     const n = limpa(await perguntar('Outra pessoa', 'Digite o nome de quem vai estar nessa função (pode ser alguém de fora do ministério).', {sim:'Incluir', input:{ph:'Nome'}})); if(!n) return;
     const f = rasc[mid].funcoes[b.dataset.outro]; if(!f.pessoas.includes(n)) f.pessoas.push(n); marcarSujo(); redesenhar(mid); });
@@ -739,6 +769,7 @@ function redesenhar(id){
 function lerSecao(mid){
   const el = $(`[data-sec="${mid}"]`); if(!el) return; const r = rasc[mid];
   el.querySelectorAll('[data-cheg]').forEach(i=>{ (r.funcoes[i.dataset.cheg] ||= {pessoas:[], chegada:''}).chegada = limpa(i.value); });
+  el.querySelectorAll('[data-voz]').forEach(i=>{ (r.funcoes[i.dataset.voz] ||= {pessoas:[], chegada:''}).voz = i.checked; });
   el.querySelectorAll('[data-mtit]').forEach(i=>{ r.musicas[+i.dataset.mtit].titulo = limpa(i.value); });
   el.querySelectorAll('[data-mtom]').forEach(i=>{ r.musicas[+i.dataset.mtom].tom = limpa(i.value); });
   el.querySelectorAll('[data-mmom]').forEach(i=>{ r.musicas[+i.dataset.mmom].momento = i.value; });
@@ -808,7 +839,7 @@ function folhaHtml(data){
   const tab = `<table class="tab"><tr><th></th><th>Responsável</th><th>Hora para chegar</th></tr>
     ${(D.ministerios.find(m=>m.id==='som')?.funcoes||[]).map(f=>linha('som', f.nome, nomes(S,f.id), S.funcoes?.[f.id]?.chegada)).join('')}
     <tr class="gap"><td colspan="3"></td></tr>
-    ${fnsLouvor.map(f=>linha('lv', f.nome, nomes(L,f.id), L.funcoes?.[f.id]?.chegada)).join('')}
+    ${fnsLouvor.map(f=>linha('lv', rotuloFn(f, L.funcoes?.[f.id]), nomes(L,f.id), L.funcoes?.[f.id]?.chegada)).join('')}
     <tr class="gap"><td colspan="3"></td></tr>
     ${(D.ministerios.find(m=>m.id==='transmissao')?.funcoes||[]).map(f=>linha('tr', f.nome, nomes(T,f.id), T.funcoes?.[f.id]?.chegada)).join('')}</table>`;
   const c = cultoDe(data);
@@ -916,7 +947,7 @@ function renderMinisterios(){
       ${(m.funcoes||[]).map((f,i)=>`<div class="funcrow"><input data-fnn="${i}" value="${esc(f.nome)}" aria-label="Função"><input data-fnc="${i}" value="${esc(f.chegada||'')}" placeholder="chegada" aria-label="Chegada"><button type="button" class="link red" data-fnd="${i}" aria-label="Apagar função">✕</button></div>`).join('')}
       <div class="row" style="margin-top:10px"><button type="button" class="btn" data-fnadd>+ Função</button><button type="button" class="btn dark" data-fnsave>Salvar funções</button><button type="button" class="link" data-fncancel style="color:var(--muted)">Cancelar</button></div></div>`;
     return `<div class="card msec m-${m.id}"><div class="mhead"><h3 style="margin:0">${esc(m.nome)}</h3><span class="hint">${membros.length} pessoa${membros.length===1?'':'s'}</span></div>
-      <div class="chips" style="margin-top:10px">${membros.map(p=>`<span class="chipsel" style="cursor:default">${esc(p.nome)}${p.email?' 🔑':''}</span>`).join('') || '<span class="hint">Ninguém cadastrado ainda.</span>'}</div>
+      <div class="chips" style="margin-top:10px">${membros.map(p=>{ const hs = habsDe(p.id, m.id); return `<span class="chipsel" style="cursor:default">${esc(p.nome)}${p.email?' 🔑':''}${hs.length?` <small class="habs">${esc(hs.map(habNome).join(', '))}</small>`:''}</span>`; }).join('') || '<span class="hint">Ninguém cadastrado ainda.</span>'}</div>
       <div class="hint" style="margin-top:8px">Funções: ${(m.funcoes||[]).map(f=>esc(f.nome)).join(' · ')}</div>
       ${eu.admin?`<div class="row" style="margin-top:10px"><button type="button" class="btn" data-mgerir="${m.id}">Pessoas do ministério</button><button type="button" class="btn" data-mfun="${m.id}">Editar funções</button></div>`:''}</div>`;
   }).join('') + (eu.admin?'<p class="hint">🔑 = tem acesso ao app e pode preencher a parte do ministério.</p>':'');
@@ -938,10 +969,15 @@ function renderMinisterios(){
 /* =========================================================
    Pessoas e acessos (admin)
    ========================================================= */
-let pFiltroMin = null, novoMins = new Set();
+let pFiltroMin = null, novoMins = new Set(), novoHabs = {};
+function habsEditor(mids, habs, attr){
+  return [...mids].filter(usaHabs).map(mid=>`<div class="habbox"><div class="lb" style="margin-top:8px">No ${esc(minNome(mid))}: o que faz? (pode marcar mais de um)</div><div class="chips">${HABS.map(([k,t])=>`<button type="button" class="chipsel ${(habs[mid]||new Set()).has(k)?'on':''}" data-${attr}="${mid}:${k}">${t}</button>`).join('')}</div></div>`).join('');
+}
+function ligaHabs(attr, habs, redraw){ $$(`[data-${attr}]`).forEach(b=>b.onclick=()=>{ const [mid,k] = b.dataset[attr].split(':'); const s = habs[mid] ||= new Set(); s.has(k) ? s.delete(k) : s.add(k); redraw(); }); }
 function renderPessoas(){
   if(!eu.admin){ irPara('cultos'); return; }
   $('#pMins').innerHTML = minis().map(m=>`<button type="button" class="chipsel ${novoMins.has(m.id)?'on':''}" data-nm="${m.id}">${esc(m.nome)}</button>`).join('');
+  $('#pHabs').innerHTML = habsEditor(novoMins, novoHabs, 'nh'); ligaHabs('nh', novoHabs, renderPessoas);
   $$('[data-nm]').forEach(b=>b.onclick=()=>{ novoMins.has(b.dataset.nm) ? novoMins.delete(b.dataset.nm) : novoMins.add(b.dataset.nm); renderPessoas(); });
   const q = semAcento($('#pBusca').value.trim());
   let lista = D.pessoas.filter(p=>!q || semAcento(p.nome).includes(q) || semAcento(p.email).includes(q));
@@ -950,7 +986,7 @@ function renderPessoas(){
   $('#pLista').innerHTML = (pFiltroMin?`<div class="row" style="margin-top:8px"><span class="tag">Só ${esc(minNome(pFiltroMin))}</span><button type="button" class="link" id="pTiraFiltro">ver todas</button></div>`:'') +
     (lista.map(p=>`<div class="pessoa ${p.ativo?'':'off'}"><div class="info"><b>${esc(p.nome)}${p.email?' 🔑':''}</b>
       <small>${p.email?esc(p.email):'sem acesso ao app'}${p.ativo?'':' · inativa'}</small>
-      <div class="mtags">${minsDe(p.id).map(id=>`<span>${esc(minNome(id))}</span>`).join('')}</div></div>
+      <div class="mtags">${minsDe(p.id).map(id=>{ const hs = habsDe(p.id, id); return `<span>${esc(minNome(id))}${hs.length?': '+esc(hs.map(habNome).join(', ')):''}</span>`; }).join('')}</div></div>
       <button type="button" class="btn" data-pe="${p.id}">Editar</button></div>`).join('') || '<p class="hint">Ninguém encontrado.</p>');
   $$('[data-pe]').forEach(b=>b.onclick=()=>abrirPessoa(b.dataset.pe));
   const tf = $('#pTiraFiltro'); if(tf) tf.onclick = ()=>{ pFiltroMin=null; renderPessoas(); };
@@ -961,19 +997,20 @@ $('#pAdd').onclick = async ()=>{
   if(D.pessoas.some(p=>semAcento(p.nome)===semAcento(nome)) && !(await perguntar('Nome repetido', `Já existe alguém chamado "${nome}". Cadastrar outra pessoa com o mesmo nome?`, {sim:'Cadastrar'}))) return;
   try{
     const [p] = await sb('/fl_pessoas', {method:'POST', headers:{Prefer:'return=representation'}, body:JSON.stringify({nome})});
-    if(novoMins.size) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify([...novoMins].map(m=>({ministerio_id:m, pessoa_id:p.id})))});
-    $('#pNome').value=''; novoMins = new Set(); await carregarTudo(); renderPessoas(); toast(`${nome} adicionada`);
+    if(novoMins.size) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify([...novoMins].map(m=>({ministerio_id:m, pessoa_id:p.id, habilidades:usaHabs(m)?[...(novoHabs[m]||[])]:[]})))});
+    $('#pNome').value=''; novoMins = new Set(); novoHabs = {}; await carregarTudo(); renderPessoas(); toast(`${nome} adicionada`);
   }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
 };
-let peId = null, peMins = new Set();
+let peId = null, peMins = new Set(), peHabs = {};
 async function abrirPessoa(id){
-  peId = id; const p = D.pessoas.find(x=>x.id===id); peMins = new Set(minsDe(id));
+  peId = id; const p = D.pessoas.find(x=>x.id===id); peMins = new Set(minsDe(id)); peHabs = Object.fromEntries(minsDe(id).map(m=>[m, new Set(habsDe(id, m))]));
   $('#peTitulo').textContent = p.nome; $('#peNome').value = p.nome; $('#peTel').value = p.telefone||'';
   desenharPeMins(); await desenharAcesso(p); $('#pesModal').classList.add('on');
 }
 function desenharPeMins(){
   $('#peMins').innerHTML = minis().map(m=>`<button type="button" class="chipsel ${peMins.has(m.id)?'on':''}" data-pm="${m.id}">${esc(m.nome)}</button>`).join('');
   $$('[data-pm]').forEach(b=>b.onclick=()=>{ peMins.has(b.dataset.pm) ? peMins.delete(b.dataset.pm) : peMins.add(b.dataset.pm); desenharPeMins(); });
+  $('#peHabs').innerHTML = habsEditor(peMins, peHabs, 'ph'); ligaHabs('ph', peHabs, desenharPeMins);
 }
 async function chamarEquipe(body){
   const r = await fetch(SB+'/functions/v1/vf-equipe', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+await tokenValido(), 'Content-Type':'application/json'}, body:JSON.stringify(body)});
@@ -1023,7 +1060,9 @@ $('#peSalvar').onclick = async ()=>{
     await sb('/fl_pessoas?id=eq.'+p.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({nome, telefone:limpa($('#peTel').value)||null})});
     const antes = new Set(minsDe(p.id));
     const add = [...peMins].filter(m=>!antes.has(m)), del = [...antes].filter(m=>!peMins.has(m));
-    if(add.length) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(add.map(m=>({ministerio_id:m, pessoa_id:p.id})))});
+    const hab = m => usaHabs(m) ? [...(peHabs[m]||[])].sort() : [];
+    if(add.length) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(add.map(m=>({ministerio_id:m, pessoa_id:p.id, habilidades:hab(m)})))});
+    for(const m of [...peMins].filter(m=>antes.has(m) && usaHabs(m))){ const h = hab(m); if(h.join() !== [...habsDe(p.id, m)].sort().join()) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({habilidades:h})}); }
     for(const m of del) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'DELETE'});
     await carregarTudo(); $('#pesModal').classList.remove('on'); renderPessoas(); toast('Pessoa salva');
   }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
