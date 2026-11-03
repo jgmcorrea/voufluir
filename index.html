@@ -725,8 +725,8 @@ async function sb(path, opt={}, tentativa=0){
 async function entrar(email, senha){
   const j = await authReq('token?grant_type=password', {email, password:senha});
   guardaSessao(j);
-  const m = await sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(sess.email));
-  if(!m || !m[0] || !m[0].ativo){ const e = new Error('Seu e-mail ainda não tem acesso ao caixa. Peça ao responsável para cadastrar você.'); sair(true); throw e; }
+  const m = await sb('/vf_membros?select=email,nome,admin,ativo,caixa&email=eq.'+encodeURIComponent(sess.email));
+  if(!m || !m[0] || !m[0].ativo || !(m[0].admin || m[0].caixa)){ const e = new Error('Seu e-mail ainda não tem acesso ao caixa. Peça ao responsável para cadastrar você.'); sair(true); throw e; }
   eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu);
 }
 function sair(silencioso){
@@ -1662,7 +1662,7 @@ async function chamarEquipe(body){
 }
 async function carregarEquipe(){
   try{
-    const ms = await sb('/vf_membros?select=*&order=nome.asc');
+    const ms = (await sb('/vf_membros?select=*&order=nome.asc')).filter(m=>m.admin || m.caixa || !m.ativo);
     $('#mLista').innerHTML = ms.map(m=>`<div class="membro ${m.ativo?'':'off'}"><div class="info"><b>${esc(m.nome)}${m.admin?' · <span class="tag">admin</span>':''}</b><small>${esc(m.email)}${m.ativo?'':' · sem acesso'}</small></div>
       <button class="btn" data-msenha="${esc(m.email)}">Nova senha</button>
       ${m.email!==eu?.email?`<button class="btn ${m.ativo?'red':''}" data-mativo="${esc(m.email)}" data-v="${m.ativo?0:1}">${m.ativo?'Tirar acesso':'Devolver acesso'}</button>`:''}</div>`).join('');
@@ -1678,7 +1678,7 @@ async function carregarEquipe(){
   }catch(e){ $('#mLista').innerHTML = '<p class="hint">Sem conexão.</p>'; }
 }
 $('#mCriar').onclick = async ()=>{
-  const body = {acao:'criar', nome:limpaNome($('#mNome').value), email:$('#mEmail').value.trim().toLowerCase(), senha:$('#mSenha').value, admin:$('#mAdmin').value==='1'};
+  const body = {acao:'criar', nome:limpaNome($('#mNome').value), email:$('#mEmail').value.trim().toLowerCase(), senha:$('#mSenha').value, admin:$('#mAdmin').value==='1', caixa:true};
   if(!body.nome || !body.email){ toast('Preencha nome e e-mail','var(--danger)'); return; }
   const b = $('#mCriar'); b.disabled = true;
   try{ const j = await chamarEquipe(body); toast(j.msg, undefined, 4500); $('#mNome').value=''; $('#mEmail').value=''; $('#mSenha').value=''; carregarEquipe(); }
@@ -1695,8 +1695,8 @@ function iniciarApp(){
   if(!master() && ctx==='perm'){ const ab = abertosVisiveis()[0]; if(ab){ ctx = ab.id; save(K.ctx, ctx); produtos = produtosCtx(); } }
   renderCtx(); renderLivForm(); renderCarrinho(); atualizarTelas(); sync();
   // confere se continua na equipe
-  sb('/vf_membros?select=email,nome,admin,ativo&email=eq.'+encodeURIComponent(eu.email)).then(m=>{
-    if(!m[0] || !m[0].ativo){ toast('Seu acesso foi removido.','var(--danger)', 4000); sair(); return; }
+  sb('/vf_membros?select=email,nome,admin,ativo,caixa&email=eq.'+encodeURIComponent(eu.email)).then(m=>{
+    if(!m[0] || !m[0].ativo || !(m[0].admin || m[0].caixa)){ toast('Seu acesso foi removido.','var(--danger)', 4000); sair(); return; }
     eu = {email:m[0].email, nome:m[0].nome, admin:!!m[0].admin}; save(K.eu, eu); ajustarNav(); if(evDetalheId===null && $('#v-eventos').classList.contains('on')) renderEventos(); $('#userBtn').textContent = eu.nome.trim().charAt(0).toUpperCase();
   }).catch(()=>{});
 }

@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#0b1f33">
+<title>Flow · Movimento Vou Fluir</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#f3f6f9; --card:#ffffff; --ink:#0b1f33; --muted:#5d7085; --line:#dfe6ee;
+  --brand:#0b1f33; --accent:#13a6c4; --accent2:#3fd0b5; --danger:#d9434e; --ok:#1f9d6b; --warn:#e0a000;
+  --chip:#e9f6f9; --teal:#1f5f73;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+[hidden]{display:none!important}
+header{background:linear-gradient(120deg,var(--brand) 0%,#123a5c 60%,#0f6f8a 100%);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:20}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:900px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-img{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.logo h1{font-size:17px;margin:0;line-height:1.1;font-weight:700}
+.logo small{display:block;font-size:12px;opacity:.8}
+.userbtn{background:rgba(255,255,255,.14);color:#fff;border-radius:999px;width:34px;height:34px;font-weight:700;font-size:14px;flex:none}
+nav{display:flex;gap:4px;max-width:900px;margin:12px auto 0;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;background:transparent;color:#cfe3ee;padding:11px 12px;font-size:15px;font-weight:600;border-radius:12px 12px 0 0}
+nav button.on{background:var(--bg);color:var(--ink)}
+main{max-width:900px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 4px;font-size:17px}
+.hint{font-size:13px;color:var(--muted)}
+.secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 8px;font-weight:600}
+.btn{padding:11px 14px;border-radius:12px;background:var(--chip);color:var(--ink);font-weight:600;font-size:15px}
+.btn.dark{background:var(--brand);color:#fff}
+.btn.red{background:#fde8ea;color:var(--danger)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn:disabled{opacity:.5}
+.btn:focus-visible,.chipsel:focus-visible,.culto:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.link{background:none;color:var(--accent);font-size:14px;font-weight:600;padding:4px}
+.link.red{color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+textarea.field{min-height:64px;resize:vertical;line-height:1.4}
+label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.go{width:100%;margin-top:12px;padding:15px;border-radius:14px;background:linear-gradient(120deg,var(--accent),var(--accent2));color:#fff;font-size:17px;font-weight:700}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);font-weight:600;white-space:nowrap}
+.tag.ceia{background:#fbe8d2;color:#8a4b00}
+.tag.esp{background:#efe7ff;color:#5b3aa8}
+
+/* Lista de cultos */
+.culto{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;color:var(--ink)}
+.culto .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.culto .h b{font-size:17px}
+.culto .st{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.st span{font-size:12.5px;font-weight:600;border-radius:999px;padding:4px 10px;background:#fff4dd;color:#7a5a00}
+.st span.ok{background:#e3f6ec;color:#16784f}
+.culto.hoje{border:2px solid var(--accent)}
+
+/* Detalhe */
+.voltar{background:none;color:var(--accent);font-weight:600;font-size:15px;padding:4px 0;margin-bottom:6px}
+.dethead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.dethead h2{margin:0;font-size:22px;text-wrap:balance}
+.msec{border-left:5px solid var(--accent)}
+.msec.m-hospitalidade{border-left-color:#e98a5a}
+.msec.m-louvor{border-left-color:#7a55c7}
+.msec.m-som{border-left-color:#2a9d8f}
+.msec.m-transmissao{border-left-color:#3a7bd5}
+.msec.m-programa{border-left-color:var(--brand)}
+.mhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.por{font-size:12px;color:var(--muted);margin-top:2px}
+.func{border-top:1px dashed var(--line);padding:10px 0}
+.func:first-of-type{border-top:0}
+.func .fh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.func .fh b{font-size:15px}
+.chega{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.chega input{width:78px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipsel{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600;color:var(--ink)}
+.chipsel.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.chipsel.add{border-style:dashed;color:var(--muted)}
+.outro{display:flex;gap:6px;margin-top:6px}
+.outro input{flex:1;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:10px}
+.leit{font-size:15px;line-height:1.5}
+.leit .vazio{color:var(--muted);font-style:italic}
+.leitab{width:100%;border-collapse:collapse;font-size:14px}
+.leitab td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.leitab td.r{text-align:right;white-space:nowrap;color:var(--muted)}
+.mus{display:grid;grid-template-columns:118px 1fr 64px 28px;gap:6px;align-items:center;margin-top:6px}
+.mus select,.mus input{width:100%;min-width:0;padding:9px 8px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+@media(max-width:480px){.mus{grid-template-columns:1fr 64px 28px}.mus select{grid-column:1/-1}}
+.bloco{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:#fbfcfd}
+.bloco.off{opacity:.55}
+.bloco .bh{display:grid;grid-template-columns:70px 1fr auto;gap:6px;align-items:center}
+.bloco input,.bloco textarea{width:100%;min-width:0;padding:9px 8px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+.bloco .auto{font-size:13px;color:var(--muted);margin-top:6px}
+.bloco .ordem{display:flex;gap:4px}
+.bloco .ordem button{width:30px;height:30px;border-radius:8px;background:var(--chip);font-weight:700}
+.horas{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sticky-save{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+
+/* Ministérios e pessoas */
+.pessoa{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.pessoa .info{flex:1;min-width:0}
+.pessoa b{display:block}
+.pessoa small{color:var(--muted)}
+.mtags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.mtags span{font-size:11.5px;background:var(--chip);border-radius:999px;padding:2px 8px;font-weight:600}
+.funcrow{display:grid;grid-template-columns:1fr 80px 28px;gap:6px;margin-top:6px}
+.funcrow input{width:100%;min-width:0;padding:9px 8px;border:1px solid var(--line);border-radius:10px;font-size:14px}
+
+/* Modal / toast / login */
+.modal{position:fixed;inset:0;background:rgba(11,31,51,.55);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.modal.on{display:flex}
+@media(min-width:600px){.modal{align-items:center}}
+.sheet{background:#fff;width:100%;max-width:460px;border-radius:20px 20px 0 0;padding:20px;max-height:92vh;overflow:auto}
+@media(min-width:600px){.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 10px;font-size:20px}
+.sheet.largo{max-width:880px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140px);background:var(--ok);color:#fff;padding:14px 22px;border-radius:14px;font-weight:600;font-size:15px;transition:transform .25s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.2);max-width:92vw}
+.toast.on{transform:translateX(-50%) translateY(0)}
+#login{position:fixed;inset:0;background:var(--bg);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+#login.on{display:flex}
+#login .box{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;width:100%;max-width:380px}
+#login h2{margin:12px 0 4px;font-size:22px}
+#login .erro{color:var(--danger);font-size:14px;min-height:20px;margin-top:10px}
+.prevwrap{overflow:auto;background:#e9eef3;border-radius:12px;padding:10px;max-height:62vh}
+.prevwrap .pg{transform-origin:top left}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+
+/* ---------- Folha do Flow (A4, 794 x 1123 px) ---------- */
+.pg{width:794px;height:1123px;background:#fff;color:#1b1b1b;font-family:'Outfit',Arial,sans-serif;position:relative;padding:62px 64px}
+.pg .moldura{border:2px solid #2d6e82;height:auto;min-height:0}
+.pg .cab{display:grid;grid-template-columns:150px 1fr;border-bottom:2px solid #2d6e82}
+.pg .cab .lg{display:flex;align-items:center;justify-content:center;padding:10px}
+.pg .cab .lg img{width:104px}
+.pg .cab .dir{padding:6px 10px 8px 0}
+.pg .cab .dia{border:1.5px solid #2d6e82;border-top:0;text-align:center;font-weight:700;font-size:16px;padding:4px 6px;letter-spacing:.02em}
+.pg .cab .hrs{display:grid;grid-template-columns:140px 1fr;align-items:center;margin-top:6px;font-size:11.5px}
+.pg .cab .hrs div span{display:inline-block;width:46px}
+.pg .cab .ttl{font-size:11.5px;letter-spacing:.04em}
+.pg .corpo{display:grid;grid-template-columns:1fr 236px;gap:12px;padding:12px 10px 16px 6px;font-size:11.5px;line-height:1.45}
+.pg .bl{display:grid;grid-template-columns:44px 104px 1fr;margin-top:12px}
+.pg .bl:first-child{margin-top:4px}
+.pg .bl .t{font-weight:500}
+.pg .bl .n{font-weight:700}
+.pg .bl .n small{display:block;font-weight:600;font-size:8.5px}
+.pg .sub{grid-column:2/-1;margin-top:2px}
+.pg .mlab{color:#2a86c8;font-size:11px;margin-left:46px}
+.pg .ml{display:grid;grid-template-columns:118px 1fr}
+.pg .ml .k{color:#2a86c8;text-align:right;padding-right:5px}
+.pg .crian{display:flex;gap:6px;color:#e02020;font-size:10.5px;margin:2px 0 2px 8px}
+.pg .crian b{white-space:nowrap}
+.pg .crian b{font-weight:700}
+.pg .nota{grid-column:3;white-space:pre-wrap}
+.pg .aviso .k{color:#2a86c8}
+.pg .fim{color:#2a86c8}
+.pg .tab{border-collapse:collapse;width:100%;font-size:10px;margin-top:20px}
+.pg .tab th{font-weight:500;font-size:9.5px;border:1px solid #9aa;padding:2px 3px;text-align:center}
+.pg .tab td{border-bottom:1px solid #fff;padding:2px 4px;height:17px}
+.pg .tab td.f{font-weight:700;width:46%}
+.pg .tab tr.lv td{background:#e3f6fa}
+.pg .tab tr.som td{background:#fdf3cf;border:1px solid #c9b46a}
+.pg .tab tr.tr td{background:#e6f3e4;border-top:1px dotted #8a8;border-bottom:1px dotted #8a8}
+.pg .tab tr.gap td{background:#fff;height:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">
+      <img class="logo-img" src="/logo.png" alt="Movimento Vou Fluir">
+      <div><h1>Flow · Cultos</h1><small>Movimento Vou Fluir</small></div>
+    </div>
+    <button class="userbtn" id="userBtn" type="button" aria-label="Minha conta">?</button>
+  </div>
+  <nav id="nav">
+    <button data-v="cultos" class="on" type="button">Cultos</button>
+    <button data-v="ministerios" type="button">Ministérios</button>
+    <button data-v="pessoas" type="button" id="navPessoas" hidden>Pessoas e acessos</button>
+  </nav>
+</header>
+
+<main>
+  <!-- CULTOS -->
+  <section class="view on" id="v-cultos">
+    <div id="meuAviso"></div>
+    <div class="secao" style="margin-top:4px">Próximos cultos</div>
+    <div id="proximos"></div>
+    <div class="row" id="addCultoRow" hidden style="margin:6px 0 4px">
+      <button class="btn" id="addCulto" type="button">+ Culto em outra data</button>
+    </div>
+    <div class="secao">Cultos anteriores</div>
+    <div id="anteriores"></div>
+  </section>
+
+  <!-- DETALHE DO CULTO -->
+  <section class="view" id="v-culto">
+    <button class="voltar" id="voltar" type="button">‹ Voltar para os cultos</button>
+    <div class="dethead">
+      <div><h2 id="dTitulo">Domingo</h2><div class="row" style="margin-top:6px" id="dTags"></div></div>
+      <button class="btn dark" id="gerarPdf" type="button" hidden>📄 Gerar PDF</button>
+    </div>
+    <div id="dSecoes"></div>
+  </section>
+
+  <!-- MINISTÉRIOS -->
+  <section class="view" id="v-ministerios">
+    <p class="hint" style="margin:0 0 10px">Quem faz parte de cada ministério aparece como opção na hora de montar a escala. Quem tem acesso e está no ministério pode preencher a parte dele.</p>
+    <div id="minLista"></div>
+  </section>
+
+  <!-- PESSOAS -->
+  <section class="view" id="v-pessoas">
+    <div class="card">
+      <h3>Adicionar pessoa</h3>
+      <p class="hint" style="margin:0 0 6px">Cadastre o nome e marque os ministérios. O acesso ao app é opcional: só quem vai preencher precisa de e-mail e senha.</p>
+      <label class="lb" for="pNome">Nome (como aparece no Flow)</label>
+      <input id="pNome" class="field" placeholder="Ex.: H. Welter" autocomplete="off">
+      <div class="lb">Ministérios</div>
+      <div class="chips" id="pMins"></div>
+      <button class="go" id="pAdd" type="button">Adicionar</button>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Pessoas</h3><span class="hint" id="pConta"></span></div>
+      <input id="pBusca" class="field" type="search" placeholder="Buscar pessoa…" style="margin-top:10px" autocomplete="off">
+      <div id="pLista"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Login -->
+<div id="login">
+  <form class="box" id="loginForm">
+    <div class="logo"><img class="logo-img" src="/logo.png" alt="" style="width:48px;height:48px"><div><b>Flow · Cultos</b><br><span class="hint">Movimento Vou Fluir</span></div></div>
+    <h2>Entrar</h2>
+    <label class="lb" for="lEmail">E-mail</label>
+    <input id="lEmail" class="field" type="email" autocomplete="username" required>
+    <label class="lb" for="lSenha">Senha</label>
+    <input id="lSenha" class="field" type="password" autocomplete="current-password" required>
+    <div class="erro" id="lErro"></div>
+    <button class="go" id="lBtn" type="submit">Entrar</button>
+    <p class="hint" style="margin:12px 0 0">Ainda não tem acesso? Peça para a pastora ou para o administrador cadastrar você.</p>
+  </form>
+</div>
+
+<!-- Editar pessoa -->
+<div class="modal" id="pesModal">
+  <div class="sheet">
+    <h3 id="peTitulo">Pessoa</h3>
+    <label class="lb" for="peNome">Nome</label>
+    <input id="peNome" class="field" autocomplete="off">
+    <label class="lb" for="peTel">Telefone (opcional)</label>
+    <input id="peTel" class="field" inputmode="tel" autocomplete="off">
+    <div class="lb">Ministérios</div>
+    <div class="chips" id="peMins"></div>
+    <div class="card" style="margin:14px 0 0;background:#f7fafc">
+      <b>Acesso ao app</b>
+      <div id="peAcesso"></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="peSalvar" type="button">Salvar</button>
+      <button class="btn" id="peFechar" type="button">Fechar</button>
+      <button class="link red" id="peExcluir" type="button" style="margin-left:auto">Remover pessoa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prévia do PDF -->
+<div class="modal" id="pdfModal">
+  <div class="sheet largo">
+    <h3>Flow pronto</h3>
+    <p class="hint" style="margin:0 0 10px">Confira abaixo. Se algo estiver faltando, feche e complete a parte que falta.</p>
+    <div class="prevwrap" id="prevWrap"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn dark" id="pdfCompartilhar" type="button">📤 Compartilhar</button>
+      <button class="btn" id="pdfBaixar" type="button">⬇️ Baixar PDF</button>
+      <button class="btn" id="pdfFechar" type="button">Fechar</button>
+    </div>
+    <p class="hint" id="pdfStatus" style="margin:8px 0 0"></p>
+  </div>
+</div>
+
+<!-- Confirmação -->
+<div class="modal" id="confModal">
+  <div class="sheet">
+    <h3 id="cTitulo">Confirmar</h3>
+    <p id="cTexto" style="margin:0 0 6px;line-height:1.45"></p>
+    <input id="cInput" class="field" hidden>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="cNao" type="button">Cancelar</button>
+      <button class="btn dark" id="cSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minha conta -->
+<div class="modal" id="contaModal">
+  <div class="sheet">
+    <h3 id="ctNome">Minha conta</h3>
+    <p class="hint" id="ctEmail" style="margin:0 0 10px"></p>
+    <label class="lb" for="ctSenha">Nova senha (mín. 6)</label>
+    <input id="ctSenha" class="field" type="password" autocomplete="new-password">
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="ctTrocar" type="button">Trocar senha</button>
+      <button class="btn red" id="ctSair" type="button">Sair</button>
+      <button class="btn" id="ctFechar" type="button">Fechar</button>
+    </div>
+    <p class="hint" id="ctCaixa" style="margin:12px 0 0" hidden><a href="/">Abrir o caixa / lojinha</a></p>
+  </div>
+</div>
+
+<div id="render" style="position:fixed;left:-10000px;top:0"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Flow · Cultos — Movimento Vou Fluir
+   Cada ministério preenche a sua parte do culto; a pastora completa
+   a programação e gera o PDF no formato do Flow.
+   ========================================================= */
+const SB = 'https://wengqckoknqqgeucgubg.supabase.co';
+const SB_URL = SB + '/rest/v1';
+const SB_KEY = 'sb_publishable_JuPHTEh530A0RGsn4CugKg_L-DaKIBm';
+const K = {sess:'vf8_sess', eu:'fl1_eu', cache:'fl1_cache'};
+const MOMENTOS = [['louvor','Louvor (início)'],['ceia','Santa Ceia'],['oferta','Oferta'],['pos','Depois da oferta']];
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
+const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
+
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const limpa = s => String(s||'').replace(/\s+/g,' ').trim();
+const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const uid = ()=> Math.random().toString(36).slice(2,9);
+function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2600); }
+function perguntar(titulo, texto, {sim='Confirmar', perigo=false, input=null}={}){
+  return new Promise(res=>{
+    $('#cTitulo').textContent = titulo; $('#cTexto').textContent = texto;
+    const inp = $('#cInput'); inp.hidden = !input; inp.value = input?.valor||''; inp.placeholder = input?.ph||''; inp.type = input?.tipo||'text';
+    const b = $('#cSim'); b.textContent = sim; b.className = 'btn ' + (perigo?'red':'dark');
+    $('#confModal').classList.add('on'); if(input) setTimeout(()=>inp.focus(),50);
+    const fim = v=>{ $('#confModal').classList.remove('on'); b.onclick = $('#cNao').onclick = null; res(v); };
+    b.onclick = ()=>fim(input ? inp.value : true); $('#cNao').onclick = ()=>fim(input ? null : false);
+  });
+}
+
+/* ---------- Datas ---------- */
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const deISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d, 12); };
+const hojeISO = ()=> iso(new Date());
+function proximosDomingos(n){ const d = new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate() + ((7 - d.getDay()) % 7)); const out=[]; for(let i=0;i<n;i++){ out.push(iso(d)); d.setDate(d.getDate()+7); } return out; }
+function domingosAnteriores(n){ const d = new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate() - (d.getDay()||7)); const out=[]; for(let i=0;i<n;i++){ out.push(iso(d)); d.setDate(d.getDate()-7); } return out; }
+const segundoDomingo = s => { const d = deISO(s); return d.getDay()===0 && d.getDate()>=8 && d.getDate()<=14; };
+const diaTxt = s => { const d = deISO(s); return `${d.getDate()===1?'1º':d.getDate()} de ${MESES[d.getMonth()]}`; };
+const tituloData = s => { const d = deISO(s); return `${DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)}, ${diaTxt(s)}`; };
+const cabecalhoPdf = s => { const d = deISO(s); return `${DIAS[d.getDay()].split('-')[0].toUpperCase()}, ${String(d.getDate()===1?'1º':d.getDate())} DE ${MESES[d.getMonth()].toUpperCase()}`; };
+const quando = ts => new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+/* =========================================================
+   Login (mesma conta do caixa)
+   ========================================================= */
+let sess = load(K.sess, null), eu = load(K.eu, null);
+async function authReq(path, body, metodo='POST', tok){
+  const r = await fetch(SB+'/auth/v1/'+path, {method:metodo, headers:{apikey:SB_KEY,'Content-Type':'application/json', ...(tok?{Authorization:'Bearer '+tok}:{})}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.error_description||j.msg||j.message||('Erro '+r.status)), {status:r.status});
+  return j;
+}
+function guardaSessao(j){ sess = {access_token:j.access_token, refresh_token:j.refresh_token, expires_at:j.expires_at || (Math.floor(Date.now()/1000)+(j.expires_in||3600)), email:(j.user?.email||sess?.email||'').toLowerCase()}; save(K.sess, sess); }
+let renovando = null;
+async function renovar(){
+  if(!sess?.refresh_token) throw new Error('sem sessão');
+  if(!renovando) renovando = authReq('token?grant_type=refresh_token', {refresh_token:sess.refresh_token}).then(guardaSessao)
+    .catch(e=>{ if(e.status===400||e.status===401) sair(); throw e; }).finally(()=>{ renovando=null; });
+  return renovando;
+}
+async function tokenValido(){ if(!sess) throw new Error('sem sessão'); if(sess.expires_at*1000 - Date.now() < 90000) await renovar(); return sess.access_token; }
+async function sb(path, opt={}, tentativa=0){
+  const tok = await tokenValido();
+  const r = await fetch(SB_URL+path, {...opt, headers:{apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json', ...(opt.headers||{})}});
+  if(r.status===401 && !tentativa){ await renovar(); return sb(path, opt, 1); }
+  if(!r.ok) throw new Error(r.status+' '+await r.text());
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+async function carregarEu(){
+  const m = await sb('/vf_membros?select=email,nome,admin,ativo,caixa,flow,flow_admin&email=eq.'+encodeURIComponent(sess.email));
+  const x = m && m[0];
+  if(!x || !x.ativo || !(x.admin || x.flow || x.flow_admin)) throw Object.assign(new Error('Seu e-mail ainda não tem acesso ao Flow. Peça para a pastora ou para o administrador liberar.'), {semAcesso:true});
+  eu = {email:x.email, nome:x.nome, admin:!!(x.admin || x.flow_admin), master:!!x.admin, caixa:!!(x.admin || x.caixa)}; save(K.eu, eu);
+}
+function sair(){ sess = null; eu = null; save(K.sess, null); save(K.eu, null); $('#login').classList.add('on'); }
+$('#loginForm').onsubmit = async e=>{
+  e.preventDefault(); $('#lErro').textContent=''; const b=$('#lBtn'); b.disabled=true; b.textContent='Entrando…';
+  try{
+    const j = await authReq('token?grant_type=password', {email:$('#lEmail').value.trim().toLowerCase(), password:$('#lSenha').value});
+    guardaSessao(j); await carregarEu(); $('#login').classList.remove('on'); $('#lSenha').value=''; iniciar();
+  }catch(err){
+    if(err.semAcesso){ sess=null; save(K.sess,null); }
+    $('#lErro').textContent = /invalid login|invalid_grant|credentials/i.test(err.message) ? 'E-mail ou senha incorretos.' : (navigator.onLine ? err.message : 'Sem internet. O login precisa de conexão.');
+  }finally{ b.disabled=false; b.textContent='Entrar'; }
+};
+$('#userBtn').onclick = ()=>{ $('#ctNome').textContent = eu?.nome||'Minha conta'; $('#ctEmail').textContent = (eu?.email||'') + (eu?.admin?' · administrador do Flow':''); $('#ctSenha').value=''; $('#ctCaixa').hidden = !eu?.caixa; $('#contaModal').classList.add('on'); };
+$('#ctFechar').onclick = ()=>$('#contaModal').classList.remove('on');
+$('#ctSair').onclick = ()=>{ $('#contaModal').classList.remove('on'); sair(); };
+$('#ctTrocar').onclick = async ()=>{
+  const s = $('#ctSenha').value; if(s.length<6){ toast('A senha precisa ter pelo menos 6 caracteres','var(--danger)'); return; }
+  try{ await authReq('user', {password:s}, 'PUT', await tokenValido()); toast('Senha trocada'); $('#contaModal').classList.remove('on'); }
+  catch(e){ toast('Não consegui trocar: '+e.message,'var(--danger)', 4000); }
+};
+
+/* =========================================================
+   Dados
+   ========================================================= */
+let D = load(K.cache, {ministerios:[], pessoas:[], mp:[], cultos:[], escalas:[]});
+const minis = ()=> [...D.ministerios].sort((a,b)=>a.ordem-b.ordem);
+const minNome = id => D.ministerios.find(m=>m.id===id)?.nome || id;
+const membrosDe = mid => D.mp.filter(x=>x.ministerio_id===mid).map(x=>D.pessoas.find(p=>p.id===x.pessoa_id)).filter(p=>p && p.ativo).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+const minsDe = pid => D.mp.filter(x=>x.pessoa_id===pid).map(x=>x.ministerio_id);
+const euPessoa = ()=> D.pessoas.find(p=>p.email && p.email===eu?.email);
+const meusMins = ()=> { const p = euPessoa(); return p ? minsDe(p.id) : []; };
+const podeMin = mid => !!eu?.admin || meusMins().includes(mid);
+const cultoDe = data => D.cultos.find(c=>c.data===data);
+const escalaDe = (data, mid) => D.escalas.find(e=>e.data===data && e.ministerio_id===mid);
+const tipoDe = data => cultoDe(data)?.tipo || (segundoDomingo(data) ? 'ceia' : 'culto');
+
+async function carregarTudo(){
+  const desde = iso(new Date(Date.now()-120*86400000));
+  const [ms, ps, mp, cs, es] = await Promise.all([
+    sb('/fl_ministerios?select=*&order=ordem.asc'),
+    sb('/fl_pessoas?select=*&order=nome.asc'),
+    sb('/fl_ministerio_pessoas?select=*'),
+    sb('/fl_cultos?select=*&data=gte.'+desde),
+    sb('/fl_escalas?select=*&data=gte.'+desde)
+  ]);
+  D = {ministerios:ms, pessoas:ps, mp, cultos:cs, escalas:es}; save(K.cache, D);
+}
+
+/* =========================================================
+   Navegação
+   ========================================================= */
+let vista = 'cultos', dataAberta = null, sujo = false;
+function irPara(v){
+  if(v!=='culto') dataAberta = null;
+  vista = v;
+  $$('nav button').forEach(x=>x.classList.toggle('on', x.dataset.v===v || (v==='culto' && x.dataset.v==='cultos')));
+  $$('.view').forEach(x=>x.classList.toggle('on', x.id==='v-'+v));
+  if(v==='cultos') renderCultos();
+  if(v==='ministerios') renderMinisterios();
+  if(v==='pessoas') renderPessoas();
+  window.scrollTo(0,0);
+}
+$$('nav button').forEach(b=>b.onclick=async ()=>{ if(sujo && !(await perguntar('Sair sem salvar?', 'Há alterações que ainda não foram salvas neste culto.', {sim:'Sair sem salvar', perigo:true}))) return; sujo=false; irPara(b.dataset.v); });
+$('#voltar').onclick = async ()=>{ if(sujo && !(await perguntar('Sair sem salvar?', 'Há alterações que ainda não foram salvas neste culto.', {sim:'Sair sem salvar', perigo:true}))) return; sujo=false; irPara('cultos'); };
+window.addEventListener('beforeunload', e=>{ if(sujo){ e.preventDefault(); e.returnValue=''; } });
+
+/* =========================================================
+   Lista de cultos
+   ========================================================= */
+function statusCulto(data){
+  const st = minis().map(m=>({id:m.id, nome:m.nome, ok:preenchido(data, m.id)}));
+  if(cultoDe(data)?.programa) st.unshift({id:'programa', nome:'Programação', ok:true}); else st.unshift({id:'programa', nome:'Programação', ok:false});
+  return st;
+}
+function preenchido(data, mid){
+  const e = escalaDe(data, mid); if(!e) return false;
+  const f = e.dados?.funcoes || {}; return Object.values(f).some(x=>(x.pessoas||[]).length) || !!e.dados?.responsavel;
+}
+function cardCulto(data){
+  const t = tipoDe(data), c = cultoDe(data), d = deISO(data);
+  const st = statusCulto(data);
+  return `<button type="button" class="culto ${data===proximosDomingos(1)[0]?'hoje':''}" data-abrir="${data}">
+    <div class="h"><b>${esc(c?.titulo || tituloData(data))}</b>
+      <span class="row" style="gap:4px">${t==='ceia'?'<span class="tag ceia">🍷 Ceia</span>':''}${d.getDay()!==0?'<span class="tag esp">Culto especial</span>':''}</span></div>
+    ${c?.titulo?`<div class="hint">${esc(tituloData(data))}</div>`:''}
+    <div class="st">${st.map(s=>`<span class="${s.ok?'ok':''}">${s.ok?'✓':'…'} ${esc(s.nome)}</span>`).join('')}</div>
+  </button>`;
+}
+function renderCultos(){
+  const prox = [...new Set([...proximosDomingos(8), ...D.cultos.filter(c=>c.data>=hojeISO()).map(c=>c.data)])].sort();
+  const ant = [...new Set([...domingosAnteriores(6), ...D.cultos.filter(c=>c.data<hojeISO()).map(c=>c.data)])].sort().reverse().slice(0,8);
+  $('#proximos').innerHTML = prox.map(cardCulto).join('');
+  $('#anteriores').innerHTML = ant.map(cardCulto).join('');
+  $$('[data-abrir]').forEach(b=>b.onclick=()=>abrirCulto(b.dataset.abrir));
+  $('#addCultoRow').hidden = !eu?.admin;
+  const ms = meusMins();
+  $('#meuAviso').innerHTML = eu?.admin ? '' : (ms.length
+    ? `<div class="card" style="background:#eefafc;border-color:#bfe6ef"><b>Você preenche: ${ms.map(minNome).join(', ')}</b><div class="hint">Toque no culto e complete a parte do seu ministério.</div></div>`
+    : `<div class="card" style="background:#fff7e0;border-color:#f5c04a"><b>Você ainda não está em nenhum ministério.</b><div class="hint">Peça para a pastora incluir você. Até lá, você só consegue ver os cultos.</div></div>`);
+}
+$('#addCulto').onclick = async ()=>{
+  const d = await perguntar('Culto em outra data', 'Escolha a data do culto especial (ex.: aniversário da igreja, ceia em outro dia).', {sim:'Criar', input:{tipo:'date'}});
+  if(!d) return;
+  const titulo = await perguntar('Nome do culto (opcional)', 'Ex.: Aniversário 4 anos. Deixe em branco para usar só a data.', {sim:'Continuar', input:{ph:'Nome do culto'}});
+  try{
+    await sb('/fl_cultos?on_conflict=data', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data:d, tipo: segundoDomingo(d)?'ceia':'culto', titulo: limpa(titulo)||null, atualizado_por:eu.nome})});
+    await carregarTudo(); abrirCulto(d);
+  }catch(e){ toast('Não consegui criar: '+(navigator.onLine?e.message:'sem internet'),'var(--danger)', 4000); }
+};
+
+/* =========================================================
+   Detalhe do culto
+   ========================================================= */
+let rasc = {};   // rascunho em edição: {programa, [mid]: dados}
+function programaPadrao(data){
+  const ant = [...D.cultos].filter(c=>c.programa && c.data<data).sort((a,b)=>b.data.localeCompare(a.data))[0];
+  const base = ant?.programa ? JSON.parse(JSON.stringify(ant.programa)) : {
+    inicio:'18h', fim:'19h30',
+    blocos:[
+      {id:'abertura', tipo:'abertura', hora:'18h', titulo:'Abertura', resp:'Pr. Allan', notas:''},
+      {id:'hospitalidade', tipo:'hospitalidade', hora:'', titulo:'Hospitalidade', resp:'', notas:''},
+      {id:'louvor', tipo:'louvor', hora:'18h05', titulo:'Louvor', resp:'', notas:''},
+      {id:'avisos', tipo:'avisos', hora:'18h25', titulo:'Avisos / Recados', resp:'Pr. Allan', notas:'', itens:[]},
+      {id:'ceia', tipo:'ceia', hora:'18h30', titulo:'Santa Ceia', resp:'Pr. Ivar', notas:''},
+      {id:'oferta', tipo:'oferta', hora:'18h30', titulo:'Oferta', resp:'Pr. Allan', notas:''},
+      {id:'pedidos', tipo:'livre', hora:'', titulo:'Pedidos de oração', resp:'', notas:'', ativo:false},
+      {id:'pregacao', tipo:'pregacao', hora:'18h35', titulo:'Pregação', resp:'Pra. Ana Cláudia', notas:''},
+      {id:'encerramento', tipo:'encerramento', hora:'19h30', titulo:'Encerramento', resp:'', notas:''}
+    ]};
+  base.blocos.forEach(b=>{ b.notas=''; if(b.tipo==='avisos') b.itens = b.itens||[]; });
+  return base;
+}
+function dadosVazios(mid){
+  const m = D.ministerios.find(x=>x.id===mid); const f = {};
+  (m?.funcoes||[]).forEach(fn=>f[fn.id] = {pessoas:[], chegada:fn.chegada||''});
+  return mid==='louvor' ? {funcoes:f, responsavel:'', musicas:[]} : {funcoes:f, obs:''};
+}
+async function abrirCulto(data){
+  dataAberta = data; sujo = false;
+  try{ await carregarTudo(); }catch(e){}
+  rasc = {programa: JSON.parse(JSON.stringify(cultoDe(data)?.programa || programaPadrao(data)))};
+  minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
+  irPara('culto'); renderCulto();
+}
+function marcarSujo(){ sujo = true; }
+function renderCulto(){
+  const data = dataAberta, c = cultoDe(data), t = tipoDe(data);
+  $('#dTitulo').textContent = c?.titulo || tituloData(data);
+  $('#dTags').innerHTML = (c?.titulo?`<span class="hint">${esc(tituloData(data))}</span>`:'') +
+    (eu.admin ? `<button type="button" class="tag ${t==='ceia'?'ceia':''}" id="tipoToggle" title="Trocar tipo do culto">${t==='ceia'?'🍷 Culto de ceia':'Culto normal'} · trocar</button>` : (t==='ceia'?'<span class="tag ceia">🍷 Culto de ceia</span>':''));
+  $('#gerarPdf').hidden = !eu.admin;
+  const ordem = ['programa', ...minis().map(m=>m.id)];
+  // quem não é admin vê primeiro o próprio ministério
+  if(!eu.admin){ const meus = meusMins(); ordem.sort((a,b)=> (meus.includes(b)?1:0) - (meus.includes(a)?1:0)); }
+  $('#dSecoes').innerHTML = ordem.map(id=> id==='programa' ? secPrograma() : secMinisterio(id)).join('');
+  ligarCulto();
+  const tt = $('#tipoToggle'); if(tt) tt.onclick = trocarTipo;
+}
+async function trocarTipo(){
+  const data = dataAberta, novo = tipoDe(data)==='ceia' ? 'culto' : 'ceia';
+  try{ await sb('/fl_cultos?on_conflict=data', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data, tipo:novo, atualizado_por:eu.nome})});
+    await carregarTudo(); renderCulto(); toast(novo==='ceia'?'Marcado como culto de ceia':'Marcado como culto normal'); }
+  catch(e){ toast('Não consegui trocar: '+e.message,'var(--danger)'); }
+}
+const porQuem = reg => reg ? `<div class="por">Atualizado por ${esc(reg.atualizado_por||'—')} em ${quando(reg.atualizado_em)}</div>` : '<div class="por">Ainda não preenchido</div>';
+
+/* ----- Ministérios (escala) ----- */
+function secMinisterio(mid){
+  const m = D.ministerios.find(x=>x.id===mid), r = rasc[mid], pode = podeMin(mid), reg = escalaDe(dataAberta, mid);
+  const membros = membrosDe(mid);
+  let corpo = '';
+  if(pode){
+    if(mid==='louvor'){
+      corpo += `<div class="func"><div class="fh"><b>Responsável do dia</b></div>
+        <div class="chips">${membros.map(p=>`<button type="button" class="chipsel ${r.responsavel===p.nome?'on':''}" data-resp="${esc(p.nome)}">${esc(p.nome)}</button>`).join('') || '<span class="hint">Cadastre as pessoas do louvor na aba Ministérios.</span>'}</div>
+        ${r.responsavel && !membros.some(p=>p.nome===r.responsavel) ? `<div class="hint" style="margin-top:4px">Escolhido: <b>${esc(r.responsavel)}</b></div>`:''}
+        <div class="outro"><input data-respoutro placeholder="Outra pessoa (digite o nome)" value=""><button type="button" class="btn" data-respok>Usar</button></div></div>`;
+    }
+    corpo += (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
+      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${mid!=='hospitalidade'?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
+        <div class="chips">${membros.map(p=>`<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
+        ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
+        <button type="button" class="chipsel add" data-outro="${fn.id}">+ outro</button></div></div>`; }).join('');
+    if(mid==='louvor'){
+      corpo += `<div class="func"><div class="fh"><b>Músicas</b><span class="hint">com o tom</span></div>
+        ${(r.musicas||[]).map((mu,i)=>`<div class="mus">
+          <select data-mmom="${i}" aria-label="Momento">${MOMENTOS.filter(([k])=>k!=='ceia'||tipoDe(dataAberta)==='ceia'||mu.momento==='ceia').map(([k,t])=>`<option value="${k}" ${mu.momento===k?'selected':''}>${t}</option>`).join('')}</select>
+          <input data-mtit="${i}" value="${esc(mu.titulo)}" placeholder="Nome da música" aria-label="Nome da música">
+          <input data-mtom="${i}" value="${esc(mu.tom)}" placeholder="Tom" aria-label="Tom">
+          <button type="button" class="link red" data-mdel="${i}" aria-label="Tirar música">✕</button></div>`).join('')}
+        <div class="row" style="margin-top:8px"><button type="button" class="btn" data-madd>+ Música</button></div></div>`;
+    }
+    corpo += `<label class="lb" for="obs_${mid}">Observação para a pastora (opcional)</label><textarea class="field" id="obs_${mid}" data-obs="${mid}" placeholder="Ex.: Gisele confirma até sexta">${esc(r.obs||'')}</textarea>
+      <button type="button" class="go" data-salvar="${mid}">Salvar ${esc(m.nome)}</button>`;
+  } else {
+    corpo = leituraMin(mid, r);
+  }
+  return `<div class="card msec m-${mid}" data-sec="${mid}"><div class="mhead"><h3 style="margin:0">${esc(m.nome)}</h3>${pode?'':'<span class="tag">só leitura</span>'}</div>${porQuem(reg)}<div style="margin-top:8px">${corpo}</div></div>`;
+}
+function leituraMin(mid, r){
+  const m = D.ministerios.find(x=>x.id===mid);
+  const linhas = (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id]||{pessoas:[]}; return `<tr><td><b>${esc(fn.nome)}</b></td><td>${f.pessoas.length?esc(f.pessoas.join(' / ')):'<span class="vazio">—</span>'}</td><td class="r">${esc(f.chegada||'')}</td></tr>`; }).join('');
+  let h = '';
+  if(mid==='louvor') h += `<p class="leit" style="margin:0 0 6px"><b>Responsável do dia:</b> ${r.responsavel?esc(r.responsavel):'<span class="vazio">—</span>'}</p>`;
+  h += `<table class="leitab">${linhas}</table>`;
+  if(mid==='louvor' && (r.musicas||[]).length) h += `<div class="leit" style="margin-top:8px"><b>Músicas</b>${MOMENTOS.map(([k,t])=>{ const ms = r.musicas.filter(x=>x.momento===k); return ms.length?`<div class="hint" style="margin-top:4px">${t}</div>${ms.map(x=>`<div>• ${esc(x.titulo)}${x.tom?` (${esc(x.tom)})`:''}</div>`).join('')}`:''; }).join('')}</div>`;
+  if(r.obs) h += `<p class="hint" style="margin:8px 0 0">Obs.: ${esc(r.obs)}</p>`;
+  return h;
+}
+
+/* ----- Programação (pastora) ----- */
+function secPrograma(){
+  const p = rasc.programa, reg = cultoDe(dataAberta)?.programa ? cultoDe(dataAberta) : null, ceia = tipoDe(dataAberta)==='ceia';
+  if(!eu.admin){
+    const ativos = p.blocos.filter(b=>b.ativo!==false && (b.tipo!=='ceia' || ceia));
+    return `<div class="card msec m-programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
+      ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
+  }
+  const blocos = p.blocos.map((b,i)=>{
+    const ehAuto = ['hospitalidade','louvor'].includes(b.tipo);
+    const off = b.ativo===false || (b.tipo==='ceia' && !ceia);
+    return `<div class="bloco ${off?'off':''}">
+      <div class="bh"><input data-bh="${i}" value="${esc(b.hora)}" placeholder="hora" aria-label="Horário">
+        <input data-bt="${i}" value="${esc(b.titulo)}" aria-label="Momento">
+        <div class="ordem"><button type="button" data-bup="${i}" aria-label="Subir">↑</button><button type="button" data-bdn="${i}" aria-label="Descer">↓</button></div></div>
+      ${ehAuto ? `<div class="auto">${b.tipo==='louvor'?'Responsável do dia e músicas vêm do Louvor.':'Nomes vêm da Hospitalidade.'}</div>`
+               : b.tipo==='encerramento' ? '' : `<input data-br="${i}" value="${esc(b.resp)}" placeholder="Quem conduz (ex.: Pr. Allan)" style="margin-top:6px" aria-label="Quem conduz">`}
+      ${b.tipo==='avisos' ? `<label class="lb" style="margin-top:8px">Avisos (um por linha)</label><textarea data-bi="${i}" rows="4" placeholder="Ex.: 15 de novembro - Batismo">${esc((b.itens||[]).join('\n'))}</textarea>` : ''}
+      ${b.tipo!=='encerramento' ? `<textarea data-bn="${i}" rows="1" placeholder="Observação (sai no PDF abaixo deste momento)" style="margin-top:6px">${esc(b.notas)}</textarea>` : ''}
+      <div class="row" style="margin-top:6px;justify-content:space-between">
+        ${b.tipo==='ceia' ? `<span class="hint">${ceia?'Aparece porque é culto de ceia.':'Só aparece em culto de ceia.'}</span>` :
+          `<label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-bon="${i}" ${b.ativo===false?'':'checked'}> Aparece no Flow</label>`}
+        ${b.tipo==='livre' ? `<button type="button" class="link red" data-bdel="${i}">Remover</button>` : ''}
+      </div></div>`;
+  }).join('');
+  return `<div class="card msec m-programa" data-sec="programa"><div class="mhead"><h3 style="margin:0">Programação (pastora)</h3></div>${porQuem(reg)}
+    <div class="horas" style="margin-top:8px"><div><label class="lb" for="pgIni">Início</label><input class="field" id="pgIni" value="${esc(p.inicio)}"></div><div><label class="lb" for="pgFim">Fim</label><input class="field" id="pgFim" value="${esc(p.fim)}"></div></div>
+    ${blocos}
+    <div class="row" style="margin-top:10px"><button type="button" class="btn" id="bAdd">+ Outro momento</button></div>
+    <button type="button" class="go" data-salvar="programa">Salvar programação</button></div>`;
+}
+
+/* ----- Eventos da tela do culto ----- */
+function ligarCulto(){
+  const box = $('#dSecoes');
+  box.querySelectorAll('input,textarea,select').forEach(x=>x.addEventListener('input', marcarSujo));
+  // escalas
+  box.querySelectorAll('[data-fn]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const f = rasc[mid].funcoes[b.dataset.fn]; const n = b.dataset.p;
+    f.pessoas = f.pessoas.includes(n) ? f.pessoas.filter(x=>x!==n) : [...f.pessoas, n]; marcarSujo(); redesenhar(mid); });
+  box.querySelectorAll('[data-outro]').forEach(b=>b.onclick=async ()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid);
+    const n = limpa(await perguntar('Outra pessoa', 'Digite o nome de quem vai estar nessa função (pode ser alguém de fora do ministério).', {sim:'Incluir', input:{ph:'Nome'}})); if(!n) return;
+    const f = rasc[mid].funcoes[b.dataset.outro]; if(!f.pessoas.includes(n)) f.pessoas.push(n); marcarSujo(); redesenhar(mid); });
+  box.querySelectorAll('[data-resp]').forEach(b=>b.onclick=()=>{ lerSecao('louvor'); rasc.louvor.responsavel = rasc.louvor.responsavel===b.dataset.resp ? '' : b.dataset.resp; marcarSujo(); redesenhar('louvor'); });
+  const ro = box.querySelector('[data-respok]'); if(ro) ro.onclick=()=>{ const v = limpa(box.querySelector('[data-respoutro]').value); if(!v) return; lerSecao('louvor'); rasc.louvor.responsavel = v; marcarSujo(); redesenhar('louvor'); };
+  const ma = box.querySelector('[data-madd]'); if(ma) ma.onclick=()=>{ lerSecao('louvor'); const ms = rasc.louvor.musicas; const ult = ms[ms.length-1]?.momento || 'louvor'; ms.push({momento:ult, titulo:'', tom:''}); marcarSujo(); redesenhar('louvor'); const ts = $$('[data-mtit]'); ts[ts.length-1]?.focus(); };
+  box.querySelectorAll('[data-mdel]').forEach(b=>b.onclick=()=>{ lerSecao('louvor'); rasc.louvor.musicas.splice(+b.dataset.mdel,1); marcarSujo(); redesenhar('louvor'); });
+  // programação
+  box.querySelectorAll('[data-bup],[data-bdn]').forEach(b=>b.onclick=()=>{ lerPrograma(); const i = +(b.dataset.bup ?? b.dataset.bdn), j = b.dataset.bup!=null ? i-1 : i+1; const bl = rasc.programa.blocos; if(j<0||j>=bl.length) return; [bl[i],bl[j]]=[bl[j],bl[i]]; marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-bdel]').forEach(b=>b.onclick=()=>{ lerPrograma(); rasc.programa.blocos.splice(+b.dataset.bdel,1); marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-bon]').forEach(b=>b.onchange=()=>{ lerPrograma(); marcarSujo(); redesenhar('programa'); });
+  const ba = $('#bAdd'); if(ba) ba.onclick=()=>{ lerPrograma(); const bl = rasc.programa.blocos; const pos = Math.max(0, bl.findIndex(b=>b.tipo==='pregacao')); bl.splice(pos, 0, {id:uid(), tipo:'livre', hora:'', titulo:'', resp:'', notas:''}); marcarSujo(); redesenhar('programa'); };
+  box.querySelectorAll('[data-salvar]').forEach(b=>b.onclick=()=>salvarSecao(b.dataset.salvar, b));
+}
+function redesenhar(id){
+  const el = $(`[data-sec="${id}"]`); if(!el) return;
+  const tmp = document.createElement('div'); tmp.innerHTML = id==='programa' ? secPrograma() : secMinisterio(id);
+  el.replaceWith(tmp.firstElementChild); ligarCulto();
+}
+function lerSecao(mid){
+  const el = $(`[data-sec="${mid}"]`); if(!el) return; const r = rasc[mid];
+  el.querySelectorAll('[data-cheg]').forEach(i=>{ (r.funcoes[i.dataset.cheg] ||= {pessoas:[], chegada:''}).chegada = limpa(i.value); });
+  el.querySelectorAll('[data-mtit]').forEach(i=>{ r.musicas[+i.dataset.mtit].titulo = limpa(i.value); });
+  el.querySelectorAll('[data-mtom]').forEach(i=>{ r.musicas[+i.dataset.mtom].tom = limpa(i.value); });
+  el.querySelectorAll('[data-mmom]').forEach(i=>{ r.musicas[+i.dataset.mmom].momento = i.value; });
+  const o = el.querySelector('[data-obs]'); if(o) r.obs = o.value.trim();
+}
+function lerPrograma(){
+  const el = $('[data-sec="programa"]'); if(!el) return; const p = rasc.programa;
+  p.inicio = limpa($('#pgIni').value); p.fim = limpa($('#pgFim').value);
+  el.querySelectorAll('[data-bh]').forEach(i=>p.blocos[+i.dataset.bh].hora = limpa(i.value));
+  el.querySelectorAll('[data-bt]').forEach(i=>p.blocos[+i.dataset.bt].titulo = limpa(i.value));
+  el.querySelectorAll('[data-br]').forEach(i=>p.blocos[+i.dataset.br].resp = limpa(i.value));
+  el.querySelectorAll('[data-bn]').forEach(i=>p.blocos[+i.dataset.bn].notas = i.value.trim());
+  el.querySelectorAll('[data-bi]').forEach(i=>p.blocos[+i.dataset.bi].itens = i.value.split('\n').map(limpa).filter(Boolean));
+  el.querySelectorAll('[data-bon]').forEach(i=>p.blocos[+i.dataset.bon].ativo = i.checked);
+}
+async function salvarSecao(id, btn){
+  const data = dataAberta;
+  btn.disabled = true; const txt = btn.textContent; btn.textContent = 'Salvando…';
+  try{
+    if(id==='programa'){
+      lerPrograma();
+      if(rasc.programa.blocos.some(b=>b.tipo==='livre' && b.ativo!==false && !b.titulo)){ toast('Dê um nome ao momento novo ou desmarque “Aparece no Flow”.','var(--danger)', 3500); return; }
+      await sb('/fl_cultos?on_conflict=data', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data, tipo:tipoDe(data), programa:rasc.programa, atualizado_por:eu.nome, atualizado_em:new Date().toISOString()})});
+    } else {
+      lerSecao(id);
+      const r = rasc[id]; if(r.musicas) r.musicas = r.musicas.filter(m=>m.titulo);
+      // alguém salvou enquanto eu editava?
+      const antes = escalaDe(data, id);
+      const atual = (await sb(`/fl_escalas?select=atualizado_em,atualizado_por&data=eq.${data}&ministerio_id=eq.${id}`))[0];
+      if(atual && (!antes || atual.atualizado_em !== antes.atualizado_em) && !(await perguntar('Alguém salvou antes', `${atual.atualizado_por||'Outra pessoa'} salvou esta parte às ${quando(atual.atualizado_em)}, depois que você abriu. Se continuar, a sua versão substitui a dela.`, {sim:'Salvar a minha', perigo:true}))) return;
+      await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data, ministerio_id:id, dados:r, atualizado_por:eu.nome, atualizado_em:new Date().toISOString()})});
+    }
+    await carregarTudo(); sujo = false;
+    toast(id==='programa' ? 'Programação salva' : `${minNome(id)} salvo. A pastora já consegue ver.`);
+    redesenhar(id);
+  }catch(e){
+    toast(!navigator.onLine ? 'Sem internet. Tente de novo quando conectar.' : /42501|row-level/i.test(e.message) ? 'Você não tem permissão para preencher esta parte.' : 'Não salvou: '+e.message, 'var(--danger)', 4500);
+  }finally{ if(btn.isConnected){ btn.disabled = false; btn.textContent = txt; } }
+}
+
+/* =========================================================
+   PDF (layout do Flow)
+   ========================================================= */
+function carregarScript(src){ return new Promise((res,rej)=>{ if([...document.scripts].some(s=>s.src===src)) return res(); const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Não consegui carregar o gerador de PDF. Verifique a internet.')); document.head.appendChild(s); }); }
+function folhaHtml(data){
+  const p = rasc.programa, ceia = tipoDe(data)==='ceia';
+  const L = rasc.louvor || dadosVazios('louvor'), H = rasc.hospitalidade || dadosVazios('hospitalidade'), S = rasc.som || dadosVazios('som'), T = rasc.transmissao || dadosVazios('transmissao');
+  const nomes = (d, fid) => ((d.funcoes||{})[fid]?.pessoas||[]).join(' / ');
+  let n = 0; const musicas = mom => (L.musicas||[]).filter(m=>m.momento===mom && m.titulo).map(m=>`<div class="ml"><span class="k">${++n}</span><span>${esc(m.titulo)}${m.tom?` (${esc(m.tom)})`:''}</span></div>`).join('');
+  const nota = b => b.notas ? `<div></div><div></div><div class="nota">${esc(b.notas)}</div>` : '';
+  const blocos = p.blocos.filter(b=>b.ativo!==false && (b.tipo!=='ceia' || ceia)).map(b=>{
+    let resp = b.resp, extra = '';
+    if(b.tipo==='hospitalidade'){ resp = nomes(H,'hospitalidade'); const port = nomes(H,'portao'); if(port) extra = `<div></div><div class="n">Portão</div><div>${esc(port)}</div>`; }
+    if(b.tipo==='louvor'){ resp = L.responsavel; const m = musicas('louvor'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Músicas</div>${m}</div>`; }
+    if(b.tipo==='ceia'){ const m = musicas('ceia'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Música</div>${m}</div>`; }
+    if(b.tipo==='oferta'){ const m1 = musicas('oferta'), m2 = musicas('pos'); extra = `<div class="sub">${m1?`<div class="mlab" style="margin-left:46px">Música</div>${m1}`:''}<div class="crian"><b>AVISO PARA CRIANÇAS</b><span>${TXT_CRIANCAS}</span></div>${m2}</div>`; }
+    if(b.tipo==='avisos' && (b.itens||[]).length) extra = `<div class="sub" style="margin-top:6px">${b.itens.map((t,i)=>`<div class="ml aviso"><span class="k">${i+1}</span><span>${esc(t)}</span></div>`).join('')}</div>`;
+    if(b.tipo==='encerramento') extra = `<div class="sub"><div class="ml"><span class="k fim">Música - ${n+1}</span><span>${TXT_FIM}</span></div></div>`;
+    const tit = b.tipo==='louvor' ? `${esc(b.titulo)}<small>(responsável do dia)</small>` : esc(b.titulo);
+    return `<div class="bl"><div class="t">${esc(b.hora)}</div><div class="n">${tit}</div><div>${esc(resp||'')}</div>${extra}${nota(b)}</div>`;
+  }).join('');
+  const linha = (cls, f, quem, cheg) => `<tr class="${cls}"><td class="f">${esc(f)}</td><td>${esc(quem||'')}</td><td>${esc(quem?cheg||'':'')}</td></tr>`;
+  const fnsLouvor = (D.ministerios.find(m=>m.id==='louvor')?.funcoes||[]);
+  const tab = `<table class="tab"><tr><th></th><th>Responsável</th><th>Hora para chegar</th></tr>
+    ${(D.ministerios.find(m=>m.id==='som')?.funcoes||[]).map(f=>linha('som', f.nome, nomes(S,f.id), S.funcoes?.[f.id]?.chegada)).join('')}
+    <tr class="gap"><td colspan="3"></td></tr>
+    ${fnsLouvor.map(f=>linha('lv', f.nome, nomes(L,f.id), L.funcoes?.[f.id]?.chegada)).join('')}
+    <tr class="gap"><td colspan="3"></td></tr>
+    ${(D.ministerios.find(m=>m.id==='transmissao')?.funcoes||[]).map(f=>linha('tr', f.nome, nomes(T,f.id), T.funcoes?.[f.id]?.chegada)).join('')}</table>`;
+  const c = cultoDe(data);
+  return `<div class="pg"><div class="moldura">
+    <div class="cab"><div class="lg"><img src="/logo-flow.png" alt="" crossorigin="anonymous"></div>
+      <div class="dir"><div class="dia">${esc(cabecalhoPdf(data))}${c?.titulo?' · '+esc(c.titulo.toUpperCase()):''}</div>
+        <div class="hrs"><div><div><span>INÍCIO</span>${esc(p.inicio)}</div><div><span>FIM</span>${esc(p.fim)}</div></div><div class="ttl">FLOW – CRONOGRAMA DO CULTO</div></div></div></div>
+    <div class="corpo"><div>${blocos}</div><div>${tab}</div></div>
+  </div></div>`;
+}
+let pdfBlob = null;
+$('#gerarPdf').onclick = async ()=>{
+  if(!sujo){ try{ await carregarTudo(); const d = dataAberta; minis().forEach(m=>{ const e = escalaDe(d, m.id); if(e){ const v = dadosVazios(m.id); rasc[m.id] = {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}}; } }); }catch(e){} }
+  else { minis().forEach(m=>{ if(podeMin(m.id)) lerSecao(m.id); }); lerPrograma(); }
+  const faltam = minis().filter(m=>!preenchido(dataAberta, m.id)).map(m=>m.nome);
+  if(!cultoDe(dataAberta)?.programa) faltam.unshift('Programação (não salva)');
+  if(sujo && !(await perguntar('Gerar sem salvar?', 'Há alterações não salvas. O PDF sai com o que está na tela, mas elas não ficam guardadas.', {sim:'Gerar assim mesmo'}))) return;
+  const wrap = $('#prevWrap'); wrap.innerHTML = folhaHtml(dataAberta);
+  const pg = wrap.querySelector('.pg'); const k = Math.min(1, (wrap.clientWidth||340)/814); pg.style.transform = `scale(${k})`; wrap.style.height = (1123*k+20)+'px';
+  $('#pdfStatus').textContent = faltam.length ? `Ainda sem preencher: ${faltam.join(', ')}.` : 'Tudo preenchido.';
+  pdfBlob = null; $('#pdfModal').classList.add('on');
+};
+$('#pdfFechar').onclick = ()=>$('#pdfModal').classList.remove('on');
+async function gerarBlob(){
+  if(pdfBlob) return pdfBlob;
+  await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const host = $('#render'); host.innerHTML = folhaHtml(dataAberta);
+  await Promise.all([...host.querySelectorAll('img')].map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; })));
+  if(document.fonts?.ready) await document.fonts.ready;
+  const canvas = await html2canvas(host.querySelector('.pg'), {scale:2, backgroundColor:'#ffffff', useCORS:true});
+  const pdf = new window.jspdf.jsPDF({unit:'pt', format:'a4', orientation:'portrait'});
+  pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 595.28, 841.89);
+  host.innerHTML = '';
+  pdfBlob = pdf.output('blob'); return pdfBlob;
+}
+const nomeArquivo = ()=> `Flow - ${diaTxt(dataAberta)}${tipoDe(dataAberta)==='ceia'?' (ceia)':''}.pdf`;
+$('#pdfBaixar').onclick = async ()=>{
+  const b = $('#pdfBaixar'); b.disabled = true; $('#pdfStatus').textContent = 'Gerando o PDF…';
+  try{ const blob = await gerarBlob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nomeArquivo(); document.body.appendChild(a); a.click(); a.remove(); $('#pdfStatus').textContent = 'PDF baixado.'; }
+  catch(e){ $('#pdfStatus').textContent = e.message; } finally{ b.disabled = false; }
+};
+$('#pdfCompartilhar').onclick = async ()=>{
+  const b = $('#pdfCompartilhar'); b.disabled = true; $('#pdfStatus').textContent = 'Gerando o PDF…';
+  try{
+    const blob = await gerarBlob(); const file = new File([blob], nomeArquivo(), {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:nomeArquivo().replace('.pdf','')}); $('#pdfStatus').textContent = ''; }
+    else { $('#pdfStatus').textContent = 'Este aparelho não compartilha arquivos direto. Use “Baixar PDF” e envie pelo WhatsApp.'; }
+  }catch(e){ if(e.name!=='AbortError') $('#pdfStatus').textContent = e.message; }
+  finally{ b.disabled = false; }
+};
+
+/* =========================================================
+   Ministérios
+   ========================================================= */
+let minEdit = null;
+function renderMinisterios(){
+  $('#minLista').innerHTML = minis().map(m=>{
+    const membros = membrosDe(m.id);
+    if(minEdit===m.id) return `<div class="card msec m-${m.id}" data-min="${m.id}"><h3>${esc(m.nome)} · funções</h3>
+      <p class="hint" style="margin:0 0 4px">Nome de cada função e a hora padrão de chegada (aparece já preenchida em todo culto).</p>
+      ${(m.funcoes||[]).map((f,i)=>`<div class="funcrow"><input data-fnn="${i}" value="${esc(f.nome)}" aria-label="Função"><input data-fnc="${i}" value="${esc(f.chegada||'')}" placeholder="chegada" aria-label="Chegada"><button type="button" class="link red" data-fnd="${i}" aria-label="Apagar função">✕</button></div>`).join('')}
+      <div class="row" style="margin-top:10px"><button type="button" class="btn" data-fnadd>+ Função</button><button type="button" class="btn dark" data-fnsave>Salvar funções</button><button type="button" class="link" data-fncancel style="color:var(--muted)">Cancelar</button></div></div>`;
+    return `<div class="card msec m-${m.id}"><div class="mhead"><h3 style="margin:0">${esc(m.nome)}</h3><span class="hint">${membros.length} pessoa${membros.length===1?'':'s'}</span></div>
+      <div class="chips" style="margin-top:10px">${membros.map(p=>`<span class="chipsel" style="cursor:default">${esc(p.nome)}${p.email?' 🔑':''}</span>`).join('') || '<span class="hint">Ninguém cadastrado ainda.</span>'}</div>
+      <div class="hint" style="margin-top:8px">Funções: ${(m.funcoes||[]).map(f=>esc(f.nome)).join(' · ')}</div>
+      ${eu.admin?`<div class="row" style="margin-top:10px"><button type="button" class="btn" data-mgerir="${m.id}">Pessoas do ministério</button><button type="button" class="btn" data-mfun="${m.id}">Editar funções</button></div>`:''}</div>`;
+  }).join('') + (eu.admin?'<p class="hint">🔑 = tem acesso ao app e pode preencher a parte do ministério.</p>':'');
+  $$('[data-mgerir]').forEach(b=>b.onclick=()=>{ irPara('pessoas'); $('#pBusca').value=''; pFiltroMin = b.dataset.mgerir; renderPessoas(); });
+  $$('[data-mfun]').forEach(b=>b.onclick=()=>{ minEdit = b.dataset.mfun; renderMinisterios(); });
+  const box = $(`[data-min="${minEdit}"]`); if(!box) return;
+  const m = D.ministerios.find(x=>x.id===minEdit); let fns = JSON.parse(JSON.stringify(m.funcoes||[]));
+  const ler = ()=>{ box.querySelectorAll('[data-fnn]').forEach(i=>fns[+i.dataset.fnn].nome = limpa(i.value)); box.querySelectorAll('[data-fnc]').forEach(i=>fns[+i.dataset.fnc].chegada = limpa(i.value)); };
+  box.querySelector('[data-fnadd]').onclick = ()=>{ ler(); m.funcoes = [...fns, {id:'f'+uid(), nome:'', chegada:''}]; renderMinisterios(); D.ministerios.find(x=>x.id===minEdit).funcoes = m.funcoes; };
+  box.querySelectorAll('[data-fnd]').forEach(b=>b.onclick=()=>{ ler(); fns.splice(+b.dataset.fnd,1); m.funcoes = fns; renderMinisterios(); });
+  box.querySelector('[data-fncancel]').onclick = async ()=>{ minEdit=null; await carregarTudo(); renderMinisterios(); };
+  box.querySelector('[data-fnsave]').onclick = async ()=>{
+    ler(); if(fns.some(f=>!f.nome)){ toast('Uma função está sem nome','var(--danger)'); return; }
+    try{ await sb('/fl_ministerios?id=eq.'+m.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({funcoes:fns})}); minEdit=null; await carregarTudo(); renderMinisterios(); toast('Funções salvas'); }
+    catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  };
+}
+
+/* =========================================================
+   Pessoas e acessos (admin)
+   ========================================================= */
+let pFiltroMin = null, novoMins = new Set();
+function renderPessoas(){
+  if(!eu.admin){ irPara('cultos'); return; }
+  $('#pMins').innerHTML = minis().map(m=>`<button type="button" class="chipsel ${novoMins.has(m.id)?'on':''}" data-nm="${m.id}">${esc(m.nome)}</button>`).join('');
+  $$('[data-nm]').forEach(b=>b.onclick=()=>{ novoMins.has(b.dataset.nm) ? novoMins.delete(b.dataset.nm) : novoMins.add(b.dataset.nm); renderPessoas(); });
+  const q = semAcento($('#pBusca').value.trim());
+  let lista = D.pessoas.filter(p=>!q || semAcento(p.nome).includes(q) || semAcento(p.email).includes(q));
+  if(pFiltroMin) lista = lista.filter(p=>minsDe(p.id).includes(pFiltroMin));
+  $('#pConta').textContent = `${D.pessoas.length} pessoa${D.pessoas.length===1?'':'s'}`;
+  $('#pLista').innerHTML = (pFiltroMin?`<div class="row" style="margin-top:8px"><span class="tag">Só ${esc(minNome(pFiltroMin))}</span><button type="button" class="link" id="pTiraFiltro">ver todas</button></div>`:'') +
+    (lista.map(p=>`<div class="pessoa ${p.ativo?'':'off'}"><div class="info"><b>${esc(p.nome)}${p.email?' 🔑':''}</b>
+      <small>${p.email?esc(p.email):'sem acesso ao app'}${p.ativo?'':' · inativa'}</small>
+      <div class="mtags">${minsDe(p.id).map(id=>`<span>${esc(minNome(id))}</span>`).join('')}</div></div>
+      <button type="button" class="btn" data-pe="${p.id}">Editar</button></div>`).join('') || '<p class="hint">Ninguém encontrado.</p>');
+  $$('[data-pe]').forEach(b=>b.onclick=()=>abrirPessoa(b.dataset.pe));
+  const tf = $('#pTiraFiltro'); if(tf) tf.onclick = ()=>{ pFiltroMin=null; renderPessoas(); };
+}
+$('#pBusca').oninput = renderPessoas;
+$('#pAdd').onclick = async ()=>{
+  const nome = limpa($('#pNome').value); if(!nome){ toast('Digite o nome','var(--danger)'); return; }
+  if(D.pessoas.some(p=>semAcento(p.nome)===semAcento(nome)) && !(await perguntar('Nome repetido', `Já existe alguém chamado "${nome}". Cadastrar outra pessoa com o mesmo nome?`, {sim:'Cadastrar'}))) return;
+  try{
+    const [p] = await sb('/fl_pessoas', {method:'POST', headers:{Prefer:'return=representation'}, body:JSON.stringify({nome})});
+    if(novoMins.size) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify([...novoMins].map(m=>({ministerio_id:m, pessoa_id:p.id})))});
+    $('#pNome').value=''; novoMins = new Set(); await carregarTudo(); renderPessoas(); toast(`${nome} adicionada`);
+  }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+};
+let peId = null, peMins = new Set();
+async function abrirPessoa(id){
+  peId = id; const p = D.pessoas.find(x=>x.id===id); peMins = new Set(minsDe(id));
+  $('#peTitulo').textContent = p.nome; $('#peNome').value = p.nome; $('#peTel').value = p.telefone||'';
+  desenharPeMins(); await desenharAcesso(p); $('#pesModal').classList.add('on');
+}
+function desenharPeMins(){
+  $('#peMins').innerHTML = minis().map(m=>`<button type="button" class="chipsel ${peMins.has(m.id)?'on':''}" data-pm="${m.id}">${esc(m.nome)}</button>`).join('');
+  $$('[data-pm]').forEach(b=>b.onclick=()=>{ peMins.has(b.dataset.pm) ? peMins.delete(b.dataset.pm) : peMins.add(b.dataset.pm); desenharPeMins(); });
+}
+async function chamarEquipe(body){
+  const r = await fetch(SB+'/functions/v1/vf-equipe', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+await tokenValido(), 'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.erro || 'Erro '+r.status); return j;
+}
+async function desenharAcesso(p){
+  const box = $('#peAcesso');
+  if(!p.email){
+    box.innerHTML = `<p class="hint" style="margin:4px 0 8px">Sem acesso. Dê acesso só se esta pessoa for preencher a escala do ministério dela.</p>
+      <label class="lb" for="aEmail">E-mail</label><input id="aEmail" class="field" type="email" autocomplete="off">
+      <label class="lb" for="aSenha">Senha inicial (mín. 6)</label><input id="aSenha" class="field" type="text" autocomplete="off">
+      <label class="hint" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="aAdmin"> Administrador do Flow (vê tudo, monta a programação e cadastra pessoas)</label>
+      <button type="button" class="btn dark" id="aCriar" style="margin-top:10px">Dar acesso</button>`;
+    $('#aCriar').onclick = async ()=>{
+      const email = $('#aEmail').value.trim().toLowerCase(), senha = $('#aSenha').value;
+      if(!email){ toast('Digite o e-mail','var(--danger)'); return; }
+      if(D.pessoas.some(x=>x.email===email)){ toast('Esse e-mail já está em outra pessoa','var(--danger)'); return; }
+      const b = $('#aCriar'); b.disabled = true;
+      try{
+        const j = await chamarEquipe({acao:'criar', nome:p.nome, email, senha, flow:true, flow_admin:$('#aAdmin').checked});
+        await sb('/fl_pessoas?id=eq.'+p.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({email})});
+        await carregarTudo(); toast(j.msg, undefined, 4500); desenharAcesso(D.pessoas.find(x=>x.id===p.id)); renderPessoas();
+      }catch(e){ toast(e.message,'var(--danger)', 4500); } finally{ b.disabled = false; }
+    };
+    return;
+  }
+  let m = null; try{ m = (await sb('/vf_membros?select=*&email=eq.'+encodeURIComponent(p.email)))[0]; }catch(e){}
+  const temFlow = m && m.ativo && (m.flow || m.flow_admin || m.admin);
+  box.innerHTML = `<p style="margin:4px 0"><b>${esc(p.email)}</b></p>
+    <p class="hint" style="margin:0 0 8px">${!m ? 'Acesso não encontrado.' : !temFlow ? 'Acesso ao Flow desligado.' : (m.admin ? 'Master do caixa (vê tudo).' : m.flow_admin ? 'Administrador do Flow.' : 'Preenche a parte dos ministérios dela.')}</p>
+    <div class="row">
+      <button type="button" class="btn" id="aSenhaNova">Nova senha</button>
+      ${m && !m.admin ? `<button type="button" class="btn" id="aAdm">${m.flow_admin?'Tirar admin do Flow':'Tornar admin do Flow'}</button>` : ''}
+      ${m && !m.admin ? `<button type="button" class="btn ${temFlow?'red':''}" id="aLiga">${temFlow?'Tirar acesso':'Devolver acesso'}</button>` : ''}
+    </div>`;
+  $('#aSenhaNova').onclick = async ()=>{
+    const s = await perguntar('Nova senha', `Nova senha para ${p.email} (mínimo 6 caracteres).`, {sim:'Trocar senha', input:{ph:'Nova senha'}}); if(s==null) return;
+    try{ const j = await chamarEquipe({acao:'senha', email:p.email, senha:s}); toast(j.msg); }catch(e){ toast(e.message,'var(--danger)', 4500); }
+  };
+  const ad = $('#aAdm'); if(ad) ad.onclick = async ()=>{ try{ await chamarEquipe({acao:'acesso', email:p.email, flow:true, flow_admin:!m.flow_admin}); toast('Acesso atualizado'); desenharAcesso(p); }catch(e){ toast(e.message,'var(--danger)', 4500); } };
+  const lg = $('#aLiga'); if(lg) lg.onclick = async ()=>{ try{ await chamarEquipe({acao:'acesso', email:p.email, flow:!temFlow, ...(temFlow?{flow_admin:false}:{})}); toast('Acesso atualizado'); desenharAcesso(p); }catch(e){ toast(e.message,'var(--danger)', 4500); } };
+}
+$('#peFechar').onclick = ()=>$('#pesModal').classList.remove('on');
+$('#peSalvar').onclick = async ()=>{
+  const p = D.pessoas.find(x=>x.id===peId); const nome = limpa($('#peNome').value); if(!nome){ toast('Digite o nome','var(--danger)'); return; }
+  try{
+    await sb('/fl_pessoas?id=eq.'+p.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({nome, telefone:limpa($('#peTel').value)||null})});
+    const antes = new Set(minsDe(p.id));
+    const add = [...peMins].filter(m=>!antes.has(m)), del = [...antes].filter(m=>!peMins.has(m));
+    if(add.length) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(add.map(m=>({ministerio_id:m, pessoa_id:p.id})))});
+    for(const m of del) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'DELETE'});
+    await carregarTudo(); $('#pesModal').classList.remove('on'); renderPessoas(); toast('Pessoa salva');
+  }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+};
+$('#peExcluir').onclick = async ()=>{
+  const p = D.pessoas.find(x=>x.id===peId);
+  if(!(await perguntar('Remover pessoa?', `${p.nome} sai da lista e dos ministérios. As escalas já salvas continuam com o nome dela.${p.email?' O login continua existindo; use “Tirar acesso” para bloquear.':''}`, {sim:'Remover', perigo:true}))) return;
+  try{ await sb('/fl_pessoas?id=eq.'+p.id, {method:'DELETE'}); await carregarTudo(); $('#pesModal').classList.remove('on'); renderPessoas(); toast('Pessoa removida'); }
+  catch(e){ toast('Não removeu: '+e.message,'var(--danger)'); }
+};
+
+/* =========================================================
+   Início
+   ========================================================= */
+async function iniciar(){
+  $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
+  $('#navPessoas').hidden = !eu?.admin;
+  renderCultos();
+  try{ await carregarTudo(); }catch(e){ if(!navigator.onLine) toast('Sem internet: mostrando a última versão salva.','#b07d00', 3500); }
+  if(vista==='cultos') renderCultos(); else if(vista==='ministerios') renderMinisterios();
+  carregarEu().then(()=>{ $('#navPessoas').hidden = !eu.admin; if(vista==='cultos') renderCultos(); }).catch(e=>{ if(e.semAcesso){ toast(e.message,'var(--danger)', 5000); sair(); } });
+}
+document.addEventListener('visibilitychange', async ()=>{ if(document.hidden || !sess || sujo) return; try{ await carregarTudo(); if(vista==='cultos') renderCultos(); }catch(e){} });
+if(sess && eu) iniciar();
+else if(sess && !eu){ carregarEu().then(iniciar).catch(()=>{ $('#login').classList.add('on'); }); }
+else $('#login').classList.add('on');
+</script>
+</body>
+</html>
