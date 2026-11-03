@@ -168,6 +168,16 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .pg .tab tr.som td{background:#fdf3cf;border:1px solid #c9b46a}
 .pg .tab tr.tr td{background:#e6f3e4;border-top:1px dotted #8a8;border-bottom:1px dotted #8a8}
 .pg .tab tr.gap td{background:#fff;height:8px}
+
+.agsel{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:6px;background:#fff}
+.agsel.on{border-color:var(--accent);background:#eefafc}
+.agsel label{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+.agsel label input{margin-top:3px}
+.agsel input[data-agx]{width:100%;margin-top:6px;padding:8px;border:1px solid var(--line);border-radius:8px;font-size:13.5px}
+.agitem{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+.agitem:last-child{border-bottom:0}
+.agitem .info{flex:1;min-width:0;font-size:15px}
+.agitem.edit{display:block}
 </style>
 </head>
 <body>
@@ -181,6 +191,7 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   </div>
   <nav id="nav">
     <button data-v="cultos" class="on" type="button">Cultos</button>
+    <button data-v="agenda" type="button">Agenda</button>
     <button data-v="ministerios" type="button">Ministérios</button>
     <button data-v="pessoas" type="button" id="navPessoas" hidden>Pessoas e acessos</button>
   </nav>
@@ -207,6 +218,22 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <button class="btn dark" id="gerarPdf" type="button" hidden>📄 Gerar PDF</button>
     </div>
     <div id="dSecoes"></div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="view" id="v-agenda">
+    <div class="card" id="agForm">
+      <h3>Novo evento na agenda</h3>
+      <p class="hint" style="margin:0 0 4px">Os eventos cadastrados aqui aparecem para marcar nos Avisos de cada culto e entram sozinhos no Flow.</p>
+      <div class="horas"><div><label class="lb" for="agData">Data</label><input class="field" type="date" id="agData"></div><div><label class="lb" for="agFim">Até (se durar mais de um dia)</label><input class="field" type="date" id="agFim"></div></div>
+      <label class="lb" for="agTit">Evento</label><input class="field" id="agTit" placeholder="Ex.: Batismo, Fluir das Mulheres, Flow Camp" autocomplete="off">
+      <label class="lb" for="agDet">Complemento padrão (opcional)</label><input class="field" id="agDet" placeholder="Ex.: ARTE COM QR CODE DE INSCRIÇÃO - Chamar Isadora" autocomplete="off">
+      <button class="go" id="agAdd" type="button">Adicionar à agenda</button>
+    </div>
+    <div class="secao" style="margin-top:4px">Próximos eventos</div>
+    <div class="card" style="padding:6px 16px"><div id="agFut"></div></div>
+    <div class="secao">Já aconteceram</div>
+    <div class="card" style="padding:6px 16px"><div id="agPas"></div></div>
   </section>
 
   <!-- MINISTÉRIOS -->
@@ -366,6 +393,28 @@ const tituloData = s => { const d = deISO(s); return `${DIAS[d.getDay()][0].toUp
 const cabecalhoPdf = s => { const d = deISO(s); return `${DIAS[d.getDay()].split('-')[0].toUpperCase()}, ${String(d.getDate()===1?'1º':d.getDate())} DE ${MESES[d.getMonth()].toUpperCase()}`; };
 const quando = ts => new Date(ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 
+/* ---------- Agenda (próximos eventos) ---------- */
+const MesCap = i => MESES[i][0].toUpperCase()+MESES[i].slice(1);
+function dataEventoTxt(ev){
+  const a = deISO(ev.data), f = ev.data_fim ? deISO(ev.data_fim) : null;
+  const d1 = a.getDate()===1 ? '1º' : a.getDate();
+  if(!f || ev.data_fim===ev.data) return `${d1} de ${MesCap(a.getMonth())}`;
+  if(f.getMonth()===a.getMonth()) return `${d1} a ${f.getDate()} de ${MesCap(f.getMonth())}`;
+  return `${d1} de ${MesCap(a.getMonth())} a ${f.getDate()} de ${MesCap(f.getMonth())}`;
+}
+const eventoTxt = ev => `${dataEventoTxt(ev)} - ${ev.titulo}`;
+const fimEv = ev => ev.data_fim || ev.data;
+const eventosAPartir = data => (D.agenda||[]).filter(ev=>fimEv(ev) >= data).sort((a,b)=>a.data.localeCompare(b.data));
+function agendaPadrao(data){   // pré-marca o que acontece nas próximas 4 semanas
+  const lim = iso(new Date(deISO(data).getTime()+28*86400000));
+  return eventosAPartir(data).filter(ev=>ev.data<=lim).map(ev=>({id:ev.id, extra:ev.detalhe||''}));
+}
+function linhasAvisos(b, data){
+  const sel = (b.agenda||[]).map(s=>{ const ev = (D.agenda||[]).find(x=>x.id===s.id); return ev ? {ev, extra:s.extra} : (s.texto ? {texto:s.texto, extra:s.extra} : null); }).filter(Boolean)
+    .sort((x,y)=>(x.ev?.data||'').localeCompare(y.ev?.data||''));
+  return [...sel.map(x=>(x.ev?eventoTxt(x.ev):x.texto) + (x.extra?` - ${x.extra}`:'')), ...(b.itens||[])];
+}
+
 /* =========================================================
    Login (mesma conta do caixa)
    ========================================================= */
@@ -421,7 +470,8 @@ $('#ctTrocar').onclick = async ()=>{
 /* =========================================================
    Dados
    ========================================================= */
-let D = load(K.cache, {ministerios:[], pessoas:[], mp:[], cultos:[], escalas:[]});
+let D = load(K.cache, {ministerios:[], pessoas:[], mp:[], cultos:[], escalas:[], agenda:[]});
+if(!D.agenda) D.agenda = [];
 const minis = ()=> [...D.ministerios].sort((a,b)=>a.ordem-b.ordem);
 const minNome = id => D.ministerios.find(m=>m.id===id)?.nome || id;
 const membrosDe = mid => D.mp.filter(x=>x.ministerio_id===mid).map(x=>D.pessoas.find(p=>p.id===x.pessoa_id)).filter(p=>p && p.ativo).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
@@ -435,14 +485,15 @@ const tipoDe = data => cultoDe(data)?.tipo || (segundoDomingo(data) ? 'ceia' : '
 
 async function carregarTudo(){
   const desde = iso(new Date(Date.now()-120*86400000));
-  const [ms, ps, mp, cs, es] = await Promise.all([
+  const [ms, ps, mp, cs, es, ag] = await Promise.all([
     sb('/fl_ministerios?select=*&order=ordem.asc'),
     sb('/fl_pessoas?select=*&order=nome.asc'),
     sb('/fl_ministerio_pessoas?select=*'),
     sb('/fl_cultos?select=*&data=gte.'+desde),
-    sb('/fl_escalas?select=*&data=gte.'+desde)
+    sb('/fl_escalas?select=*&data=gte.'+desde),
+    sb('/fl_agenda?select=*&order=data.asc&data=gte.'+desde)
   ]);
-  D = {ministerios:ms, pessoas:ps, mp, cultos:cs, escalas:es}; save(K.cache, D);
+  D = {ministerios:ms, pessoas:ps, mp, cultos:cs, escalas:es, agenda:ag}; save(K.cache, D);
 }
 
 /* =========================================================
@@ -456,6 +507,7 @@ function irPara(v){
   $$('.view').forEach(x=>x.classList.toggle('on', x.id==='v-'+v));
   if(v==='cultos') renderCultos();
   if(v==='ministerios') renderMinisterios();
+  if(v==='agenda') renderAgenda();
   if(v==='pessoas') renderPessoas();
   window.scrollTo(0,0);
 }
@@ -526,7 +578,7 @@ function programaPadrao(data){
       {id:'pregacao', tipo:'pregacao', hora:'18h35', titulo:'Pregação', resp:'Pra. Ana Cláudia', notas:''},
       {id:'encerramento', tipo:'encerramento', hora:'19h30', titulo:'Encerramento', resp:'', notas:''}
     ]};
-  base.blocos.forEach(b=>{ b.notas=''; if(b.tipo==='avisos') b.itens = b.itens||[]; });
+  base.blocos.forEach(b=>{ b.notas=''; if(b.tipo==='avisos'){ b.itens = []; b.agenda = agendaPadrao(data); } });
   return base;
 }
 function dadosVazios(mid){
@@ -538,6 +590,7 @@ async function abrirCulto(data){
   dataAberta = data; sujo = false;
   try{ await carregarTudo(); }catch(e){}
   rasc = {programa: JSON.parse(JSON.stringify(cultoDe(data)?.programa || programaPadrao(data)))};
+  rasc.programa.blocos.forEach(b=>{ if(b.tipo==='avisos' && !Array.isArray(b.agenda)) b.agenda = agendaPadrao(data); });
   minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
   irPara('culto'); renderCulto();
 }
@@ -613,7 +666,7 @@ function secPrograma(){
   if(!eu.admin){
     const ativos = p.blocos.filter(b=>b.ativo!==false && (b.tipo!=='ceia' || ceia));
     return `<div class="card msec m-programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
-      ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
+      ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}${b.tipo==='avisos'?linhasAvisos(b,dataAberta).map(t=>`<div class="hint">• ${esc(t)}</div>`).join(''):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
   }
   const blocos = p.blocos.map((b,i)=>{
     const ehAuto = ['hospitalidade','louvor'].includes(b.tipo);
@@ -624,7 +677,7 @@ function secPrograma(){
         <div class="ordem"><button type="button" data-bup="${i}" aria-label="Subir">↑</button><button type="button" data-bdn="${i}" aria-label="Descer">↓</button></div></div>
       ${ehAuto ? `<div class="auto">${b.tipo==='louvor'?'Responsável do dia e músicas vêm do Louvor.':'Nomes vêm da Hospitalidade.'}</div>`
                : b.tipo==='encerramento' ? '' : `<input data-br="${i}" value="${esc(b.resp)}" placeholder="Quem conduz (ex.: Pr. Allan)" style="margin-top:6px" aria-label="Quem conduz">`}
-      ${b.tipo==='avisos' ? `<label class="lb" style="margin-top:8px">Avisos (um por linha)</label><textarea data-bi="${i}" rows="4" placeholder="Ex.: 15 de novembro - Batismo">${esc((b.itens||[]).join('\n'))}</textarea>` : ''}
+      ${b.tipo==='avisos' ? avisosEditor(b, i) : ''}
       ${b.tipo!=='encerramento' ? `<textarea data-bn="${i}" rows="1" placeholder="Observação (sai no PDF abaixo deste momento)" style="margin-top:6px">${esc(b.notas)}</textarea>` : ''}
       <div class="row" style="margin-top:6px;justify-content:space-between">
         ${b.tipo==='ceia' ? `<span class="hint">${ceia?'Aparece porque é culto de ceia.':'Só aparece em culto de ceia.'}</span>` :
@@ -637,6 +690,19 @@ function secPrograma(){
     ${blocos}
     <div class="row" style="margin-top:10px"><button type="button" class="btn" id="bAdd">+ Outro momento</button></div>
     <button type="button" class="go" data-salvar="programa">Salvar programação</button></div>`;
+}
+
+function avisosEditor(b, i){
+  const evs = eventosAPartir(dataAberta), sel = new Map((b.agenda||[]).map(x=>[x.id,x]));
+  const orfaos = (b.agenda||[]).filter(x=>!(D.agenda||[]).some(ev=>ev.id===x.id));
+  return `<div class="lb" style="margin-top:10px">Próximos eventos da Agenda — marque os que serão avisados</div>
+    ${evs.length ? evs.map(ev=>{ const s = sel.get(ev.id); return `<div class="agsel ${s?'on':''}">
+      <label><input type="checkbox" data-ag="${i}" value="${ev.id}" ${s?'checked':''}> <span><b>${esc(dataEventoTxt(ev))}</b> - ${esc(ev.titulo)}</span></label>
+      ${s?`<input data-agx="${ev.id}" value="${esc(s.extra||'')}" placeholder="Complemento (ex.: Chamar a Paula - NOVA ARTE)">`:''}</div>`; }).join('')
+      : '<p class="hint" style="margin:4px 0">Nenhum evento futuro na Agenda.</p>'}
+    ${orfaos.map(x=>`<div class="agsel on"><label><input type="checkbox" data-ag="${i}" value="${x.id}" checked> <span>${esc(x.texto||'Evento removido da Agenda')}</span></label></div>`).join('')}
+    <button type="button" class="link" data-iragenda style="margin-top:4px">+ Cadastrar evento na Agenda</button>
+    <label class="lb">Outros avisos (um por linha)</label><textarea data-bi="${i}" rows="2" placeholder="Ex.: Débora vai falar dos avisos das crianças">${esc((b.itens||[]).join('\n'))}</textarea>`;
 }
 
 /* ----- Eventos da tela do culto ----- */
@@ -657,6 +723,11 @@ function ligarCulto(){
   box.querySelectorAll('[data-bup],[data-bdn]').forEach(b=>b.onclick=()=>{ lerPrograma(); const i = +(b.dataset.bup ?? b.dataset.bdn), j = b.dataset.bup!=null ? i-1 : i+1; const bl = rasc.programa.blocos; if(j<0||j>=bl.length) return; [bl[i],bl[j]]=[bl[j],bl[i]]; marcarSujo(); redesenhar('programa'); });
   box.querySelectorAll('[data-bdel]').forEach(b=>b.onclick=()=>{ lerPrograma(); rasc.programa.blocos.splice(+b.dataset.bdel,1); marcarSujo(); redesenhar('programa'); });
   box.querySelectorAll('[data-bon]').forEach(b=>b.onchange=()=>{ lerPrograma(); marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-ag]').forEach(cb=>cb.onchange=()=>{ lerPrograma(); const bl = rasc.programa.blocos[+cb.dataset.ag];
+    if(cb.checked){ const ev = (D.agenda||[]).find(x=>x.id===cb.value); if(!bl.agenda.some(x=>x.id===cb.value)) bl.agenda.push({id:cb.value, extra:ev?.detalhe||''}); }
+    else bl.agenda = bl.agenda.filter(x=>x.id!==cb.value);
+    marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-iragenda]').forEach(b=>b.onclick=async ()=>{ if(sujo && !(await perguntar('Sair sem salvar?', 'Salve a programação antes de ir para a Agenda, senão as mudanças se perdem.', {sim:'Ir assim mesmo', perigo:true}))) return; sujo=false; irPara('agenda'); setTimeout(()=>$('#agData').focus(),100); });
   const ba = $('#bAdd'); if(ba) ba.onclick=()=>{ lerPrograma(); const bl = rasc.programa.blocos; const pos = Math.max(0, bl.findIndex(b=>b.tipo==='pregacao')); bl.splice(pos, 0, {id:uid(), tipo:'livre', hora:'', titulo:'', resp:'', notas:''}); marcarSujo(); redesenhar('programa'); };
   box.querySelectorAll('[data-salvar]').forEach(b=>b.onclick=()=>salvarSecao(b.dataset.salvar, b));
 }
@@ -681,6 +752,8 @@ function lerPrograma(){
   el.querySelectorAll('[data-br]').forEach(i=>p.blocos[+i.dataset.br].resp = limpa(i.value));
   el.querySelectorAll('[data-bn]').forEach(i=>p.blocos[+i.dataset.bn].notas = i.value.trim());
   el.querySelectorAll('[data-bi]').forEach(i=>p.blocos[+i.dataset.bi].itens = i.value.split('\n').map(limpa).filter(Boolean));
+  el.querySelectorAll('[data-agx]').forEach(i=>{ p.blocos.forEach(b=>{ if(b.tipo==='avisos'){ const x = (b.agenda||[]).find(a=>a.id===i.dataset.agx); if(x) x.extra = limpa(i.value); } }); });
+  p.blocos.forEach(b=>{ if(b.tipo==='avisos') (b.agenda||[]).forEach(x=>{ const ev = (D.agenda||[]).find(e=>e.id===x.id); if(ev) x.texto = eventoTxt(ev); }); });
   el.querySelectorAll('[data-bon]').forEach(i=>p.blocos[+i.dataset.bon].ativo = i.checked);
 }
 async function salvarSecao(id, btn){
@@ -724,7 +797,8 @@ function folhaHtml(data){
     if(b.tipo==='louvor'){ resp = L.responsavel; const m = musicas('louvor'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Músicas</div>${m}</div>`; }
     if(b.tipo==='ceia'){ const m = musicas('ceia'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Música</div>${m}</div>`; }
     if(b.tipo==='oferta'){ const m1 = musicas('oferta'), m2 = musicas('pos'); extra = `<div class="sub">${m1?`<div class="mlab" style="margin-left:46px">Música</div>${m1}`:''}<div class="crian"><b>AVISO PARA CRIANÇAS</b><span>${TXT_CRIANCAS}</span></div>${m2}</div>`; }
-    if(b.tipo==='avisos' && (b.itens||[]).length) extra = `<div class="sub" style="margin-top:6px">${b.itens.map((t,i)=>`<div class="ml aviso"><span class="k">${i+1}</span><span>${esc(t)}</span></div>`).join('')}</div>`;
+    const avs = b.tipo==='avisos' ? linhasAvisos(b, data) : [];
+    if(avs.length) extra = `<div class="sub" style="margin-top:6px">${avs.map((t,i)=>`<div class="ml aviso"><span class="k">${i+1}</span><span>${esc(t)}</span></div>`).join('')}</div>`;
     if(b.tipo==='encerramento') extra = `<div class="sub"><div class="ml"><span class="k fim">Música - ${n+1}</span><span>${TXT_FIM}</span></div></div>`;
     const tit = b.tipo==='louvor' ? `${esc(b.titulo)}<small>(responsável do dia)</small>` : esc(b.titulo);
     return `<div class="bl"><div class="t">${esc(b.hora)}</div><div class="n">${tit}</div><div>${esc(resp||'')}</div>${extra}${nota(b)}</div>`;
@@ -785,6 +859,49 @@ $('#pdfCompartilhar').onclick = async ()=>{
     else { $('#pdfStatus').textContent = 'Este aparelho não compartilha arquivos direto. Use “Baixar PDF” e envie pelo WhatsApp.'; }
   }catch(e){ if(e.name!=='AbortError') $('#pdfStatus').textContent = e.message; }
   finally{ b.disabled = false; }
+};
+
+/* =========================================================
+   Agenda
+   ========================================================= */
+let agEdit = null;
+function renderAgenda(){
+  $('#agForm').hidden = !eu.admin;
+  const hoje = hojeISO();
+  const fut = (D.agenda||[]).filter(ev=>fimEv(ev)>=hoje).sort((a,b)=>a.data.localeCompare(b.data));
+  const pas = (D.agenda||[]).filter(ev=>fimEv(ev)<hoje).sort((a,b)=>b.data.localeCompare(a.data)).slice(0,10);
+  const item = ev => agEdit===ev.id ? `<div class="agitem edit">
+      <div class="horas"><div><label class="lb">Data</label><input class="field" type="date" id="aeData" value="${ev.data}"></div><div><label class="lb">Até (opcional)</label><input class="field" type="date" id="aeFim" value="${ev.data_fim||''}"></div></div>
+      <label class="lb">Evento</label><input class="field" id="aeTit" value="${esc(ev.titulo)}">
+      <label class="lb">Complemento padrão (opcional)</label><input class="field" id="aeDet" value="${esc(ev.detalhe||'')}">
+      <div class="row" style="margin-top:10px"><button type="button" class="btn dark" id="aeSalvar">Salvar</button><button type="button" class="btn" id="aeCancel">Cancelar</button><button type="button" class="link red" id="aeDel" style="margin-left:auto">Excluir</button></div></div>`
+    : `<div class="agitem"><div class="info"><b>${esc(dataEventoTxt(ev))}</b> - ${esc(ev.titulo)}${ev.detalhe?`<div class="hint">${esc(ev.detalhe)}</div>`:''}</div>${eu.admin?`<button type="button" class="btn" data-agedit="${ev.id}">Editar</button>`:''}</div>`;
+  $('#agFut').innerHTML = fut.length ? fut.map(item).join('') : '<p class="hint">Nenhum evento cadastrado ainda.</p>';
+  $('#agPas').innerHTML = pas.length ? pas.map(item).join('') : '<p class="hint">Nada por aqui.</p>';
+  $$('[data-agedit]').forEach(b=>b.onclick=()=>{ agEdit=b.dataset.agedit; renderAgenda(); });
+  if(agEdit && $('#aeSalvar')){
+    $('#aeCancel').onclick = ()=>{ agEdit=null; renderAgenda(); };
+    $('#aeSalvar').onclick = async ()=>{
+      const body = {data:$('#aeData').value, data_fim:$('#aeFim').value||null, titulo:limpa($('#aeTit').value), detalhe:limpa($('#aeDet').value)||null};
+      if(!body.data || !body.titulo){ toast('Preencha a data e o evento','var(--danger)'); return; }
+      if(body.data_fim && body.data_fim<body.data){ toast('A data final é antes da inicial','var(--danger)'); return; }
+      try{ await sb('/fl_agenda?id=eq.'+agEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(body)}); agEdit=null; await carregarTudo(); renderAgenda(); toast('Evento salvo'); }
+      catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+    };
+    $('#aeDel').onclick = async ()=>{
+      if(!(await perguntar('Excluir evento?', 'Ele sai da Agenda. Nos Flows já salvos, o aviso continua com o texto que tinha.', {sim:'Excluir', perigo:true}))) return;
+      try{ await sb('/fl_agenda?id=eq.'+agEdit, {method:'DELETE'}); agEdit=null; await carregarTudo(); renderAgenda(); toast('Evento excluído'); }
+      catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); }
+    };
+  }
+}
+$('#agAdd').onclick = async ()=>{
+  const body = {data:$('#agData').value, data_fim:$('#agFim').value||null, titulo:limpa($('#agTit').value), detalhe:limpa($('#agDet').value)||null, criado_por:eu.nome};
+  if(!body.data || !body.titulo){ toast('Preencha a data e o nome do evento','var(--danger)'); return; }
+  if(body.data_fim && body.data_fim<body.data){ toast('A data final é antes da inicial','var(--danger)'); return; }
+  try{ await sb('/fl_agenda', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(body)});
+    $('#agData').value=''; $('#agFim').value=''; $('#agTit').value=''; $('#agDet').value=''; await carregarTudo(); renderAgenda(); toast(`Evento “${body.titulo}” na Agenda`); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
 };
 
 /* =========================================================
