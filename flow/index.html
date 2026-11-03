@@ -203,6 +203,11 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .pular .ir.m-kids{border-left-color:#e8b923}
 .chipsel:disabled{opacity:.45;cursor:not-allowed}
 .mtags .lidtag{background:#fff3c4}
+
+.bloco label.onflow{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.bloco label.onflow input{width:18px;height:18px;padding:0;flex:none}
+.bloco.fixo{background:#f2f6f9;border-style:dashed}
+.pg .bl.equipe{margin-top:4px;row-gap:3px}
 </style>
 </head>
 <body>
@@ -620,7 +625,6 @@ function programaPadrao(data){
     inicio:'18h', fim:'19h30',
     blocos:[
       {id:'abertura', tipo:'abertura', hora:'18h', titulo:'Abertura', resp:'Pr. Allan', notas:''},
-      {id:'hospitalidade', tipo:'hospitalidade', hora:'', titulo:'Hospitalidade', resp:'', notas:''},
       {id:'louvor', tipo:'louvor', hora:'18h05', titulo:'Louvor', resp:'', notas:''},
       {id:'avisos', tipo:'avisos', hora:'18h25', titulo:'Avisos / Recados', resp:'Pr. Allan', notas:'', itens:[]},
       {id:'ceia', tipo:'ceia', hora:'18h30', titulo:'Santa Ceia', resp:'Pr. Ivar', notas:''},
@@ -641,6 +645,7 @@ async function abrirCulto(data){
   dataAberta = data; sujo = false; verTodos = new Set();
   try{ await carregarTudo(); }catch(e){}
   rasc = {programa: JSON.parse(JSON.stringify(cultoDe(data)?.programa || programaPadrao(data)))};
+  rasc.programa.blocos = rasc.programa.blocos.filter(b=>b.tipo!=='hospitalidade');   // equipe sem horário vai no topo do Flow
   rasc.programa.blocos.forEach(b=>{ if(b.tipo==='avisos' && !Array.isArray(b.agenda)) b.agenda = agendaPadrao(data); });
   minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
   irPara('culto'); renderCulto();
@@ -732,7 +737,7 @@ function secMinisterio(mid){
       const todos = verTodos.has(mid+':'+fn.id);
       const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
       const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !hs.includes(fn.hab) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
-      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${mid!=='hospitalidade'?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
+      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!['hospitalidade','kids'].includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
         <div class="chips">${vis.map(chip).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
         ${escondidos ? `<button type="button" class="chipsel add" data-todos="${fn.id}">ver todos (+${escondidos})</button>` : (todos && membros.some(p=>!serve(p)) ? `<button type="button" class="chipsel add" data-todos="${fn.id}">só quem toca</button>` : '')}
@@ -773,8 +778,8 @@ function secPrograma(){
     return `<div class="card msec m-programa" data-sec="programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
       ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}${b.tipo==='avisos'?linhasAvisos(b,dataAberta).map(t=>`<div class="hint">• ${esc(t)}</div>`).join(''):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
   }
-  const blocos = p.blocos.map((b,i)=>{
-    const ehAuto = ['hospitalidade','louvor'].includes(b.tipo);
+  const blocos = `<div class="bloco fixo"><b>Hospitalidade · Portão · Kids</b><div class="auto">Não têm horário: os nomes vêm das escalas desses ministérios e saem no topo do Flow, antes da Abertura.</div></div>` + p.blocos.map((b,i)=>{
+    const ehAuto = b.tipo==='louvor';
     const off = b.ativo===false || (b.tipo==='ceia' && !ceia);
     return `<div class="bloco ${off?'off':''}">
       <div class="bh"><input data-bh="${i}" value="${esc(b.hora)}" placeholder="hora" aria-label="Horário">
@@ -786,7 +791,7 @@ function secPrograma(){
       ${b.tipo!=='encerramento' ? `<textarea data-bn="${i}" rows="1" placeholder="Observação (sai no PDF abaixo deste momento)" style="margin-top:6px">${esc(b.notas)}</textarea>` : ''}
       <div class="row" style="margin-top:6px;justify-content:space-between">
         ${b.tipo==='ceia' ? `<span class="hint">${ceia?'Aparece porque é culto de ceia.':'Só aparece em culto de ceia.'}</span>` :
-          `<label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-bon="${i}" ${b.ativo===false?'':'checked'}> Aparece no Flow</label>`}
+          `<label class="hint onflow"><input type="checkbox" data-bon="${i}" ${b.ativo===false?'':'checked'}> Aparece no Flow</label>`}
         ${b.tipo==='livre' ? `<button type="button" class="link red" data-bdel="${i}">Remover</button>` : ''}
       </div></div>`;
   }).join('');
@@ -903,10 +908,11 @@ function folhaHtml(data){
   const nomes = (d, fid) => ((d.funcoes||{})[fid]?.pessoas||[]).join(' / ');
   let n = 0; const musicas = mom => (L.musicas||[]).filter(m=>m.momento===mom && m.titulo).map(m=>`<div class="ml"><span class="k">${++n}</span><span>${esc(m.titulo)}${m.tom?` (${esc(m.tom)})`:''}</span></div>`).join('');
   const nota = b => b.notas ? `<div></div><div></div><div class="nota">${esc(b.notas)}</div>` : '';
-  const blocos = p.blocos.filter(b=>b.ativo!==false && (b.tipo!=='ceia' || ceia)).map(b=>{
+  // equipe sem horário (Hospitalidade, Portão, Kids) antes da Abertura
+  const equipe = ['hospitalidade','kids'].flatMap(mid=>{ const d = rasc[mid]; return (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).map(f=>[f.nome, d ? nomes(d, f.id) : '']); }).filter(([,q])=>q);
+  const topo = equipe.length ? `<div class="bl equipe">${equipe.map(([f,q])=>`<div></div><div class="n">${esc(f)}</div><div>${esc(q)}</div>`).join('')}</div>` : '';
+  const blocos = topo + p.blocos.filter(b=>b.ativo!==false && b.tipo!=='hospitalidade' && (b.tipo!=='ceia' || ceia)).map(b=>{
     let resp = b.resp, extra = '';
-    if(b.tipo==='hospitalidade'){ resp = nomes(H,'hospitalidade'); const port = nomes(H,'portao'); if(port) extra = `<div></div><div class="n">Portão</div><div>${esc(port)}</div>`;
-      const Kd = rasc.kids; (D.ministerios.find(m=>m.id==='kids')?.funcoes||[]).forEach(f=>{ const q = Kd ? nomes(Kd, f.id) : ''; if(q) extra += `<div></div><div class="n">${esc(f.nome)}</div><div>${esc(q)}</div>`; }); }
     if(b.tipo==='louvor'){ resp = L.responsavel; const m = musicas('louvor'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Músicas</div>${m}</div>`; }
     if(b.tipo==='ceia'){ const m = musicas('ceia'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Música</div>${m}</div>`; }
     if(b.tipo==='oferta'){ const m1 = musicas('oferta'), m2 = musicas('pos'); extra = `<div class="sub">${m1?`<div class="mlab" style="margin-left:46px">Música</div>${m1}`:''}<div class="crian"><b>AVISO PARA CRIANÇAS</b><span>${TXT_CRIANCAS}</span></div>${m2}</div>`; }
