@@ -188,6 +188,12 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .voz input{width:18px;height:18px}
 .chipsel small{font-weight:500;opacity:.7}
 .chipsel small.habs{font-size:12px}
+
+.culto.sem{background:#f4f5f7;border-style:dashed;opacity:.85}
+.culto.sem b{color:var(--muted);text-decoration:line-through}
+.tag.semtag{background:#eceff3;color:var(--muted)}
+.tag.acao{border:0;cursor:pointer;background:#fff;border:1px solid var(--line);color:var(--ink);font-family:inherit}
+.semcard{background:#fff7e0;border-color:#f5c04a}
 </style>
 </head>
 <body>
@@ -213,8 +219,9 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <div id="meuAviso"></div>
     <div class="secao" style="margin-top:4px">Próximos cultos</div>
     <div id="proximos"></div>
-    <div class="row" id="addCultoRow" hidden style="margin:6px 0 4px">
+    <div class="row" id="addCultoRow" hidden style="margin:6px 0 4px;gap:8px;flex-wrap:wrap">
       <button class="btn" id="addCulto" type="button">+ Culto em outra data</button>
+      <button class="btn" id="addPausa" type="button">🚫 Pausa sem culto</button>
     </div>
     <div class="secao">Cultos anteriores</div>
     <div id="anteriores"></div>
@@ -385,7 +392,7 @@ function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.ba
 function perguntar(titulo, texto, {sim='Confirmar', perigo=false, input=null}={}){
   return new Promise(res=>{
     $('#cTitulo').textContent = titulo; $('#cTexto').textContent = texto;
-    const inp = $('#cInput'); inp.hidden = !input; inp.value = input?.valor||''; inp.placeholder = input?.ph||''; inp.type = input?.tipo||'text';
+    const inp = $('#cInput'); inp.hidden = !input; inp.type = input?.tipo||'text'; inp.value = input?.valor||''; inp.placeholder = input?.ph||'';
     const b = $('#cSim'); b.textContent = sim; b.className = 'btn ' + (perigo?'red':'dark');
     $('#confModal').classList.add('on'); if(input) setTimeout(()=>inp.focus(),50);
     const fim = v=>{ $('#confModal').classList.remove('on'); b.onclick = $('#cNao').onclick = null; res(v); };
@@ -544,11 +551,15 @@ function preenchido(data, mid){
 }
 function cardCulto(data){
   const t = tipoDe(data), c = cultoDe(data), d = deISO(data);
+  if(c?.cancelado) return `<button type="button" class="culto sem" data-abrir="${data}">
+    <div class="h"><b>${esc(tituloData(data))}</b><span class="tag semtag">${c.movido_para?'📅 Mudou de data':'🚫 Sem culto'}</span></div>
+    <div class="hint">${c.movido_para ? 'O culto passou para '+esc(tituloData(c.movido_para)) : esc(c.motivo||'Não vai ter culto neste dia')}</div></button>`;
   const st = statusCulto(data);
   return `<button type="button" class="culto ${data===proximosDomingos(1)[0]?'hoje':''}" data-abrir="${data}">
     <div class="h"><b>${esc(c?.titulo || tituloData(data))}</b>
       <span class="row" style="gap:4px">${t==='ceia'?'<span class="tag ceia">🍷 Ceia</span>':''}${d.getDay()!==0?'<span class="tag esp">Culto especial</span>':''}</span></div>
     ${c?.titulo?`<div class="hint">${esc(tituloData(data))}</div>`:''}
+    ${c?.movido_de?`<div class="hint">No lugar do culto de ${esc(tituloData(c.movido_de))}</div>`:''}
     <div class="st">${st.map(s=>`<span class="${s.ok?'ok':''}">${s.ok?'✓':'…'} ${esc(s.nome)}</span>`).join('')}</div>
   </button>`;
 }
@@ -564,6 +575,16 @@ function renderCultos(){
     ? `<div class="card" style="background:#eefafc;border-color:#bfe6ef"><b>Você preenche: ${ms.map(minNome).join(', ')}</b><div class="hint">Toque no culto e complete a parte do seu ministério.</div></div>`
     : `<div class="card" style="background:#fff7e0;border-color:#f5c04a"><b>Você ainda não está em nenhum ministério.</b><div class="hint">Peça para a pastora incluir você. Até lá, você só consegue ver os cultos.</div></div>`);
 }
+$('#addPausa').onclick = async ()=>{
+  const de = await perguntar('Pausa sem culto', 'A partir de qual domingo não vai ter culto?', {sim:'Continuar', input:{tipo:'date'}}); if(!de) return;
+  const ate = await perguntar('Pausa sem culto', 'Até qual domingo (inclusive)? Se for só um, deixe a mesma data.', {sim:'Continuar', input:{tipo:'date', valor:de}}); if(!ate) return;
+  const ds = []; for(let d = deISO(de); iso(d) <= ate; d.setDate(d.getDate()+1)) if(d.getDay()===0) ds.push(iso(d));
+  if(!ds.length){ toast('Não há domingo nesse período','var(--danger)'); return; }
+  const motivo = await perguntar('Motivo (opcional)', `${ds.length} domingo${ds.length>1?'s':''} sem culto: ${ds.map(diaTxt).join(', ')}.`, {sim:'Marcar sem culto', perigo:true, input:{ph:'Ex.: Pausa de fim de ano', valor:'Pausa de fim de ano'}}); if(motivo===null) return;
+  try{ await sb('/fl_cultos?on_conflict=data', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(ds.map(d=>({data:d, tipo:tipoDe(d), cancelado:true, motivo:limpa(motivo)||null, movido_para:null, atualizado_por:eu.nome})))});
+    await carregarTudo(); renderCultos(); toast(`Pausa marcada: ${ds.length} domingo${ds.length>1?'s':''} sem culto`); }
+  catch(e){ toast('Não consegui marcar: '+(navigator.onLine?e.message:'sem internet'),'var(--danger)', 4000); }
+};
 $('#addCulto').onclick = async ()=>{
   const d = await perguntar('Culto em outra data', 'Escolha a data do culto especial (ex.: aniversário da igreja, ceia em outro dia).', {sim:'Criar', input:{tipo:'date'}});
   if(!d) return;
@@ -615,7 +636,18 @@ function renderCulto(){
   $('#dTitulo').textContent = c?.titulo || tituloData(data);
   $('#dTags').innerHTML = (c?.titulo?`<span class="hint">${esc(tituloData(data))}</span>`:'') +
     (eu.admin ? `<button type="button" class="tag ${t==='ceia'?'ceia':''}" id="tipoToggle" title="Trocar tipo do culto">${t==='ceia'?'🍷 Culto de ceia':'Culto normal'} · trocar</button>` : (t==='ceia'?'<span class="tag ceia">🍷 Culto de ceia</span>':''));
-  $('#gerarPdf').hidden = !eu.admin;
+  $('#gerarPdf').hidden = !eu.admin || !!c?.cancelado;
+  if(eu.admin && !c?.cancelado) $('#dTags').innerHTML += `<button type="button" class="tag acao" id="semCulto">🚫 Não vai ter culto</button><button type="button" class="tag acao" id="mudarData">📅 Mudar a data</button>`;
+  if(c?.cancelado){
+    $('#dSecoes').innerHTML = `<div class="card semcard"><h3 style="margin:0 0 6px">${c.movido_para?'📅 Este culto mudou de data':'🚫 Não vai ter culto neste dia'}</h3>
+      <p style="margin:0;line-height:1.45">${c.movido_para ? `Ele vai acontecer em <b>${esc(tituloData(c.movido_para))}</b>. As escalas e a programação foram junto.` : esc(c.motivo||'')}</p>
+      <div class="row" style="margin-top:12px">${c.movido_para?`<button type="button" class="btn dark" id="irMovido">Abrir o culto de ${esc(diaTxt(c.movido_para))}</button>`:''}
+      ${eu.admin?`<button type="button" class="btn" id="desfazSem">Voltar a ter culto neste dia</button>`:''}</div></div>`;
+    const im = $('#irMovido'); if(im) im.onclick = ()=>abrirCulto(c.movido_para);
+    const ds = $('#desfazSem'); if(ds) ds.onclick = desfazerSem;
+    const tt0 = $('#tipoToggle'); if(tt0) tt0.onclick = trocarTipo;
+    return;
+  }
   const ordem = ['programa', ...minis().map(m=>m.id)];
   // quem não é admin vê primeiro o próprio ministério
   if(!eu.admin){ const meus = meusMins(); ordem.sort((a,b)=> (meus.includes(b)?1:0) - (meus.includes(a)?1:0)); }
@@ -624,6 +656,40 @@ function renderCulto(){
   $('#dSecoes').innerHTML = atalhos + ordem.map(id=> id==='programa' ? secPrograma() : secMinisterio(id)).join('');
   ligarCulto();
   const tt = $('#tipoToggle'); if(tt) tt.onclick = trocarTipo;
+  const sc = $('#semCulto'); if(sc) sc.onclick = semCulto;
+  const md = $('#mudarData'); if(md) md.onclick = mudarData;
+}
+const upCulto = row => sb('/fl_cultos?on_conflict=data', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({...row, atualizado_por:eu.nome, atualizado_em:new Date().toISOString()})});
+async function salvarAntes(){ return !sujo || await perguntar('Sair sem salvar?', 'Há alterações neste culto que ainda não foram salvas. Salve antes, senão elas se perdem.', {sim:'Continuar assim mesmo', perigo:true}); }
+async function semCulto(){
+  const data = dataAberta; if(!(await salvarAntes())) return;
+  const m = await perguntar('Não vai ter culto', `Marcar ${tituloData(data)} como sem culto? O que já foi preenchido fica guardado e volta se você desfizer.`, {sim:'Marcar sem culto', perigo:true, input:{ph:'Motivo (opcional), ex.: Pausa de fim de ano'}});
+  if(m===null) return;
+  try{ await upCulto({data, tipo:tipoDe(data), cancelado:true, motivo:limpa(m)||null, movido_para:null}); sujo=false; await carregarTudo(); renderCulto(); toast('Marcado: sem culto neste dia'); }
+  catch(e){ toast('Não consegui marcar: '+e.message,'var(--danger)', 4000); }
+}
+async function desfazerSem(){
+  const data = dataAberta, c = cultoDe(data);
+  try{ await upCulto({data, tipo:tipoDe(data), cancelado:false, motivo:null, movido_para:null}); await carregarTudo(); renderCulto();
+    toast(c?.movido_para ? `Voltou a ter culto. O de ${diaTxt(c.movido_para)} continua; marque como sem culto se não for acontecer.` : 'Voltou a ter culto neste dia', undefined, c?.movido_para?6000:2600); }
+  catch(e){ toast('Não consegui: '+e.message,'var(--danger)', 4000); }
+}
+async function mudarData(){
+  const de = dataAberta, c = cultoDe(de); if(!(await salvarAntes())) return;
+  const sab = deISO(de); sab.setDate(sab.getDate()-1);
+  const nova = await perguntar('Mudar a data do culto', `Em que dia vai ser o culto de ${tituloData(de)}? Tudo o que já foi preenchido (escalas e programação) vai junto para a nova data.`, {sim:'Continuar', input:{tipo:'date', valor:iso(sab)}});
+  if(!nova || nova===de) return;
+  const ja = cultoDe(nova);
+  if((ja && !ja.cancelado && ja.programa) || D.escalas.some(e=>e.data===nova && !(ja?.cancelado))){ toast(`Já existe um culto preenchido em ${diaTxt(nova)}. Escolha outra data.`,'var(--danger)', 4500); return; }
+  const titulo = await perguntar('Nome do culto (opcional)', 'Ex.: Aniversário 5 anos. Deixe em branco para usar só a data.', {sim:'Mudar a data', input:{ph:'Nome do culto', valor:c?.titulo||''}});
+  if(titulo===null) return;
+  try{
+    await upCulto({data:nova, tipo:tipoDe(de), titulo:limpa(titulo)||null, programa:c?.programa||null, cancelado:false, motivo:null, movido_para:null, movido_de:de});
+    const es = D.escalas.filter(e=>e.data===de);
+    if(es.length) await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(es.map(e=>({data:nova, ministerio_id:e.ministerio_id, dados:e.dados, atualizado_por:e.atualizado_por, atualizado_em:e.atualizado_em})))});
+    await upCulto({data:de, tipo:tipoDe(de), cancelado:true, motivo:null, movido_para:nova});
+    sujo = false; await carregarTudo(); toast(`Culto passou para ${tituloData(nova)}`, undefined, 4000); abrirCulto(nova);
+  }catch(e){ toast('Não consegui mudar: '+e.message,'var(--danger)', 4500); }
 }
 async function trocarTipo(){
   const data = dataAberta, novo = tipoDe(data)==='ceia' ? 'culto' : 'ceia';
