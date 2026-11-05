@@ -209,6 +209,9 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .bloco label.onflow input{width:18px;height:18px;padding:0;flex:none}
 .bloco.fixo{background:#f2f6f9;border-style:dashed}
 .pg .bl.equipe{margin-top:4px;row-gap:3px}
+
+.msec.m-babys{border-left-color:#f08fb5}
+.pular .ir.m-babys{border-left-color:#f08fb5}
 </style>
 </head>
 <body>
@@ -393,6 +396,7 @@ const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-fe
 const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
 const HABS = [['bateria','Bateria'],['violao','Violão'],['baixo','Baixo'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
 const habNome = h => (HABS.find(x=>x[0]===h)||[h,h])[1];
+const SEM_HORA = ['hospitalidade','babys','kids'];   // sem horário: saem no topo do Flow, nessa ordem
 const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
 
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
@@ -738,7 +742,7 @@ function secMinisterio(mid){
       const todos = verTodos.has(mid+':'+fn.id);
       const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
       const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !hs.includes(fn.hab) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
-      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!['hospitalidade','kids'].includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
+      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!SEM_HORA.includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
         <div class="chips">${vis.map(chip).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
         ${escondidos ? `<button type="button" class="chipsel add" data-todos="${fn.id}">ver todos (+${escondidos})</button>` : (todos && membros.some(p=>!serve(p)) ? `<button type="button" class="chipsel add" data-todos="${fn.id}">só quem toca</button>` : '')}
@@ -779,14 +783,14 @@ function secPrograma(){
     return `<div class="card msec m-programa" data-sec="programa"><div class="mhead"><h3 style="margin:0">Programação</h3><span class="tag">só leitura</span></div>${porQuem(reg)}
       ${reg ? `<table class="leitab" style="margin-top:8px">${ativos.map(b=>`<tr><td class="r" style="text-align:left;width:52px">${esc(b.hora)}</td><td><b>${esc(b.titulo)}</b>${b.resp?' — '+esc(b.resp):''}${b.tipo==='avisos'?linhasAvisos(b,dataAberta).map(t=>`<div class="hint">• ${esc(t)}</div>`).join(''):''}</td></tr>`).join('')}</table>` : '<p class="hint" style="margin:8px 0 0">A pastora ainda vai montar a programação.</p>'}</div>`;
   }
-  const blocos = `<div class="bloco fixo"><b>Hospitalidade · Portão · Kids</b><div class="auto">Não têm horário: os nomes vêm das escalas desses ministérios e saem no topo do Flow, antes da Abertura.</div></div>` + p.blocos.map((b,i)=>{
+  const blocos = `<div class="bloco fixo"><b>Hospitalidade · Portão · Babys · Kids</b><div class="auto">Não têm horário: os nomes vêm das escalas desses ministérios e saem no topo do Flow, antes da Abertura.</div></div>` + p.blocos.map((b,i)=>{
     const ehAuto = b.tipo==='louvor';
     const off = b.ativo===false || (b.tipo==='ceia' && !ceia);
     return `<div class="bloco ${off?'off':''}">
       <div class="bh"><input data-bh="${i}" value="${esc(b.hora)}" placeholder="hora" aria-label="Horário">
         <input data-bt="${i}" value="${esc(b.titulo)}" aria-label="Momento">
         <div class="ordem"><button type="button" data-bup="${i}" aria-label="Subir">↑</button><button type="button" data-bdn="${i}" aria-label="Descer">↓</button></div></div>
-      ${ehAuto ? `<div class="auto">${b.tipo==='louvor'?'Responsável do dia e músicas vêm do Louvor.':'Nomes vêm da Hospitalidade e do Kids.'}</div>`
+      ${ehAuto ? `<div class="auto">${b.tipo==='louvor'?'Responsável do dia e músicas vêm do Louvor.':'Nomes vêm da Hospitalidade, Babys e Kids.'}</div>`
                : b.tipo==='encerramento' ? '' : `<input data-br="${i}" value="${esc(b.resp)}" placeholder="Quem conduz (ex.: Pr. Allan)" style="margin-top:6px" aria-label="Quem conduz">`}
       ${b.tipo==='avisos' ? avisosEditor(b, i) : ''}
       ${b.tipo!=='encerramento' ? `<textarea data-bn="${i}" rows="1" placeholder="Observação (sai no PDF abaixo deste momento)" style="margin-top:6px">${esc(b.notas)}</textarea>` : ''}
@@ -910,7 +914,7 @@ function folhaHtml(data){
   let n = 0; const musicas = mom => (L.musicas||[]).filter(m=>m.momento===mom && m.titulo).map(m=>`<div class="ml"><span class="k">${++n}</span><span>${esc(m.titulo)}${m.tom?` (${esc(m.tom)})`:''}</span></div>`).join('');
   const nota = b => b.notas ? `<div></div><div></div><div class="nota">${esc(b.notas)}</div>` : '';
   // equipe sem horário (Hospitalidade, Portão, Kids) antes da Abertura
-  const equipe = ['hospitalidade','kids'].flatMap(mid=>{ const d = rasc[mid]; return (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).map(f=>[f.nome, d ? nomes(d, f.id) : '']); }).filter(([,q])=>q);
+  const equipe = SEM_HORA.flatMap(mid=>{ const d = rasc[mid]; return (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).map(f=>[f.nome, d ? nomes(d, f.id) : '']); }).filter(([,q])=>q);
   const topo = equipe.length ? `<div class="bl equipe">${equipe.map(([f,q])=>`<div></div><div class="n">${esc(f)}</div><div>${esc(q)}</div>`).join('')}</div>` : '';
   const blocos = topo + p.blocos.filter(b=>b.ativo!==false && b.tipo!=='hospitalidade' && (b.tipo!=='ceia' || ceia)).map(b=>{
     let resp = b.resp, extra = '';
