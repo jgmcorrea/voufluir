@@ -437,8 +437,9 @@ nav button{flex:1 0 auto;padding:11px 12px}
       <div class="card">
         <h3 style="margin:0 0 8px">Novo evento</h3>
         <div class="formgrid">
-          <div><label for="evNome">Nome do evento</label><input id="evNome" placeholder="Ex.: Culto de Natal"></div>
-          <div><label for="evData">Data</label><input id="evData" type="date"></div>
+          <div style="grid-column:1/-1"><label for="evNome">Nome do evento</label><input id="evNome" placeholder="Ex.: Culto de Natal"></div>
+          <div><label for="evData">Data de início</label><input id="evData" type="date"></div>
+          <div><label for="evFim">Data de fim (se durar mais de um dia)</label><input id="evFim" type="date"></div>
           <div style="grid-column:1/-1"><label for="evBase">Produtos e preços</label>
             <select id="evBase"><option value="ultimo">Copiar do último evento</option><option value="perm">Lista básica (só bebidas)</option></select></div>
         </div>
@@ -655,6 +656,7 @@ const brl = v => (+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'
 const num = s => { if(s==null) return NaN; s = String(s).trim().replace(/\s|R\$/g,''); if(s.includes(',')) s = s.replace(/\./g,'').replace(',','.'); return parseFloat(s); };
 const hora = ts => new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 const dataBR = d => d ? new Date(String(d).length===10 ? d+'T12:00' : d).toLocaleDateString('pt-BR') : '';
+const periodoBR = e => !e?.data ? '' : (e.data_fim && e.data_fim!==e.data ? `${dataBR(e.data).slice(0,5)} a ${dataBR(e.data_fim)}` : dataBR(e.data));
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const chaveNome = s => semAcento(s).replace(/\s+/g,' ').trim();
@@ -852,7 +854,7 @@ async function sync(){
     }
     const ctxPedido = ctx;
     const [evs, vs, ps, cfg, est] = await Promise.all([
-      sb('/vf_eventos?select=id,nome,data,status,produtos,resumo,criado_em,encerrado_em&order=data.desc.nullslast,criado_em.desc'),
+      sb('/vf_eventos?select=id,nome,data,data_fim,status,produtos,resumo,criado_em,encerrado_em&order=data.desc.nullslast,criado_em.desc'),
       sb('/vf_caixa_vendas?select=*&order=ts.asc&'+filtroVendas()),
       sb('/vf_caixa_pedidos?select=*&order=criado_em.asc&'+filtroPedidos()),
       sb('/vf_caixa_config?select=id,valor'),
@@ -957,7 +959,7 @@ $('#ctxBtn').onclick = ()=>{
   const abertos = eventos.filter(e=>e.status==='aberto');
   $('#ctxNovo').hidden = !master();
   $('#ctxLista').innerHTML = [master() ? `<button type="button" class="ctxitem ${ctx==='perm'?'on':''}" data-ctx="perm">🏪 <span>Lojinha (dia a dia)<small>A livraria entrega e já cobra</small></span></button>` : '',
-    ...abertos.map(e=>`<button type="button" class="ctxitem ${ctx===e.id?'on':''}" data-ctx="${e.id}">🎉 <span>${esc(e.nome)}<small>Evento${e.data?' · '+dataBR(e.data):''}</small></span></button>`)].join('')
+    ...abertos.map(e=>`<button type="button" class="ctxitem ${ctx===e.id?'on':''}" data-ctx="${e.id}">🎉 <span>${esc(e.nome)}<small>Evento${e.data?' · '+periodoBR(e):''}</small></span></button>`)].join('')
     + (abertos.length ? '' : '<p class="hint" style="margin:4px 0 0">Nenhum evento aberto agora.</p>');
   $$('#ctxLista [data-ctx]').forEach(x=>x.onclick=()=>{ $('#ctxModal').classList.remove('on'); if(x.dataset.ctx!==ctx){ trocarCtx(x.dataset.ctx); toast('Vendendo em: '+ctxNome()); } });
   $('#ctxModal').classList.add('on');
@@ -1589,10 +1591,10 @@ function renderEventos(){
   $('#evDetalhe').innerHTML = ''; $('#evPrincipal').hidden = false;
   if(!$('#evData').value) $('#evData').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
   const ab = eventos.filter(e=>e.status==='aberto'), pas = eventos.filter(e=>e.status==='encerrado');
-  $('#evAbertos').innerHTML = ab.length ? ab.map(e=>`<div class="evcard"><div class="h"><b>🎉 ${esc(e.nome)}</b><span class="tag">${e.data?dataBR(e.data):'Aberto'}</span></div>
+  $('#evAbertos').innerHTML = ab.length ? ab.map(e=>`<div class="evcard"><div class="h"><b>🎉 ${esc(e.nome)}</b><span class="tag">${e.data?periodoBR(e):'Aberto'}</span></div>
     <div class="row">${ctx===e.id?'<span class="tag" style="background:#fff1c7">Vendendo neste evento</span>':`<button class="btn dark" data-usar="${e.id}">Vender neste evento</button>`}
     ${eu?.admin?`<button class="btn red" data-encerrar="${e.id}">Encerrar evento</button>`:'<span class="hint">Só administradores encerram o evento.</span>'}</div></div>`).join('') : '<p class="hint">Nenhum evento aberto. A lojinha do dia a dia continua funcionando normalmente.</p>';
-  $('#evPassados').innerHTML = pas.length ? pas.map(e=>`<button type="button" class="evpass" data-ver="${e.id}"><span><b>${esc(e.nome)}</b><small>${e.data?dataBR(e.data)+' · ':''}${e.resumo?.vendas??'–'} vendas</small></span><span class="t">${brl(e.resumo?.total||0)} ›</span></button>`).join('') : '<p class="hint">Nenhum evento encerrado ainda.</p>';
+  $('#evPassados').innerHTML = pas.length ? pas.map(e=>`<button type="button" class="evpass" data-ver="${e.id}"><span><b>${esc(e.nome)}</b><small>${e.data?periodoBR(e)+' · ':''}${e.resumo?.vendas??'–'} vendas</small></span><span class="t">${brl(e.resumo?.total||0)} ›</span></button>`).join('') : '<p class="hint">Nenhum evento encerrado ainda.</p>';
   $$('[data-usar]').forEach(b=>b.onclick=()=>{ trocarCtx(b.dataset.usar); toast('Vendendo em: '+ctxNome()); irPara('venda'); });
   $$('[data-encerrar]').forEach(b=>b.onclick=()=>encerrarEvento(eventos.find(e=>e.id===b.dataset.encerrar)));
   $$('[data-ver]').forEach(b=>b.onclick=()=>verEvento(b.dataset.ver));
@@ -1601,12 +1603,15 @@ $('#evCriar').onclick = async ()=>{
   const nome = limpaNome($('#evNome').value); if(!nome){ toast('Dê um nome ao evento','var(--danger)'); $('#evNome').focus(); return; }
   const base = $('#evBase').value; const ult = eventos.find(e=>e.produtos && e.produtos.length);
   const prods = base==='ultimo' && ult ? ult.produtos : prodPerm;
-  const ev = {id:uuid(), nome, data:$('#evData').value||null, status:'aberto', produtos:prods, criado_por:eu?.email||null};
+  const ini = $('#evData').value||null, fim = $('#evFim').value||null;
+  if(!ini){ toast('Escolha a data de início','var(--danger)'); $('#evData').focus(); return; }
+  if(fim && fim < ini){ toast('A data de fim não pode ser antes do início','var(--danger)'); $('#evFim').focus(); return; }
+  const ev = {id:uuid(), nome, data:ini, data_fim:fim && fim!==ini ? fim : null, status:'aberto', produtos:prods, criado_por:eu?.email||null};
   const b = $('#evCriar'); b.disabled = true;
   try{
     await sb('/vf_eventos', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(ev)});
     eventos.unshift({...ev, criado_em:new Date().toISOString()}); save(K.evs, eventos);
-    $('#evNome').value=''; trocarCtx(ev.id); toast(`Evento "${nome}" criado. Vendendo nele agora.`); irPara('venda');
+    $('#evNome').value=''; $('#evFim').value=''; trocarCtx(ev.id); toast(`Evento "${nome}" criado. Vendendo nele agora.`); irPara('venda');
   }catch(e){ toast('Não criou: sem conexão. Tente de novo.','var(--danger)', 3500); }
   finally{ b.disabled = false; }
 };
@@ -1635,7 +1640,7 @@ async function verEvento(id){
   $('#evPrincipal').hidden = true;
   const box = $('#evDetalhe');
   box.innerHTML = `<button class="voltar" id="evVoltar" type="button">‹ Voltar para eventos</button>
-    <h2 style="margin:0 0 2px">${esc(e.nome)}</h2><p class="hint" style="margin:0 0 12px">${e.data?dataBR(e.data)+' · ':''}encerrado${e.encerrado_em?' em '+new Date(e.encerrado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
+    <h2 style="margin:0 0 2px">${esc(e.nome)}</h2><p class="hint" style="margin:0 0 12px">${e.data?periodoBR(e)+' · ':''}encerrado${e.encerrado_em?' em '+new Date(e.encerrado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</p>
     <div id="evFiados"></div>${e.resumo ? htmlResumo(e.resumo) : '<p class="hint">Sem resumo salvo.</p>'}
     <div class="row"><button class="btn dark" id="evCsv" type="button">Baixar planilha do evento (CSV)</button></div>`;
   $('#evVoltar').onclick = ()=>{ evDetalheId=null; renderEventos(); };
