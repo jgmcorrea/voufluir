@@ -404,7 +404,11 @@ const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','ag
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
 const HABS = [['bateria','Bateria'],['violao','Violão'],['baixo','Baixo'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
-const habNome = h => (HABS.find(x=>x[0]===h)||[h,h])[1];
+const habNome = h => (HABS.find(x=>x[0]===h) || [h, (D.ministerios||[]).flatMap(m=>m.funcoes||[]).find(f=>f.hab===h)?.nome || h])[1];
+// opções de "o que faz" em cada ministério: Louvor usa instrumentos/voz; os demais, as próprias funções (ex.: Hospitalidade · Portão)
+const habOpcoes = mid => { const fs = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).filter(f=>f.hab);
+  const usados = [...new Set(fs.map(f=>f.hab))];
+  return usados.every(h=>HABS.some(x=>x[0]===h)) ? HABS.filter(x=>usados.includes(x[0]) || mid==='louvor') : usados.map(h=>[h, fs.find(f=>f.hab===h).nome]); };
 const UMA_CHEGADA = ['louvor','transmissao'];   // todos da equipe chegam no mesmo horário
 const SEM_HORA = ['hospitalidade','babys','kids'];   // sem horário: saem no topo do Flow, nessa ordem
 const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
@@ -1137,7 +1141,7 @@ function renderMinisterios(){
    ========================================================= */
 let pFiltroMin = null, novoMins = new Set(), novoHabs = {};
 function habsEditor(mids, habs, attr){
-  return [...mids].filter(usaHabs).map(mid=>`<div class="habbox"><div class="lb" style="margin-top:8px">No ${esc(minNome(mid))}: o que faz? (pode marcar mais de um)</div><div class="chips">${HABS.map(([k,t])=>`<button type="button" class="chipsel ${(habs[mid]||new Set()).has(k)?'on':''}" data-${attr}="${mid}:${k}">${t}</button>`).join('')}</div></div>`).join('');
+  return [...mids].filter(usaHabs).map(mid=>`<div class="habbox"><div class="lb" style="margin-top:8px">No ${esc(minNome(mid))}: o que faz? (pode marcar mais de um)</div><div class="chips">${habOpcoes(mid).map(([k,t])=>`<button type="button" class="chipsel ${(habs[mid]||new Set()).has(k)?'on':''}" data-${attr}="${mid}:${k}">${t}</button>`).join('')}</div></div>`).join('');
 }
 function ligaHabs(attr, habs, redraw){ $$(`[data-${attr}]`).forEach(b=>b.onclick=()=>{ const [mid,k] = b.dataset[attr].split(':'); const s = habs[mid] ||= new Set(); s.has(k) ? s.delete(k) : s.add(k); redraw(); }); }
 function renderPessoas(){
