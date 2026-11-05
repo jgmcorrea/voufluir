@@ -396,6 +396,7 @@ const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-fe
 const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
 const HABS = [['bateria','Bateria'],['violao','Violão'],['baixo','Baixo'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
 const habNome = h => (HABS.find(x=>x[0]===h)||[h,h])[1];
+const UMA_CHEGADA = ['som','transmissao'];   // todos da equipe chegam no mesmo horário
 const SEM_HORA = ['hospitalidade','babys','kids'];   // sem horário: saem no topo do Flow, nessa ordem
 const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
 
@@ -736,13 +737,15 @@ function secMinisterio(mid){
         ${r.responsavel && !membros.some(p=>p.nome===r.responsavel) ? `<div class="hint" style="margin-top:4px">Escolhido: <b>${esc(r.responsavel)}</b></div>`:''}
         <div class="outro"><input data-respoutro placeholder="Outra pessoa (digite o nome)" value=""><button type="button" class="btn" data-respok>Usar</button></div></div>`;
     }
+    if(UMA_CHEGADA.includes(mid)){ const fs = m.funcoes||[]; const ch = fs.map(fn=>r.funcoes[fn.id]?.chegada).find(Boolean) ?? fs[0]?.chegada ?? '';
+      corpo += `<div class="func"><div class="fh"><b>Horário de chegada</b><label class="chega">toda a equipe chega às <input data-chegmin value="${esc(ch)}" placeholder="—"></label></div></div>`; }
     corpo += (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       // quem tem a habilidade (ou ainda não tem nada marcado) aparece direto; o resto fica em "ver todos"
       const serve = p => !fn.hab || !habsDe(p.id, mid).length || habsDe(p.id, mid).includes(fn.hab);
       const todos = verTodos.has(mid+':'+fn.id);
       const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
       const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !hs.includes(fn.hab) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
-      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!SEM_HORA.includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
+      return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!SEM_HORA.includes(mid) && !UMA_CHEGADA.includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
         <div class="chips">${vis.map(chip).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
         ${escondidos ? `<button type="button" class="chipsel add" data-todos="${fn.id}">ver todos (+${escondidos})</button>` : (todos && membros.some(p=>!serve(p)) ? `<button type="button" class="chipsel add" data-todos="${fn.id}">só quem toca</button>` : '')}
@@ -859,6 +862,7 @@ function redesenhar(id){
 }
 function lerSecao(mid){
   const el = $(`[data-sec="${mid}"]`); if(!el) return; const r = rasc[mid];
+  const cm = el.querySelector('[data-chegmin]'); if(cm){ const v = limpa(cm.value); (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).forEach(fn=>{ (r.funcoes[fn.id] ||= {pessoas:[], chegada:''}).chegada = v; }); }
   el.querySelectorAll('[data-cheg]').forEach(i=>{ (r.funcoes[i.dataset.cheg] ||= {pessoas:[], chegada:''}).chegada = limpa(i.value); });
   el.querySelectorAll('[data-voz]').forEach(i=>{ (r.funcoes[i.dataset.voz] ||= {pessoas:[], chegada:''}).voz = i.checked; });
   el.querySelectorAll('[data-mtit]').forEach(i=>{ r.musicas[+i.dataset.mtit].titulo = limpa(i.value); });
