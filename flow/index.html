@@ -987,8 +987,13 @@ function folhaHtml(data){
   let n = 0; const musicas = mom => (L.musicas||[]).filter(m=>m.momento===mom && m.titulo).map(m=>`<div class="ml"><span class="k">${++n}</span><span>${esc(m.titulo)}${m.tom?` (${esc(m.tom)})`:''}</span></div>`).join('');
   const nota = b => b.notas ? `<div></div><div></div><div class="nota">${esc(b.notas)}</div>` : '';
   // equipe sem horário (Hospitalidade, Portão, Kids) antes da Abertura
-  const equipe = SEM_HORA.flatMap(mid=>{ const d = rasc[mid]; return (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).map(f=>[f.nome, d ? nomes(d, f.id) : '']); }).filter(([,q])=>q);
-  const topo = equipe.length ? `<div class="bl equipe">${equipe.map(([f,q])=>`<div></div><div class="n">${esc(f)}</div><div>${esc(q)}</div>`).join('')}</div>` : '';
+  // funções "Kids 1 - Responsável" / "Kids 1 - Apoio" viram uma linha só: Kids 1 → Resp.: X · Apoio: Y
+  const equipe = [];
+  SEM_HORA.forEach(mid=>{ const d = rasc[mid]; (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).forEach(f=>{ const q = d ? nomes(d, f.id) : ''; if(!q) return;
+    const [g, sub] = f.nome.split(/\s+-\s+/); const ult = equipe[equipe.length-1];
+    if(sub){ const txt = `${sub.replace(/^Respons[aá]vel$/i,'Resp.')}: ${q}`; if(ult && ult.g===g) ult.q += ' · '+txt; else equipe.push({g, q:txt}); }
+    else equipe.push({g:f.nome, q}); }); });
+  const topo = equipe.length ? `<div class="bl equipe">${equipe.map(({g,q})=>`<div></div><div class="n">${esc(g)}</div><div>${esc(q)}</div>`).join('')}</div>` : '';
   const blocos = topo + p.blocos.filter(b=>b.ativo!==false && b.tipo!=='hospitalidade' && (b.tipo!=='ceia' || ceia)).map(b=>{
     let resp = b.resp, extra = '';
     if(b.tipo==='louvor'){ resp = L.responsavel; const m = musicas('louvor'); if(m) extra = `<div class="sub"><div class="mlab" style="margin-left:46px">Músicas</div>${m}</div>`; }
