@@ -221,6 +221,13 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .escfn .voz{grid-column:2;margin-top:0}
 .escbar{position:sticky;bottom:0;background:var(--card);padding:10px 0 2px;margin-top:6px}
 @media(max-width:520px){.escfn{grid-template-columns:1fr}.escfn .fl{padding-top:0}.escfn .voz{grid-column:1}}
+
+.vzlist{display:grid;gap:6px;margin-top:8px}
+.vzrow{display:flex;align-items:center;gap:10px}
+.vzrow span{min-width:90px;font-weight:600;font-size:14px}
+.vzrow select{flex:1;max-width:240px;padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+.escfn .func.vozes{margin:0;padding:0;border:0;background:none}
+.escfn .func.vozes .fh{display:none}
 </style>
 </head>
 <body>
@@ -530,6 +537,32 @@ const minis = ()=> [...D.ministerios].sort((a,b)=>a.ordem-b.ordem);
 const minNome = id => D.ministerios.find(m=>m.id===id)?.nome || id;
 const membrosDe = mid => D.mp.filter(x=>x.ministerio_id===mid).map(x=>D.pessoas.find(p=>p.id===x.pessoa_id)).filter(p=>p && p.ativo).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
 const habsDe = (pid, mid) => D.mp.find(x=>x.pessoa_id===pid && x.ministerio_id===mid)?.habilidades || [];
+const vozFns = mid => (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).filter(f=>{ const h = habsFn(f); return h.length===1 && h[0]==='voz'; });
+const micDe = (pid, mid) => D.mp.find(x=>x.pessoa_id===pid && x.ministerio_id===mid)?.microfone || null;
+const cantoresDe = mid => membrosDe(mid).filter(p=>habsDe(p.id, mid).includes('voz') && micDe(p.id, mid)!=='instrumento');
+// quem canta vai sozinho para o microfone da sua cor; sem cor definida, para o primeiro livre
+function vozToggle(r, mid, nome){
+  const vf = vozFns(mid); if(!vf.length) return;
+  const tem = vf.some(f=>(r.funcoes[f.id]?.pessoas||[]).includes(nome));
+  vf.forEach(f=>{ const x = r.funcoes[f.id] ||= {pessoas:[], chegada:f.chegada||''}; x.pessoas = x.pessoas.filter(n=>n!==nome); });
+  if(tem) return;
+  const p = membrosDe(mid).find(x=>x.nome===nome), mic = p && micDe(p.id, mid);
+  const alvo = vf.find(f=>f.id===mic) || vf.find(f=>!(r.funcoes[f.id]?.pessoas||[]).length) || vf[vf.length-1];
+  r.funcoes[alvo.id].pessoas.push(nome);
+}
+function vozMover(r, mid, nome, fid){ vozFns(mid).forEach(f=>{ const x = r.funcoes[f.id] ||= {pessoas:[], chegada:f.chegada||''}; x.pessoas = x.pessoas.filter(n=>n!==nome); }); (r.funcoes[fid] ||= {pessoas:[], chegada:''}).pessoas.push(nome); }
+function vozesHtml(r, mid, chave){
+  const vf = vozFns(mid); if(!vf.length) return '';
+  const sel = vf.flatMap(f=>(r.funcoes[f.id]?.pessoas||[]).map(n=>[n, f.id])), nomes = sel.map(x=>x[0]);
+  const cant = cantoresDe(mid), extra = nomes.filter(n=>!cant.some(p=>p.nome===n));
+  const corDe = n => { const p = cant.find(x=>x.nome===n); const m = p && micDe(p.id, mid); return m ? vf.find(f=>f.id===m)?.nome : ''; };
+  return `<div class="func vozes"><div class="fh"><b>Quem vai cantar (voz)</b></div>
+    <div class="chips">${cant.map(p=>`<button type="button" class="chipsel ${nomes.includes(p.nome)?'on':''}" data-vz="${chave}|${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
+    ${extra.map(n=>`<button type="button" class="chipsel on" data-vz="${chave}|${esc(n)}">${esc(n)} ✕</button>`).join('')}
+    ${chave==='' ? `<button type="button" class="chipsel add" data-vzoutro>+ outro</button>` : ''}</div>
+    ${sel.length ? `<div class="vzlist">${sel.map(([n,fid])=>`<div class="vzrow"><span>${esc(n)}</span><select data-vzmic="${chave}|${esc(n)}" aria-label="Microfone de ${esc(n)}">${vf.map(f=>`<option value="${f.id}" ${f.id===fid?'selected':''}>${esc(f.nome)}</option>`).join('')}</select></div>`).join('')}</div>` : ''}
+    <div class="hint" style="margin-top:6px">Cada pessoa vai direto para o microfone da sua cor; dá para trocar ao lado do nome.</div></div>`;
+}
 const usaHabs = mid => (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).some(f=>f.hab);
 const rotuloFn = (fn, f) => fn.nome + (fn.voz_opcional && f?.voz ? ' / Voz' : '');
 const papelDe = (pid, mid) => D.mp.find(x=>x.pessoa_id===pid && x.ministerio_id===mid)?.papel || null;
@@ -756,7 +789,8 @@ function secMinisterio(mid){
     }
     if(UMA_CHEGADA.includes(mid)){ const fs = m.funcoes||[]; const ch = fs.map(fn=>r.funcoes[fn.id]?.chegada).find(Boolean) ?? fs[0]?.chegada ?? '';
       corpo += `<div class="func"><div class="fh"><b>Horário de chegada</b><label class="chega">toda a equipe chega às <input data-chegmin value="${esc(ch)}" placeholder="—"></label></div></div>`; }
-    corpo += (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
+    const vzIds = vozFns(mid).map(f=>f.id);
+    corpo += (m.funcoes||[]).filter(fn=>!vzIds.includes(fn.id)).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       // quem tem a habilidade (ou ainda não tem nada marcado) aparece direto; o resto fica em "ver todos"
       const serve = p => !fn.hab || !habsDe(p.id, mid).length || tocaFn(fn, habsDe(p.id, mid));
       const todos = verTodos.has(mid+':'+fn.id);
@@ -768,6 +802,7 @@ function secMinisterio(mid){
         ${escondidos ? `<button type="button" class="chipsel add" data-todos="${fn.id}">ver todos (+${escondidos})</button>` : (todos && membros.some(p=>!serve(p)) ? `<button type="button" class="chipsel add" data-todos="${fn.id}">só quem toca</button>` : '')}
         <button type="button" class="chipsel add" data-outro="${fn.id}">+ outro</button></div>
         ${fn.voz_opcional ? `<label class="voz"><input type="checkbox" data-voz="${fn.id}" ${f.voz?'checked':''}> Também canta (fica “${esc(fn.nome)} / Voz” no Flow)</label>` : ''}</div>`; }).join('');
+    corpo += vozesHtml(r, mid, '');
     if(mid==='louvor'){
       corpo += `<div class="func"><div class="fh"><b>Músicas</b><span class="hint">com o tom</span></div>
         ${(r.musicas||[]).map((mu,i)=>`<div class="mus">
@@ -852,6 +887,11 @@ function ligarCulto(){
     marcarSujo(); redesenhar(mid); });
   box.querySelectorAll('[data-todos]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const k = mid+':'+b.dataset.todos; verTodos.has(k) ? verTodos.delete(k) : verTodos.add(k); redesenhar(mid); });
   box.querySelectorAll('[data-voz]').forEach(c=>c.onchange=()=>marcarSujo());
+  box.querySelectorAll('[data-vz]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); vozToggle(rasc[mid], mid, b.dataset.vz.split('|')[1]); marcarSujo(); redesenhar(mid); });
+  box.querySelectorAll('[data-vzmic]').forEach(sl=>sl.onchange=()=>{ const mid = sl.closest('[data-sec]').dataset.sec; lerSecao(mid); vozMover(rasc[mid], mid, sl.dataset.vzmic.split('|')[1], sl.value); marcarSujo(); redesenhar(mid); });
+  box.querySelectorAll('[data-vzoutro]').forEach(b=>b.onclick=async ()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid);
+    const n = limpa(await perguntar('Outra pessoa', 'Digite o nome de quem vai cantar (pode ser alguém de fora do ministério).', {sim:'Incluir', input:{ph:'Nome'}})); if(!n) return;
+    vozToggle(rasc[mid], mid, n); marcarSujo(); redesenhar(mid); });
   box.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>$(`[data-sec="${b.dataset.ir}"]`)?.scrollIntoView({behavior:'smooth', block:'start'}));
   box.querySelectorAll('[data-outro]').forEach(b=>b.onclick=async ()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid);
     const n = limpa(await perguntar('Outra pessoa', 'Digite o nome de quem vai estar nessa função (pode ser alguém de fora do ministério).', {sim:'Incluir', input:{ph:'Nome'}})); if(!n) return;
@@ -1066,14 +1106,15 @@ async function abrirEscala(mid){
 function escalaHtml(m, membros){
   const datas = Object.keys(escR).sort();
   const dias = datas.map(d=>{ const r = escR[d], c = cultoDe(d), ceia = tipoDe(d)==='ceia';
-    const fns = (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[]};
+    const vzIds = vozFns(m.id).map(f=>f.id);
+    const fns = (m.funcoes||[]).filter(fn=>!vzIds.includes(fn.id)).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[]};
       const serve = p => !fn.hab || !habsDe(p.id, m.id).length || tocaFn(fn, habsDe(p.id, m.id));
       const vis = membros.filter(p=>serve(p) || f.pessoas.includes(p.nome)), extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       return `<div class="escfn"><div class="fl">${esc(fn.nome)}</div><div class="chips">
         ${vis.map(p=>`<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-ed="${d}|${fn.id}|${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-ed="${d}|${fn.id}|${esc(n)}">${esc(n)} ✕</button>`).join('')}
         ${!vis.length && !extra.length ? '<span class="hint">ninguém com essa função</span>' : ''}</div>
-        ${fn.voz_opcional && f.pessoas.length ? `<label class="voz"><input type="checkbox" data-evoz="${d}|${fn.id}" ${f.voz?'checked':''}> também canta</label>` : ''}</div>`; }).join('');
+        ${fn.voz_opcional && f.pessoas.length ? `<label class="voz"><input type="checkbox" data-evoz="${d}|${fn.id}" ${f.voz?'checked':''}> também canta</label>` : ''}</div>`; }).join('') + (vzIds.length ? `<div class="escfn"><div class="fl">Voz</div><div>${vozesHtml(r, m.id, d)}</div></div>` : '');
     const quem = escalaDe(d, m.id);
     return `<div class="escdia ${escSujo.has(d)?'mud':''}"><div class="eh"><b>${esc(c?.titulo || tituloData(d))}</b>${ceia?'<span class="tag ceia">🍷 Ceia</span>':''}${c?.titulo?`<span class="hint">${esc(tituloData(d))}</span>`:''}
       <span class="hint" style="margin-left:auto">${escSujo.has(d)?'● não salvo':quem?'salvo por '+esc(quem.atualizado_por||'—'):''}</span></div>${fns}</div>`; }).join('');
@@ -1090,6 +1131,9 @@ function ligarEscala(){
     const fn = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).find(x=>x.id===fid);
     if(fn?.voz_opcional && entra && f.pessoas.length===1){ const p = membrosDe(mid).find(x=>x.nome===n); f.voz = !!p && habsDe(p.id, mid).includes('voz'); }
     escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); });
+  const redEsc = d => { escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); };
+  box.querySelectorAll('[data-vz]').forEach(b=>b.onclick=()=>{ const [d, n] = b.dataset.vz.split('|'); vozToggle(escR[d], mid, n); redEsc(d); });
+  box.querySelectorAll('[data-vzmic]').forEach(sl=>sl.onchange=()=>{ const [d, n] = sl.dataset.vzmic.split('|'); vozMover(escR[d], mid, n, sl.value); redEsc(d); });
   box.querySelectorAll('[data-evoz]').forEach(c=>c.onchange=()=>{ const [d, fid] = c.dataset.evoz.split('|'); escR[d].funcoes[fid].voz = c.checked; escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); });
   box.querySelector('[data-escfechar]').onclick = async ()=>{ if(escSujo.size && !(await perguntar('Fechar sem salvar?', 'Há cultos com mudanças na escala que ainda não foram salvas.', {sim:'Fechar sem salvar', perigo:true}))) return; escMin = null; escSujo = new Set(); sujo = false; renderMinisterios(); };
   box.querySelector('[data-escsalvar]').onclick = async (ev)=>{
@@ -1184,9 +1228,9 @@ $('#pAdd').onclick = async ()=>{
     $('#pNome').value=''; novoMins = new Set(); novoHabs = {}; await carregarTudo(); renderPessoas(); toast(`${nome} adicionada`);
   }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
 };
-let peId = null, peMins = new Set(), peHabs = {}, pePapel = {};
+let peId = null, peMins = new Set(), peHabs = {}, pePapel = {}, peMic = {};
 async function abrirPessoa(id){
-  peId = id; const p = D.pessoas.find(x=>x.id===id); peMins = new Set(minsDe(id)); peHabs = Object.fromEntries(minsDe(id).map(m=>[m, new Set(habsDe(id, m))])); pePapel = Object.fromEntries(minsDe(id).map(m=>[m, papelDe(id, m)]));
+  peId = id; const p = D.pessoas.find(x=>x.id===id); peMins = new Set(minsDe(id)); peHabs = Object.fromEntries(minsDe(id).map(m=>[m, new Set(habsDe(id, m))])); pePapel = Object.fromEntries(minsDe(id).map(m=>[m, papelDe(id, m)])); peMic = Object.fromEntries(minsDe(id).map(m=>[m, micDe(id, m)]));
   $('#peExcluir').hidden = !eu.admin;
   $('#peTitulo').textContent = p.nome; $('#peNome').value = p.nome; $('#peTel').value = p.telefone||'';
   desenharPeMins(); await desenharAcesso(p); $('#pesModal').classList.add('on');
@@ -1197,7 +1241,9 @@ function desenharPeMins(){
   const papeis = [...peMins].map(mid=> eu.admin
     ? `<div class="lb" style="margin-top:8px">No ${esc(minNome(mid))}:</div><div class="chips">${[[null,'Membro'],['lider','Líder'],['colider','Co-líder']].map(([k,t])=>`<button type="button" class="chipsel ${(pePapel[mid]||null)===k?'on':''}" data-pp="${mid}:${k||''}">${t}</button>`).join('')}</div>`
     : (pePapel[mid] ? `<div class="hint" style="margin-top:8px">★ ${PAPEL[pePapel[mid]]} do ${esc(minNome(mid))}</div>` : '')).join('');
-  $('#peHabs').innerHTML = papeis + habsEditor(peMins, peHabs, 'ph'); ligaHabs('ph', peHabs, desenharPeMins);
+  const mics = [...peMins].filter(mid=>vozFns(mid).length && (peHabs[mid]||new Set()).has('voz')).map(mid=>`<div class="lb" style="margin-top:8px">Quando canta no ${esc(minNome(mid))}, vai para:</div><div class="chips">${[[null,'Primeiro livre'], ...vozFns(mid).map(f=>[f.id, f.nome]), ['instrumento','Só canta tocando (nunca só voz)']].map(([k,t])=>`<button type="button" class="chipsel ${(peMic[mid]||null)===k?'on':''}" data-pmic="${mid}:${k||''}">${esc(t)}</button>`).join('')}</div>`).join('');
+  $('#peHabs').innerHTML = papeis + habsEditor(peMins, peHabs, 'ph') + mics; ligaHabs('ph', peHabs, desenharPeMins);
+  $$('[data-pmic]').forEach(b=>b.onclick=()=>{ const [mid,k] = b.dataset.pmic.split(':'); peMic[mid] = k||null; desenharPeMins(); });
   $$('[data-pp]').forEach(b=>b.onclick=()=>{ const [mid,k] = b.dataset.pp.split(':'); pePapel[mid] = k||null; desenharPeMins(); });
 }
 async function chamarEquipe(body){
@@ -1249,9 +1295,11 @@ $('#peSalvar').onclick = async ()=>{
     const antes = new Set(minsDe(p.id));
     const add = [...peMins].filter(m=>!antes.has(m)), del = [...antes].filter(m=>!peMins.has(m));
     const hab = m => usaHabs(m) ? [...(peHabs[m]||[])].sort() : [];
-    if(add.length) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(add.map(m=>({ministerio_id:m, pessoa_id:p.id, habilidades:hab(m), ...(eu.admin?{papel:pePapel[m]||null}:{})})))});
+    const mic = m => hab(m).includes('voz') ? (peMic[m]||null) : null;
+    if(add.length) await sb('/fl_ministerio_pessoas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(add.map(m=>({ministerio_id:m, pessoa_id:p.id, habilidades:hab(m), microfone:mic(m), ...(eu.admin?{papel:pePapel[m]||null}:{})})))});
     if(eu.admin) for(const m of [...peMins].filter(m=>antes.has(m))){ if((pePapel[m]||null) !== papelDe(p.id, m)) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({papel:pePapel[m]||null})}); }
     for(const m of [...peMins].filter(m=>antes.has(m) && usaHabs(m))){ const h = hab(m); if(h.join() !== [...habsDe(p.id, m)].sort().join()) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({habilidades:h})}); }
+    for(const m of [...peMins].filter(m=>antes.has(m) && vozFns(m).length)){ if(mic(m) !== micDe(p.id, m)) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({microfone:mic(m)})}); }
     for(const m of del.filter(podeGerir)) await sb(`/fl_ministerio_pessoas?ministerio_id=eq.${m}&pessoa_id=eq.${p.id}`, {method:'DELETE'});
     await carregarTudo(); $('#pesModal').classList.remove('on'); renderPessoas(); toast('Pessoa salva');
   }catch(e){ toast('Não salvou: '+(/lider|líder|42501|row-level/i.test(e.message)?'você não tem permissão para essa mudança.':e.message),'var(--danger)', 4500); }
