@@ -228,6 +228,8 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .vzrow select{flex:1;max-width:240px;padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff}
 .escfn .func.vozes{margin:0;padding:0;border:0;background:none}
 .escfn .func.vozes .fh{display:none}
+
+.padrao{background:#eef7ff;border:1px solid #bcdcf5;color:#1c4f75;border-radius:10px;padding:8px 10px;font-size:14px;margin:4px 0 8px}
 </style>
 </head>
 <body>
@@ -563,6 +565,10 @@ function vozesHtml(r, mid, chave){
     ${sel.length ? `<div class="vzlist">${sel.map(([n,fid])=>`<div class="vzrow"><span>${esc(n)}</span><select data-vzmic="${chave}|${esc(n)}" aria-label="Microfone de ${esc(n)}">${vf.map(f=>`<option value="${f.id}" ${f.id===fid?'selected':''}>${esc(f.nome)}</option>`).join('')}</select></div>`).join('')}</div>` : ''}
     <div class="hint" style="margin-top:6px">Cada pessoa vai direto para o microfone da sua cor; dá para trocar ao lado do nome.</div></div>`;
 }
+// quem toca e canta (ex.: Deni, Welter, Aninha) já canta no instrumento: sai da lista de vozes
+function tiraDasVozes(r, mid, nome){ vozFns(mid).forEach(f=>{ const x = r.funcoes[f.id]; if(x) x.pessoas = x.pessoas.filter(n=>n!==nome); }); }
+// líder que não toca nem canta (sem nada marcado) não aparece para escalar; os demais sem marcação aparecem em tudo
+const servePara = (fn, p, mid) => { const hs = habsDe(p.id, mid); if(!fn.hab) return true; if(!hs.length) return !papelDe(p.id, mid); return tocaFn(fn, hs); };
 const usaHabs = mid => (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).some(f=>f.hab);
 const rotuloFn = (fn, f) => fn.nome + (fn.voz_opcional && f?.voz ? ' / Voz' : '');
 const papelDe = (pid, mid) => D.mp.find(x=>x.pessoa_id===pid && x.ministerio_id===mid)?.papel || null;
@@ -702,6 +708,20 @@ function garantirCeia(prog, data){
   prog.blocos.splice(i>=0 ? i : (j>=0 ? j+1 : prog.blocos.length), 0, {id:'ceia', tipo:'ceia', hora, titulo:'Santa Ceia', resp:'', notas:''});
   return true;
 }
+// banda/equipe padrão da semana do mês (5º domingo usa a da semana 4); vale enquanto ninguém salvou aquele culto
+const semanaDoMes = data => Math.min(4, Math.ceil(deISO(data).getDate()/7));
+function dadosPadrao(mid, data){
+  const v = dadosVazios(mid), pd = D.ministerios.find(x=>x.id===mid)?.padrao?.[semanaDoMes(data)];
+  if(!pd) return v;
+  if(pd.responsavel && mid==='louvor') v.responsavel = pd.responsavel;
+  const fns = D.ministerios.find(x=>x.id===mid)?.funcoes||[];
+  Object.entries(pd.toca||{}).forEach(([fid, ns])=>{ const fn = fns.find(f=>f.id===fid); if(!fn || !v.funcoes[fid]) return;
+    v.funcoes[fid].pessoas = [...ns];
+    if(fn.voz_opcional) v.funcoes[fid].voz = ns.some(n=>{ const p = membrosDe(mid).find(x=>x.nome===n); return p && habsDe(p.id, mid).includes('voz'); }); });
+  (pd.vozes||[]).forEach(n=>vozToggle(v, mid, n));
+  v._padrao = semanaDoMes(data);
+  return v;
+}
 function dadosVazios(mid){
   const m = D.ministerios.find(x=>x.id===mid); const f = {};
   (m?.funcoes||[]).forEach(fn=>f[fn.id] = {pessoas:[], chegada:fn.chegada||''});
@@ -714,7 +734,7 @@ async function abrirCulto(data){
   rasc.programa.blocos = rasc.programa.blocos.filter(b=>b.tipo!=='hospitalidade');   // equipe sem horário vai no topo do Flow
   garantirCeia(rasc.programa, data);
   rasc.programa.blocos.forEach(b=>{ if(b.tipo==='avisos' && !Array.isArray(b.agenda)) b.agenda = agendaPadrao(data); });
-  minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
+  minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : dadosPadrao(m.id, data); });
   irPara('culto'); renderCulto();
 }
 function marcarSujo(){ sujo = true; }
@@ -793,6 +813,7 @@ function secMinisterio(mid){
   const membros = membrosDe(mid);
   let corpo = '';
   if(pode){
+    if(r._padrao && !reg) corpo += `<div class="padrao">🎸 Já veio preenchido com a banda da semana ${r._padrao}${r._padrao===4 && deISO(dataAberta).getDate()>28?' (5º domingo)':''}. Confira, troque o que precisar e salve.</div>`;
     if(mid==='louvor'){
       corpo += `<div class="func"><div class="fh"><b>Responsável do dia</b></div>
         <div class="chips">${membros.map(p=>`<button type="button" class="chipsel ${r.responsavel===p.nome?'on':''}" data-resp="${esc(p.nome)}">${esc(p.nome)}</button>`).join('') || '<span class="hint">Cadastre as pessoas do louvor na aba Ministérios.</span>'}</div>
@@ -804,7 +825,7 @@ function secMinisterio(mid){
     const vzIds = vozFns(mid).map(f=>f.id);
     corpo += (m.funcoes||[]).filter(fn=>!vzIds.includes(fn.id)).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       // quem tem a habilidade (ou ainda não tem nada marcado) aparece direto; o resto fica em "ver todos"
-      const serve = p => !fn.hab || !habsDe(p.id, mid).length || tocaFn(fn, habsDe(p.id, mid));
+      const serve = p => servePara(fn, p, mid);
       const todos = verTodos.has(mid+':'+fn.id);
       const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
       const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !tocaFn(fn, hs) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
@@ -895,7 +916,7 @@ function ligarCulto(){
   box.querySelectorAll('[data-fn]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const f = rasc[mid].funcoes[b.dataset.fn]; const n = b.dataset.p;
     const entra = !f.pessoas.includes(n); f.pessoas = entra ? [...f.pessoas, n] : f.pessoas.filter(x=>x!==n);
     const fn = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).find(x=>x.id===b.dataset.fn);
-    if(fn?.voz_opcional && entra && f.pessoas.length===1){ const p = membrosDe(mid).find(x=>x.nome===n); f.voz = !!p && habsDe(p.id, mid).includes('voz'); }
+    if(fn?.voz_opcional && entra){ const p = membrosDe(mid).find(x=>x.nome===n); if(p && habsDe(p.id, mid).includes('voz')){ f.voz = true; tiraDasVozes(rasc[mid], mid, n); } else if(f.pessoas.length===1) f.voz = false; }
     marcarSujo(); redesenhar(mid); });
   box.querySelectorAll('[data-todos]').forEach(b=>b.onclick=()=>{ const mid = b.closest('[data-sec]').dataset.sec; lerSecao(mid); const k = mid+':'+b.dataset.todos; verTodos.has(k) ? verTodos.delete(k) : verTodos.add(k); redesenhar(mid); });
   box.querySelectorAll('[data-voz]').forEach(c=>c.onchange=()=>marcarSujo());
@@ -966,7 +987,7 @@ async function salvarSecao(id, btn){
       const antes = escalaDe(data, id);
       const atual = (await sb(`/fl_escalas?select=atualizado_em,atualizado_por&data=eq.${data}&ministerio_id=eq.${id}`))[0];
       if(atual && (!antes || atual.atualizado_em !== antes.atualizado_em) && !(await perguntar('Alguém salvou antes', `${atual.atualizado_por||'Outra pessoa'} salvou esta parte às ${quando(atual.atualizado_em)}, depois que você abriu. Se continuar, a sua versão substitui a dela.`, {sim:'Salvar a minha', perigo:true}))) return;
-      await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data, ministerio_id:id, dados:r, atualizado_por:eu.nome, atualizado_em:new Date().toISOString()})});
+      await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({data, ministerio_id:id, dados:{...r, _padrao:undefined}, atualizado_por:eu.nome, atualizado_em:new Date().toISOString()})});
     }
     await carregarTudo(); sujo = false;
     toast(id==='programa' ? 'Programação salva' : `${minNome(id)} salvo. A pastora já consegue ver.`);
@@ -1117,7 +1138,7 @@ async function abrirEscala(mid){
   escMin = mid; minEdit = null; escR = {}; escBase = {}; escSujo = new Set(); sujo = false;
   proximasDatas().filter(d=>!cultoDe(d)?.cancelado).forEach(d=>{ const e = escalaDe(d, mid), v = dadosVazios(mid);
     escBase[d] = e?.atualizado_em || null;
-    escR[d] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
+    escR[d] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : dadosPadrao(mid, d); });
   renderMinisterios(); $(`[data-esc="${mid}"]`)?.scrollIntoView({block:'start'});
 }
 function escalaHtml(m, membros){
@@ -1125,7 +1146,7 @@ function escalaHtml(m, membros){
   const dias = datas.map(d=>{ const r = escR[d], c = cultoDe(d), ceia = tipoDe(d)==='ceia';
     const vzIds = vozFns(m.id).map(f=>f.id);
     const fns = (m.funcoes||[]).filter(fn=>!vzIds.includes(fn.id)).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[]};
-      const serve = p => !fn.hab || !habsDe(p.id, m.id).length || tocaFn(fn, habsDe(p.id, m.id));
+      const serve = p => servePara(fn, p, m.id);
       const vis = membros.filter(p=>serve(p) || f.pessoas.includes(p.nome)), extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       return `<div class="escfn"><div class="fl">${esc(fn.nome)}</div><div class="chips">
         ${vis.map(p=>`<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-ed="${d}|${fn.id}|${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
@@ -1134,11 +1155,11 @@ function escalaHtml(m, membros){
         ${fn.voz_opcional && f.pessoas.length ? `<label class="voz"><input type="checkbox" data-evoz="${d}|${fn.id}" ${f.voz?'checked':''}> também canta</label>` : ''}</div>`; }).join('') + (vzIds.length ? `<div class="escfn"><div class="fl">Voz</div><div>${vozesHtml(r, m.id, d)}</div></div>` : '');
     const quem = escalaDe(d, m.id);
     return `<div class="escdia ${escSujo.has(d)?'mud':''}"><div class="eh"><b>${esc(c?.titulo || tituloData(d))}</b>${ceia?'<span class="tag ceia">🍷 Ceia</span>':''}${c?.titulo?`<span class="hint">${esc(tituloData(d))}</span>`:''}
-      <span class="hint" style="margin-left:auto">${escSujo.has(d)?'● não salvo':quem?'salvo por '+esc(quem.atualizado_por||'—'):''}</span></div>${fns}</div>`; }).join('');
+      <span class="hint" style="margin-left:auto">${escSujo.has(d)?'● não salvo':r._padrao?`🎸 banda da semana ${r._padrao} · não salvo`:quem?'salvo por '+esc(quem.atualizado_por||'—'):''}</span></div>${fns}</div>`; }).join('');
   return `<div class="card msec m-${m.id}" data-esc="${m.id}"><h3 style="margin:0 0 4px">${esc(m.nome)} · escala</h3>
     <p class="hint" style="margin:0 0 6px">Marque quem vai estar em cada culto. Ao salvar, já aparece no culto — e o que for preenchido lá dentro também aparece aqui.${m.id==='louvor'?' Músicas e responsável do dia continuam sendo preenchidos dentro do culto.':''}</p>
     ${membros.length ? dias : '<p class="hint">Cadastre as pessoas do ministério primeiro (botão “Pessoas do ministério”).</p>'}
-    <div class="row escbar"><button type="button" class="btn dark" data-escsalvar ${escSujo.size?'':'disabled'}>Salvar escala${escSujo.size?` (${escSujo.size} culto${escSujo.size>1?'s':''})`:''}</button><button type="button" class="btn" data-escfechar>Fechar</button></div></div>`;
+    <div class="row escbar">${(()=>{ const n = new Set([...escSujo, ...datas.filter(d=>escR[d]._padrao)]).size; return `<button type="button" class="btn dark" data-escsalvar ${n?'':'disabled'}>Salvar escala${n?` (${n} culto${n>1?'s':''})`:''}</button>`; })()}<button type="button" class="btn" data-escfechar>Fechar</button></div></div>`;
 }
 function ligarEscala(){
   const box = $(`[data-esc="${escMin}"]`); if(!box) return;
@@ -1146,7 +1167,7 @@ function ligarEscala(){
   box.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{ const [d, fid, n] = b.dataset.ed.split('|'); const f = escR[d].funcoes[fid] ||= {pessoas:[], chegada:''};
     const entra = !f.pessoas.includes(n); f.pessoas = entra ? [...f.pessoas, n] : f.pessoas.filter(x=>x!==n);
     const fn = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).find(x=>x.id===fid);
-    if(fn?.voz_opcional && entra && f.pessoas.length===1){ const p = membrosDe(mid).find(x=>x.nome===n); f.voz = !!p && habsDe(p.id, mid).includes('voz'); }
+    if(fn?.voz_opcional && entra){ const p = membrosDe(mid).find(x=>x.nome===n); if(p && habsDe(p.id, mid).includes('voz')){ f.voz = true; tiraDasVozes(escR[d], mid, n); } else if(f.pessoas.length===1) f.voz = false; }
     escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); });
   const redEsc = d => { escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); };
   box.querySelectorAll('[data-vz]').forEach(b=>b.onclick=()=>{ const [d, n] = b.dataset.vz.split('|'); vozToggle(escR[d], mid, n); redEsc(d); });
@@ -1154,15 +1175,15 @@ function ligarEscala(){
   box.querySelectorAll('[data-evoz]').forEach(c=>c.onchange=()=>{ const [d, fid] = c.dataset.evoz.split('|'); escR[d].funcoes[fid].voz = c.checked; escSujo.add(d); sujo = true; const y = window.scrollY; renderMinisterios(); window.scrollTo(0, y); });
   box.querySelector('[data-escfechar]').onclick = async ()=>{ if(escSujo.size && !(await perguntar('Fechar sem salvar?', 'Há cultos com mudanças na escala que ainda não foram salvas.', {sim:'Fechar sem salvar', perigo:true}))) return; escMin = null; escSujo = new Set(); sujo = false; renderMinisterios(); };
   box.querySelector('[data-escsalvar]').onclick = async (ev)=>{
-    const b = ev.currentTarget; const datas = [...escSujo]; if(!datas.length) return;
+    const b = ev.currentTarget; const datas = [...new Set([...escSujo, ...Object.keys(escR).filter(d=>escR[d]._padrao)])]; if(!datas.length) return;
     b.disabled = true; b.textContent = 'Salvando…';
     try{
       const atual = await sb(`/fl_escalas?select=data,atualizado_em,atualizado_por&ministerio_id=eq.${mid}&data=in.(${datas.join(',')})`);
       const conflito = atual.filter(a=>a.atualizado_em !== escBase[a.data]);
       if(conflito.length && !(await perguntar('Alguém salvou antes', `${conflito.map(a=>`${diaTxt(a.data)} (${a.atualizado_por||'outra pessoa'})`).join(', ')} foi alterado depois que você abriu a escala. Se continuar, a sua versão substitui.`, {sim:'Salvar a minha', perigo:true}))){ b.disabled = false; b.textContent = 'Salvar escala'; return; }
       const agora = new Date().toISOString();
-      await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(datas.map(d=>({data:d, ministerio_id:mid, dados:escR[d], atualizado_por:eu.nome, atualizado_em:agora})))});
-      await carregarTudo(); datas.forEach(d=>{ escBase[d] = agora; }); escSujo = new Set(); sujo = false; renderMinisterios(); toast(`Escala salva em ${datas.length} culto${datas.length>1?'s':''}`);
+      await sb('/fl_escalas?on_conflict=data,ministerio_id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(datas.map(d=>({data:d, ministerio_id:mid, dados:{...escR[d], _padrao:undefined}, atualizado_por:eu.nome, atualizado_em:agora})))});
+      await carregarTudo(); datas.forEach(d=>{ escBase[d] = agora; delete escR[d]._padrao; }); escSujo = new Set(); sujo = false; renderMinisterios(); toast(`Escala salva em ${datas.length} culto${datas.length>1?'s':''}`);
     }catch(e){ b.disabled = false; b.textContent = 'Salvar escala'; toast(!navigator.onLine ? 'Sem internet. Tente de novo.' : /42501|row-level/i.test(e.message) ? 'Você não tem permissão para preencher este ministério.' : 'Não salvou: '+e.message, 'var(--danger)', 4500); }
   };
 }
