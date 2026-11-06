@@ -692,6 +692,16 @@ function programaPadrao(data){
   base.blocos.forEach(b=>{ b.notas=''; if(b.tipo==='avisos'){ b.itens = []; b.agenda = agendaPadrao(data); } });
   return base;
 }
+// culto de ceia sempre tem a Santa Ceia na programação (volta mesmo se tiver sido tirada ou desligada)
+function garantirCeia(prog, data){
+  if(!prog?.blocos || tipoDe(data)!=='ceia') return false;
+  const b = prog.blocos.find(x=>x.tipo==='ceia');
+  if(b){ if(b.ativo===false){ b.ativo = true; return true; } return false; }
+  const i = prog.blocos.findIndex(x=>x.tipo==='oferta'), j = prog.blocos.findIndex(x=>x.tipo==='avisos');
+  const hora = (i>=0 ? prog.blocos[i].hora : '') || '18h30';
+  prog.blocos.splice(i>=0 ? i : (j>=0 ? j+1 : prog.blocos.length), 0, {id:'ceia', tipo:'ceia', hora, titulo:'Santa Ceia', resp:'Pr. Ivar', notas:''});
+  return true;
+}
 function dadosVazios(mid){
   const m = D.ministerios.find(x=>x.id===mid); const f = {};
   (m?.funcoes||[]).forEach(fn=>f[fn.id] = {pessoas:[], chegada:fn.chegada||''});
@@ -702,12 +712,14 @@ async function abrirCulto(data){
   try{ await carregarTudo(); }catch(e){}
   rasc = {programa: JSON.parse(JSON.stringify(cultoDe(data)?.programa || programaPadrao(data)))};
   rasc.programa.blocos = rasc.programa.blocos.filter(b=>b.tipo!=='hospitalidade');   // equipe sem horário vai no topo do Flow
+  garantirCeia(rasc.programa, data);
   rasc.programa.blocos.forEach(b=>{ if(b.tipo==='avisos' && !Array.isArray(b.agenda)) b.agenda = agendaPadrao(data); });
   minis().forEach(m=>{ const e = escalaDe(data, m.id); const v = dadosVazios(m.id); rasc[m.id] = e ? {...v, ...JSON.parse(JSON.stringify(e.dados)), funcoes:{...v.funcoes, ...(e.dados.funcoes||{})}} : v; });
   irPara('culto'); renderCulto();
 }
 function marcarSujo(){ sujo = true; }
 function renderCulto(){
+  if(rasc.programa && dataAberta) garantirCeia(rasc.programa, dataAberta);
   const data = dataAberta, c = cultoDe(data), t = tipoDe(data);
   $('#dTitulo').textContent = c?.titulo || tituloData(data);
   $('#dTags').innerHTML = (c?.titulo?`<span class="hint">${esc(tituloData(data))}</span>`:'') +
