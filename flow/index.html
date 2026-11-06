@@ -403,12 +403,14 @@ const MOMENTOS = [['louvor','Louvor (início)'],['ceia','Santa Ceia'],['oferta',
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DIAS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 const TXT_CRIANCAS = 'Ver sequência das artes, Oferta e Crianças, na ficha da projeção.';
-const HABS = [['bateria','Bateria'],['violao','Violão'],['baixo','Baixo'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
-const habNome = h => (HABS.find(x=>x[0]===h) || [h, (D.ministerios||[]).flatMap(m=>m.funcoes||[]).find(f=>f.hab===h)?.nome || h])[1];
+const HABS = [['bateria','Bateria'],['cajon','Cajon'],['violao','Violão'],['baixo','Baixo'],['baixolao','Baixolão'],['guitarra','Guitarra'],['teclado','Teclado'],['voz','Canta (voz)']];
+const habsFn = fn => [].concat(fn?.hab || []);   // uma função pode aceitar mais de uma habilidade (ex.: Bateria ou Cajon)
+const tocaFn = (fn, hs) => habsFn(fn).some(h=>hs.includes(h));
+const habNome = h => (HABS.find(x=>x[0]===h) || [h, (D.ministerios||[]).flatMap(m=>m.funcoes||[]).find(f=>habsFn(f).includes(h))?.nome || h])[1];
 // opções de "o que faz" em cada ministério: Louvor usa instrumentos/voz; os demais, as próprias funções (ex.: Hospitalidade · Portão)
 const habOpcoes = mid => { const fs = (D.ministerios.find(m=>m.id===mid)?.funcoes||[]).filter(f=>f.hab);
-  const usados = [...new Set(fs.map(f=>f.hab))];
-  return usados.every(h=>HABS.some(x=>x[0]===h)) ? HABS.filter(x=>usados.includes(x[0]) || mid==='louvor') : usados.map(h=>[h, fs.find(f=>f.hab===h).nome]); };
+  const usados = [...new Set(fs.flatMap(habsFn))];
+  return usados.every(h=>HABS.some(x=>x[0]===h)) ? HABS.filter(x=>usados.includes(x[0]) || mid==='louvor') : usados.map(h=>[h, fs.find(f=>habsFn(f).includes(h)).nome]); };
 const UMA_CHEGADA = ['louvor','transmissao'];   // todos da equipe chegam no mesmo horário
 const SEM_HORA = ['hospitalidade','babys','kids'];   // sem horário: saem no topo do Flow, nessa ordem
 const TXT_FIM = 'a definir de acordo com a necessidade. Não havendo louvor, liberar o som ambiente.';
@@ -756,10 +758,10 @@ function secMinisterio(mid){
       corpo += `<div class="func"><div class="fh"><b>Horário de chegada</b><label class="chega">toda a equipe chega às <input data-chegmin value="${esc(ch)}" placeholder="—"></label></div></div>`; }
     corpo += (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[], chegada:fn.chegada||''}; const extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       // quem tem a habilidade (ou ainda não tem nada marcado) aparece direto; o resto fica em "ver todos"
-      const serve = p => !fn.hab || !habsDe(p.id, mid).length || habsDe(p.id, mid).includes(fn.hab);
+      const serve = p => !fn.hab || !habsDe(p.id, mid).length || tocaFn(fn, habsDe(p.id, mid));
       const todos = verTodos.has(mid+':'+fn.id);
       const vis = membros.filter(p=>todos || serve(p) || f.pessoas.includes(p.nome)), escondidos = membros.length - vis.length;
-      const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !hs.includes(fn.hab) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
+      const chip = p => { const hs = fn.hab ? habsDe(p.id, mid) : []; const dica = fn.hab && hs.length && !tocaFn(fn, hs) ? ` <small>(${esc(hs.map(habNome).join(', '))})</small>` : ''; return `<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-fn="${fn.id}" data-p="${esc(p.nome)}">${esc(p.nome)}${dica}</button>`; };
       return `<div class="func"><div class="fh"><b>${esc(fn.nome)}</b>${!SEM_HORA.includes(mid) && !UMA_CHEGADA.includes(mid)?`<label class="chega">chegar <input data-cheg="${fn.id}" value="${esc(f.chegada)}" placeholder="—"></label>`:''}</div>
         <div class="chips">${vis.map(chip).join('')}
         ${extra.map(n=>`<button type="button" class="chipsel on" data-fn="${fn.id}" data-p="${esc(n)}">${esc(n)} ✕</button>`).join('')}
@@ -1065,7 +1067,7 @@ function escalaHtml(m, membros){
   const datas = Object.keys(escR).sort();
   const dias = datas.map(d=>{ const r = escR[d], c = cultoDe(d), ceia = tipoDe(d)==='ceia';
     const fns = (m.funcoes||[]).map(fn=>{ const f = r.funcoes[fn.id] || {pessoas:[]};
-      const serve = p => !fn.hab || !habsDe(p.id, m.id).length || habsDe(p.id, m.id).includes(fn.hab);
+      const serve = p => !fn.hab || !habsDe(p.id, m.id).length || tocaFn(fn, habsDe(p.id, m.id));
       const vis = membros.filter(p=>serve(p) || f.pessoas.includes(p.nome)), extra = f.pessoas.filter(n=>!membros.some(p=>p.nome===n));
       return `<div class="escfn"><div class="fl">${esc(fn.nome)}</div><div class="chips">
         ${vis.map(p=>`<button type="button" class="chipsel ${f.pessoas.includes(p.nome)?'on':''}" data-ed="${d}|${fn.id}|${esc(p.nome)}">${esc(p.nome)}</button>`).join('')}
