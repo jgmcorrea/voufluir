@@ -993,7 +993,7 @@ function folhaHtml(data){
   const tab = `<table class="tab"><tr><th></th><th>Responsável</th><th>Hora para chegar</th></tr>
     ${(D.ministerios.find(m=>m.id==='som')?.funcoes||[]).map(f=>linha('som', f.nome, nomes(S,f.id), S.funcoes?.[f.id]?.chegada)).join('')}
     <tr class="gap"><td colspan="3"></td></tr>
-    ${fnsLouvor.map(f=>linha('lv', rotuloFn(f, L.funcoes?.[f.id]), nomes(L,f.id), L.funcoes?.[f.id]?.chegada)).join('')}
+    ${fnsLouvor.filter(f=>!f.opcional || nomes(L,f.id)).map(f=>linha('lv', rotuloFn(f, L.funcoes?.[f.id]), nomes(L,f.id), L.funcoes?.[f.id]?.chegada)).join('')}
     <tr class="gap"><td colspan="3"></td></tr>
     ${(D.ministerios.find(m=>m.id==='transmissao')?.funcoes||[]).map(f=>linha('tr', f.nome, nomes(T,f.id), T.funcoes?.[f.id]?.chegada)).join('')}</table>`;
   const c = cultoDe(data);
