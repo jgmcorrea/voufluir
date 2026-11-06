@@ -683,7 +683,7 @@ function programaPadrao(data){
       {id:'abertura', tipo:'abertura', hora:'18h', titulo:'Abertura', resp:'Pr. Allan', notas:''},
       {id:'louvor', tipo:'louvor', hora:'18h05', titulo:'Louvor', resp:'', notas:''},
       {id:'avisos', tipo:'avisos', hora:'18h25', titulo:'Avisos / Recados', resp:'Pr. Allan', notas:'', itens:[]},
-      {id:'ceia', tipo:'ceia', hora:'18h30', titulo:'Santa Ceia', resp:'Pr. Ivar', notas:''},
+      {id:'ceia', tipo:'ceia', hora:'18h30', titulo:'Santa Ceia', resp:'', notas:''},
       {id:'oferta', tipo:'oferta', hora:'18h30', titulo:'Oferta', resp:'Pr. Allan', notas:''},
       {id:'pedidos', tipo:'livre', hora:'', titulo:'Pedidos de oração', resp:'', notas:'', ativo:false},
       {id:'pregacao', tipo:'pregacao', hora:'18h35', titulo:'Pregação', resp:'Pra. Ana Cláudia', notas:''},
@@ -699,7 +699,7 @@ function garantirCeia(prog, data){
   if(b){ if(b.ativo===false){ b.ativo = true; return true; } return false; }
   const i = prog.blocos.findIndex(x=>x.tipo==='oferta'), j = prog.blocos.findIndex(x=>x.tipo==='avisos');
   const hora = (i>=0 ? prog.blocos[i].hora : '') || '18h30';
-  prog.blocos.splice(i>=0 ? i : (j>=0 ? j+1 : prog.blocos.length), 0, {id:'ceia', tipo:'ceia', hora, titulo:'Santa Ceia', resp:'Pr. Ivar', notas:''});
+  prog.blocos.splice(i>=0 ? i : (j>=0 ? j+1 : prog.blocos.length), 0, {id:'ceia', tipo:'ceia', hora, titulo:'Santa Ceia', resp:'', notas:''});
   return true;
 }
 function dadosVazios(mid){
