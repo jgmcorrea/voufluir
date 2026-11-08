@@ -88,7 +88,7 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
   </div>
   <div class="card sem-topo" id="formDoar" hidden>
     <h2>O que você pode doar?</h2>
-    <p class="hint" style="margin:0">Marque os itens e, se souber, a quantidade. A equipe entra em contato para combinar a entrega. 🙏</p>
+    <p class="hint" style="margin:0">Marque o que você vai doar — cada item é a quantidade toda que precisamos. A equipe entra em contato para combinar a entrega. 🙏</p>
     <label class="lb" for="dNome">Seu nome</label>
     <input class="field" id="dNome" autocomplete="name" maxlength="80">
     <label class="lb" for="dTel">Telefone / WhatsApp</label>
@@ -158,12 +158,10 @@ document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>mostrarAba(b.da
 const fmt = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
   $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, m = marc.get(i.id);
-    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${m?'checked':''}>
-      <span class="n"><b>${esc(i.nome)}</b><small>${cheio ? '✅ já temos o suficiente' : i.faltam !== null ? `faltam ${fmt(Number(i.faltam))} ${esc(i.unidade)}` : ''}${i.refeicao?`${!cheio && i.faltam!==null?' · ':''}${esc(i.refeicao)}`:''}</small></span>
-      ${m ? `<span class="q"><input type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(m.q||'')}" placeholder="qtd" aria-label="Quantidade de ${esc(i.nome)}"><span>${esc(i.unidade)}</span></span>` : ''}</label>`; }).join('')
+    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${m?'checked':''} ${cheio?'disabled':''}>
+      <span class="n"><b>${!cheio && i.faltam !== null ? `${fmt(Number(i.faltam))} ${esc(i.unidade)} de ` : ''}${esc(i.nome)}</b><small>${cheio ? '✅ já tem quem vai doar' : esc(i.refeicao||'')}</small></span></label>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
   document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, {q:''}) : marc.delete(c.dataset.i); $('#dErro').textContent=''; desenharItens(); });
-  document.querySelectorAll('[data-q]').forEach(x=>{ x.onclick = e=>e.preventDefault(); x.oninput = ()=>{ marc.get(x.dataset.q).q = x.value; }; });
 }
 rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; desenharItens(); }).catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
 $('#doar').onclick = async ()=>{
@@ -174,9 +172,10 @@ $('#doar').onclick = async ()=>{
   if(!marc.size && !outro){ $('#dErro').textContent = 'Marque pelo menos um item (ou escreva o que quer doar).'; return; }
   const b = $('#doar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
-    await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(([id,m])=>({id, quantidade:String(m.q||'').replace(',','.')})), p_outro:outro||null, p_obs:$('#dObs').value.trim()||null});
+    await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc.keys()].map(id=>({id})), p_outro:outro||null, p_obs:$('#dObs').value.trim()||null});
     pronto(nome, 'Recebemos sua doação. A equipe do Flow Camp vai falar com você pelo WhatsApp para combinar a entrega. Deus abençoe!');
-  }catch(e){ $('#dErro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.'; }
+  }catch(e){ $('#dErro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.';
+    rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); }).catch(()=>{}); }
   finally{ b.disabled = false; b.textContent = 'Quero doar'; }
 };
 $('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dNome','#dTel','#dOutro','#dObs'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Map(); desenhar(REFS); desenharItens();
