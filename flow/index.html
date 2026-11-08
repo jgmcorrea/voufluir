@@ -972,7 +972,6 @@ function ligarCulto(){
   box.querySelectorAll('[data-io],[data-ago]').forEach(x=>x.addEventListener('change', ()=>{ lerPrograma(); const n = parseInt(x.value,10);
     rasc.programa.blocos.forEach(bl=>{ if(bl.tipo==='avisos') moverAviso(bl, x.dataset.ago ? 'ev' : 'it', x.dataset.ago || +x.dataset.io, n>0 ? n : null); });
     marcarSujo(); redesenhar('programa'); }));
-  box.querySelectorAll('[data-it]').forEach(x=>x.addEventListener('change', ()=>{ lerPrograma(); redesenhar('programa'); }));
   box.querySelectorAll('[data-iragenda]').forEach(b=>b.onclick=async ()=>{ if(sujo && !(await perguntar('Sair sem salvar?', 'Salve a programação antes de ir para a Agenda, senão as mudanças se perdem.', {sim:'Ir assim mesmo', perigo:true}))) return; sujo=false; irPara('agenda'); setTimeout(()=>$('#agData').focus(),100); });
   const ba = $('#bAdd'); if(ba) ba.onclick=()=>{ lerPrograma(); const bl = rasc.programa.blocos; const pos = Math.max(0, bl.findIndex(b=>b.tipo==='pregacao')); bl.splice(pos, 0, {id:uid(), tipo:'livre', hora:'', titulo:'', resp:'', notas:''}); marcarSujo(); redesenhar('programa'); };
   box.querySelectorAll('[data-salvar]').forEach(b=>b.onclick=()=>salvarSecao(b.dataset.salvar, b));
