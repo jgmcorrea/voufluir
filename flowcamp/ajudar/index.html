@@ -56,6 +56,10 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 .it .q input{width:60px;padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;text-align:center}
 .it .q span{font-size:13px;color:var(--muted)}
 .it.cheio{opacity:.55}
+.parte{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:16px}
+.parte:has(input:checked){border-color:var(--brand);background:#f6faf1}
+.ptit{display:flex;gap:10px;align-items:center;font-size:16.5px;font-weight:700;cursor:pointer}
+.ptit input{width:22px;height:22px;flex:none;accent-color:var(--brand)}
 .link{background:none;color:var(--brand);font-weight:700;font-size:15px;margin-top:14px;padding:6px}
 </style>
 </head>
@@ -66,43 +70,40 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
   <p>Seja voluntário nas refeições ou doe o que precisamos</p>
 </div>
 <main>
-  <div class="abas" role="tablist">
-    <button type="button" class="on" data-aba="vol" role="tab">🍽️ Ser voluntário</button>
-    <button type="button" data-aba="doar" role="tab">🎁 Quero doar</button>
-  </div>
-  <div class="card sem-topo" id="form">
-    <h2>Deixe seu nome</h2>
-    <p class="hint" style="margin:0">Marque as refeições em que você <b>pode</b> ajudar. Depois a equipe organiza todo mundo e entra em contato para confirmar. 🙌</p>
+  <div class="card" id="form">
+    <h2>Como você quer ajudar?</h2>
+    <p class="hint" style="margin:0">Você pode se voluntariar, doar, ou os dois. A equipe organiza tudo e entra em contato pelo WhatsApp para confirmar. 🙌</p>
     <label class="lb" for="nome">Seu nome</label>
     <input class="field" id="nome" autocomplete="name" maxlength="80">
     <label class="lb" for="tel">Telefone / WhatsApp</label>
     <input class="field" id="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="(47) 99999-9999">
-    <div class="lb">Em quais refeições você pode ajudar? <small>(marque todas que der)</small></div>
-    <div id="refs"><p class="hint">Carregando…</p></div>
-    <div class="lb">Prefere ajudar com <small>(opcional)</small></div>
-    <div class="chips" id="funs"></div>
+
+    <div class="parte">
+      <label class="ptit"><input type="checkbox" id="querVol"> <span>🍽️ Quero ser voluntário nas refeições</span></label>
+      <div id="boxVol" hidden>
+        <div class="lb">Em quais refeições você pode ajudar? <small>(marque todas que der)</small></div>
+        <div id="refs"><p class="hint">Carregando…</p></div>
+        <div class="lb">Prefere ajudar com <small>(opcional)</small></div>
+        <div class="chips" id="funs"></div>
+      </div>
+    </div>
+
+    <div class="parte">
+      <label class="ptit"><input type="checkbox" id="querDoar"> <span>🎁 Quero doar</span></label>
+      <div id="boxDoar" hidden>
+        <div class="lb">Marque o que você vai doar</div>
+        <div id="itens"><p class="hint">Carregando…</p></div>
+        <label class="lb" for="dOutro">Quer doar outra coisa? <small>(opcional)</small></label>
+        <input class="field" id="dOutro" maxlength="200" placeholder="Ex.: 2 bolos caseiros">
+      </div>
+    </div>
+
     <label class="lb" for="obs">Alguma observação? <small>(opcional)</small></label>
     <input class="field" id="obs" maxlength="300" placeholder="Ex.: só consigo chegar depois das 18h">
     <div class="erro" id="erro" role="alert"></div>
-    <button class="go" id="enviar" type="button">Quero ajudar</button>
+    <button class="go" id="enviar" type="button">Enviar</button>
   </div>
-  <div class="card sem-topo" id="formDoar" hidden>
-    <h2>O que você pode doar?</h2>
-    <p class="hint" style="margin:0">Marque o que você vai doar. A equipe entra em contato para combinar a entrega. 🙏</p>
-    <label class="lb" for="dNome">Seu nome</label>
-    <input class="field" id="dNome" autocomplete="name" maxlength="80">
-    <label class="lb" for="dTel">Telefone / WhatsApp</label>
-    <input class="field" id="dTel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="(47) 99999-9999">
-    <div class="lb">Do que estamos precisando</div>
-    <div id="itens"><p class="hint">Carregando…</p></div>
-    <label class="lb" for="dOutro">Quer doar outra coisa? <small>(opcional)</small></label>
-    <input class="field" id="dOutro" maxlength="200" placeholder="Ex.: 2 bolos caseiros">
-    <label class="lb" for="dObs">Alguma observação? <small>(opcional)</small></label>
-    <input class="field" id="dObs" maxlength="300" placeholder="Ex.: entrego no sábado de manhã">
-    <div class="erro" id="dErro" role="alert"></div>
-    <button class="go" id="doar" type="button">Quero doar</button>
-  </div>
-  <div class="card ok sem-topo" id="pronto" hidden>
+  <div class="card ok" id="pronto" hidden>
     <div class="big">🔥</div>
     <h2>Obrigado, <span id="pNome"></span>!</h2>
     <p class="hint" id="pMsg"></p>
@@ -117,71 +118,64 @@ const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const FUN = ['Cozinhar','Servir','Lavar louça / limpeza','Onde precisar'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let sel = new Set(), fun = '';
+let sel = new Set(), fun = '', REFS = [], ITENS = [], marc = new Set();
 async function rpc(fn, body){
   const r = await fetch(`${SB}/rpc/${fn}`, {method:'POST', headers:{apikey:KEY, Authorization:'Bearer '+KEY, 'Content-Type':'application/json'}, body:JSON.stringify(body||{})});
   const t = await r.text(); let j = null; try{ j = t ? JSON.parse(t) : null; }catch(e){}
   if(!r.ok) throw new Error(j?.message || 'Não foi possível enviar agora.'); return j;
 }
-function desenhar(refs){
-  const dias = {}; refs.forEach(r=>(dias[r.dia] ||= []).push(r));
+function desenharRefs(){
+  const dias = {}; REFS.forEach(r=>(dias[r.dia] ||= []).push(r));
   $('#refs').innerHTML = Object.entries(dias).map(([d, rs])=>{ const x = new Date(d+'T12:00');
     return `<div class="dia"><b>${DIAS[x.getDay()]}, ${x.getDate()}/${x.getMonth()+1}</b><div class="chips">${rs.map(r=>`<button type="button" class="chip ${sel.has(r.id)?'on':''}" data-r="${esc(r.id)}" aria-pressed="${sel.has(r.id)}">${TIPOS[r.tipo]||r.tipo}${r.hora?` <small>${esc(r.hora)}</small>`:''}</button>`).join('')}</div></div>`; }).join('');
-  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ sel.has(b.dataset.r) ? sel.delete(b.dataset.r) : sel.add(b.dataset.r); $('#erro').textContent=''; desenhar(refs); });
+  document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ sel.has(b.dataset.r) ? sel.delete(b.dataset.r) : sel.add(b.dataset.r); $('#erro').textContent=''; desenharRefs(); });
   $('#funs').innerHTML = FUN.map(f=>`<button type="button" class="chip ${fun===f?'on':''}" data-f="${esc(f)}" aria-pressed="${fun===f}">${esc(f)}</button>`).join('');
-  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ fun = fun===b.dataset.f ? '' : b.dataset.f; desenhar(refs); });
+  document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ fun = fun===b.dataset.f ? '' : b.dataset.f; desenharRefs(); });
 }
-let REFS = [];
-rpc('fc_refeicoes_publicas').then(r=>{ REFS = r||[]; desenhar(REFS); }).catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
-$('#enviar').onclick = async ()=>{
-  const nome = $('#nome').value.replace(/\s+/g,' ').trim(), tel = $('#tel').value.trim();
-  $('#erro').textContent = '';
-  if(nome.length < 2){ $('#erro').textContent = 'Digite seu nome.'; $('#nome').focus(); return; }
-  if(tel.replace(/\D/g,'').length < 8){ $('#erro').textContent = 'Digite seu telefone com DDD.'; $('#tel').focus(); return; }
-  if(!sel.size){ $('#erro').textContent = 'Marque pelo menos uma refeição.'; return; }
-  const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
-  try{
-    await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:$('#obs').value.trim()||null});
-    pronto(nome, 'Recebemos seu nome. A equipe do Flow Camp vai organizar as refeições e falar com você pelo WhatsApp para confirmar.');
-  }catch(e){ $('#erro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.'; }
-  finally{ b.disabled = false; b.textContent = 'Quero ajudar'; }
-};
-let aba = 'vol', ITENS = [], marc = new Map();
-function pronto(nome, msg){ $('#pNome').textContent = nome.split(' ')[0]; $('#pMsg').textContent = msg; $('#form').hidden = $('#formDoar').hidden = true; document.querySelector('.abas').hidden = true; $('#pronto').hidden = false; window.scrollTo(0,0); }
-function mostrarAba(a){ aba = a; document.querySelectorAll('[data-aba]').forEach(b=>{ b.classList.toggle('on', b.dataset.aba===a); b.setAttribute('aria-selected', b.dataset.aba===a); });
-  $('#form').hidden = a!=='vol'; $('#formDoar').hidden = a!=='doar';
-  // quem já digitou nome/telefone numa aba não precisa digitar de novo
-  if(a==='doar'){ if(!$('#dNome').value) $('#dNome').value = $('#nome').value; if(!$('#dTel').value) $('#dTel').value = $('#tel').value; }
-  else { if(!$('#nome').value) $('#nome').value = $('#dNome').value; if(!$('#tel').value) $('#tel').value = $('#dTel').value; }
-  try{ history.replaceState(null, '', a==='doar' ? '#doar' : '#'); }catch(e){} }
-document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>mostrarAba(b.dataset.aba));
-const fmt = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
-  $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, m = marc.get(i.id);
-    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${m?'checked':''} ${cheio?'disabled':''}>
+  $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0;
+    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marc.has(i.id)?'checked':''} ${cheio?'disabled':''}>
       <span class="n"><b>${esc(i.nome)}</b><small>${cheio ? '✅ já tem quem vai doar' : esc(i.refeicao||'')}</small></span></label>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
-  document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, {q:''}) : marc.delete(c.dataset.i); $('#dErro').textContent=''; desenharItens(); });
+  document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.add(c.dataset.i) : marc.delete(c.dataset.i); $('#erro').textContent=''; });
 }
-rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; desenharItens(); }).catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
-$('#doar').onclick = async ()=>{
-  const nome = $('#dNome').value.replace(/\s+/g,' ').trim(), tel = $('#dTel').value.trim(), outro = $('#dOutro').value.trim();
-  $('#dErro').textContent = '';
-  if(nome.length < 2){ $('#dErro').textContent = 'Digite seu nome.'; $('#dNome').focus(); return; }
-  if(tel.replace(/\D/g,'').length < 8){ $('#dErro').textContent = 'Digite seu telefone com DDD.'; $('#dTel').focus(); return; }
-  if(!marc.size && !outro){ $('#dErro').textContent = 'Marque pelo menos um item (ou escreva o que quer doar).'; return; }
-  const b = $('#doar'); b.disabled = true; b.textContent = 'Enviando…';
+const carregarItens = ()=> rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
+rpc('fc_refeicoes_publicas').then(r=>{ REFS = r||[]; desenharRefs(); }).catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
+carregarItens().catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
+const abrirParte = (cb, box)=>{ $(box).hidden = !$(cb).checked; $('#erro').textContent=''; };
+$('#querVol').onchange = ()=>abrirParte('#querVol', '#boxVol');
+$('#querDoar').onchange = ()=>abrirParte('#querDoar', '#boxDoar');
+if(location.hash==='#doar'){ $('#querDoar').checked = true; abrirParte('#querDoar', '#boxDoar'); }
+if(location.hash==='#voluntario'){ $('#querVol').checked = true; abrirParte('#querVol', '#boxVol'); }
+
+let feitoVol = false, feitoDoar = false;   // se uma parte já foi enviada e a outra falhou, não manda de novo
+$('#enviar').onclick = async ()=>{
+  const nome = $('#nome').value.replace(/\s+/g,' ').trim(), tel = $('#tel').value.trim(), obs = $('#obs').value.trim() || null, outro = $('#dOutro').value.trim();
+  const vol = $('#querVol').checked, doar = $('#querDoar').checked;
+  $('#erro').textContent = '';
+  const erro = (m, foco)=>{ $('#erro').textContent = m; if(foco) $(foco).focus(); };
+  if(nome.length < 2) return erro('Digite seu nome.', '#nome');
+  if(tel.replace(/\D/g,'').length < 8) return erro('Digite seu telefone com DDD.', '#tel');
+  if(!vol && !doar) return erro('Marque se quer ser voluntário, doar, ou os dois.');
+  if(vol && !sel.size) return erro('Marque pelo menos uma refeição em que pode ajudar.');
+  if(doar && !marc.size && !outro) return erro('Marque pelo menos um item para doar (ou escreva o que quer doar).');
+  const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
-    await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc.keys()].map(id=>({id})), p_outro:outro||null, p_obs:$('#dObs').value.trim()||null});
-    pronto(nome, 'Recebemos sua doação. A equipe do Flow Camp vai falar com você pelo WhatsApp para combinar a entrega. Deus abençoe!');
-  }catch(e){ $('#dErro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.';
-    rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); }).catch(()=>{}); }
-  finally{ b.disabled = false; b.textContent = 'Quero doar'; }
+    if(vol && !feitoVol){ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
+    if(doar && !feitoDoar){
+      try{ await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(id=>({id})), p_outro:outro||null, p_obs:obs}); feitoDoar = true; }
+      catch(e){ carregarItens().catch(()=>{}); throw new Error((feitoVol ? 'Seu nome como voluntário já foi registrado. Sobre a doação: ' : '') + e.message); }
+    }
+    const msg = vol && doar ? 'Recebemos seu nome para as refeições e a sua doação. A equipe vai falar com você pelo WhatsApp para confirmar.'
+      : vol ? 'Recebemos seu nome. A equipe do Flow Camp vai organizar as refeições e falar com você pelo WhatsApp para confirmar.'
+      : 'Recebemos sua doação. A equipe do Flow Camp vai falar com você pelo WhatsApp para combinar a entrega. Deus abençoe!';
+    $('#pNome').textContent = nome.split(' ')[0]; $('#pMsg').textContent = msg; $('#form').hidden = true; $('#pronto').hidden = false; window.scrollTo(0,0);
+  }catch(e){ erro(navigator.onLine ? e.message : 'Sem internet. Tente de novo.'); }
+  finally{ b.disabled = false; b.textContent = 'Enviar'; }
 };
-$('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dNome','#dTel','#dOutro','#dObs'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Map(); desenhar(REFS); desenharItens();
-  rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; desenharItens(); }).catch(()=>{});
-  $('#pronto').hidden = true; document.querySelector('.abas').hidden = false; mostrarAba(aba); };
-if(location.hash==='#doar') mostrarAba('doar');
+$('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dOutro'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Set(); feitoVol = feitoDoar = false;
+  $('#querVol').checked = $('#querDoar').checked = false; $('#boxVol').hidden = $('#boxDoar').hidden = true;
+  desenharRefs(); carregarItens().catch(()=>{}); $('#pronto').hidden = true; $('#form').hidden = false; window.scrollTo(0,0); };
 </script>
 </body>
 </html>
