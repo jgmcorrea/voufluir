@@ -165,7 +165,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 
   <!-- VOLUNTÁRIOS -->
   <section class="view" id="v-voluntarios">
-    <button class="go" id="novoVol" type="button" style="margin:0 0 14px">+ Cadastrar voluntário</button>
+    <button class="go" id="novoVol" type="button" style="margin:0 0 14px">+ Anotar quem pode ajudar</button>
     <div id="volLista"></div>
   </section>
 
@@ -256,14 +256,14 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 <!-- Voluntário -->
 <div class="modal" id="voModal">
   <div class="sheet">
-    <h3 id="voTit">Cadastrar voluntário</h3>
+    <h3 id="voTit">Quem pode ajudar</h3>
     <div class="grid2">
       <div><label class="lb" for="vNome">Nome</label><input class="field" id="vNome" autocomplete="off" list="dlNomes"></div>
       <div><label class="lb" for="vTel">Telefone (opcional)</label><input class="field" id="vTel" inputmode="tel" autocomplete="off"></div>
     </div>
-    <label class="lb">Em quais refeições vai ajudar? (pode marcar mais de uma)</label>
+    <label class="lb">Em quais refeições pode ajudar? (marque todas que der)</label>
     <div id="vRefs"></div>
-    <label class="lb">Vai ajudar com</label>
+    <label class="lb">Prefere ajudar com (opcional)</label>
     <div class="chips" id="vFun"></div>
     <label class="lb" for="vObs">Observação (opcional)</label><input class="field" id="vObs" placeholder="Ex.: só consegue chegar às 18h" autocomplete="off">
     <div class="row" style="margin-top:14px">
@@ -419,7 +419,8 @@ async function carregarTudo(){
 const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
 const refDe = id => D.refeicoes.find(r=>r.id===id);
 const itemDe = id => D.itens.find(i=>i.id===id);
-const volsDe = rid => D.voluntarios.filter(v=>v.refeicao_id===rid);
+const volsDe = rid => D.voluntarios.filter(v=>v.refeicao_id===rid);            // quem pode ajudar
+const escDe = rid => volsDe(rid).filter(v=>v.escalado);                           // quem foi escalado
 const doadoDe = iid => D.doacoes.filter(d=>d.item_id===iid).reduce((s,d)=>s+(d.quantidade||0),0);
 const entregueDe = iid => D.doacoes.filter(d=>d.item_id===iid && d.status==='entregue').reduce((s,d)=>s+(d.quantidade||0),0);
 const descDoacao = d => { if(d.dinheiro) return brl(d.dinheiro); const it = itemDe(d.item_id);
@@ -447,24 +448,25 @@ function porDia(){ const m = {}; D.refeicoes.forEach(r=>(m[r.dia] ||= []).push(r
 function renderPainel(){
   const dias = Math.ceil((deISO(INICIO) - new Date())/86400000);
   $('#contagem').innerHTML = dias > 1 ? `Faltam <b>${dias}</b> dias` : dias === 1 ? '<b>É amanhã!</b>' : dias === 0 ? '<b>É hoje!</b>' : 'Evento realizado';
-  const vagas = D.refeicoes.reduce((s,r)=>s+(r.vagas||0),0), preench = D.refeicoes.reduce((s,r)=>s+Math.min(r.vagas||0, volsDe(r.id).length),0);
+  const vagas = D.refeicoes.reduce((s,r)=>s+(r.vagas||0),0), preench = D.refeicoes.reduce((s,r)=>s+Math.min(r.vagas||0, escDe(r.id).length),0);
   const pessoas = new Set(D.voluntarios.map(v=>semAcento(v.nome))).size;
   const dinheiro = D.doacoes.reduce((s,d)=>s+(d.dinheiro||0),0);
   const aReceber = D.doacoes.filter(d=>d.status==='prometido').length;
   $('#kpis').innerHTML = [
-    [`${preench}/${vagas}`, 'vagas de voluntários preenchidas'], [pessoas, 'pessoas ajudando nas refeições'],
+    [`${preench}/${vagas}`, 'vagas já escaladas'], [pessoas, 'pessoas se ofereceram para ajudar'],
     [D.doacoes.length, `doações (${aReceber} a receber)`], [brl(dinheiro), 'em dinheiro']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
   $('#refs').innerHTML = porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{
-    const vs = volsDe(r.id), cheia = vs.length >= (r.vagas||0), its = D.itens.filter(i=>i.refeicao_id===r.id);
-    return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${vs.length}/${r.vagas||0} voluntários</span></div>
+    const vs = volsDe(r.id), es = escDe(r.id), cheia = es.length >= (r.vagas||0), its = D.itens.filter(i=>i.refeicao_id===r.id);
+    return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${es.length}/${r.vagas||0} escalados</span></div>
       ${r.cardapio?`<div class="card-txt">🍽️ ${esc(r.cardapio)}</div>`:''}
-      <div class="bar ${cheia?'cheia':''}"><i style="width:${Math.min(100, (r.vagas? vs.length/r.vagas*100 : 0))}%"></i></div>
-      ${vs.length?`<div class="vlist">${vs.map(v=>`<span>${esc(v.nome)}${v.funcao?` · <small>${esc(v.funcao)}</small>`:''}</span>`).join('')}</div>`:'<div class="hint" style="margin-top:6px">Ninguém ainda.</div>'}
+      <div class="bar ${cheia?'cheia':''}"><i style="width:${Math.min(100, (r.vagas? es.length/r.vagas*100 : 0))}%"></i></div>
+      ${es.length?`<div class="vlist">${es.map(v=>`<span>✓ ${esc(v.nome)}${v.funcao?` · <small>${esc(v.funcao)}</small>`:''}</span>`).join('')}</div>`:''}
+      <div class="hint" style="margin-top:6px">${vs.length ? `${vs.length} ${vs.length>1?'pessoas podem':'pessoa pode'} ajudar${vs.length>es.length?` (${vs.length-es.length} ainda não escalada${vs.length-es.length>1?'s':''})`:''}` : 'Ninguém se ofereceu ainda.'}</div>
       ${its.length?`<div class="hint" style="margin-top:8px">Para esta refeição: ${its.map(i=>{ const f = i.meta ? Math.max(0, i.meta - doadoDe(i.id)) : null; return `${esc(i.nome)}${f===0?' ✅':f!=null?` (faltam ${fmtN(f)} ${esc(i.unidade)})`:''}`; }).join(' · ')}</div>`:''}</div>`; }).join('')}</div>`).join('') || '<p class="vazio">Nenhuma refeição cadastrada.</p>';
 }
 $('#zapBtn').onclick = async ()=>{
   const linhas = ['*FLOW CAMP 2026* 🔥', '4 a 6 de dezembro', ''];
-  const faltaVol = D.refeicoes.filter(r=>volsDe(r.id).length < (r.vagas||0));
+  const faltaVol = D.refeicoes.filter(r=>volsDe(r.id).length < (r.vagas||0));   // ainda não tem gente suficiente se oferecendo
   if(faltaVol.length){ linhas.push('*Precisamos de voluntários nas refeições:*'); faltaVol.forEach(r=>linhas.push(`• ${TIPOS[r.tipo]} de ${diaTxt(r.dia).toLowerCase()} — faltam ${(r.vagas||0) - volsDe(r.id).length}`)); linhas.push(''); }
   const faltaIt = D.itens.filter(i=>!i.meta || doadoDe(i.id) < i.meta);
   if(faltaIt.length){ linhas.push('*Doações que ainda precisamos:*'); faltaIt.forEach(i=>linhas.push(`• ${i.nome}${i.meta?` — faltam ${fmtN(i.meta - doadoDe(i.id))} ${i.unidade}`:''}`)); linhas.push(''); }
@@ -536,21 +538,49 @@ $('#dExcluir').onclick = async ()=>{
   catch(e){ toast('Não apagou: '+e.message,'var(--danger)'); }
 };
 
-/* ---------- voluntários ---------- */
-let vSel = new Set(), vFun = '';
+/* ---------- voluntários: cada um diz quando pode; os administradores escalam e avisam ---------- */
+let vSel = new Set(), vFun = '', volModo = load('fc1_volmodo', 'refeicao');
+const pessoasVol = () => { const m = new Map(); D.voluntarios.forEach(v=>{ const k = semAcento(v.nome); if(!m.has(k)) m.set(k, {nome:v.nome, telefone:null, regs:[]}); const p = m.get(k); p.regs.push(v); if(v.telefone) p.telefone = v.telefone; }); return [...m.values()].sort((a,b)=>a.nome.localeCompare(b.nome)); };
+function msgAviso(p){
+  const es = p.regs.filter(v=>v.escalado).map(v=>refDe(v.refeicao_id)).filter(Boolean).sort((a,b)=>a.ordem-b.ordem || a.dia.localeCompare(b.dia));
+  return `Oi, ${p.nome.split(' ')[0]}! Obrigado por se oferecer para ajudar no *Flow Camp* 🔥\n\nVocê ficou escalado(a) para:\n${es.map(r=>`• ${TIPOS[r.tipo]} — ${diaTxt(r.dia).toLowerCase()}${r.hora?` às ${r.hora}`:''}`).join('\n')}\n\nQualquer imprevisto, avise a gente. Deus abençoe! 🙌`;
+}
 function renderVoluntarios(){
-  $('#volLista').innerHTML = porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{ const vs = volsDe(r.id), cheia = vs.length >= (r.vagas||0);
-    return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${vs.length}/${r.vagas||0}</span></div>
-      ${vs.length ? vs.map(v=>`<div class="item"><div class="t"><b>${esc(v.nome)}</b><div>${[v.funcao?esc(v.funcao):'', v.telefone?telLink(v.telefone):'', v.obs?'📝 '+esc(v.obs):''].filter(Boolean).join(' · ')}</div></div>
-        ${eu.admin?`<div class="a"><button class="link red" data-vdel="${v.id}" type="button">Tirar</button></div>`:''}</div>`).join('') : '<div class="hint" style="margin-top:6px">Ninguém ainda.</div>'}
-      <button class="link" data-vadd="${r.id}" type="button" style="margin-top:4px">+ Adicionar aqui</button></div>`; }).join('')}</div>`).join('');
+  const modos = `<div class="filtros" style="margin:0 0 12px"><button type="button" class="chipsel ${volModo==='refeicao'?'on':''}" data-vmodo="refeicao">Por refeição</button><button type="button" class="chipsel ${volModo==='pessoa'?'on':''}" data-vmodo="pessoa">Por pessoa${eu.admin?' (avisar)':''}</button></div>`;
+  if(volModo==='pessoa'){
+    const ps = pessoasVol();
+    $('#volLista').innerHTML = modos + `<div class="card">${ps.map(p=>{ const es = p.regs.filter(v=>v.escalado), avis = es.length && es.every(v=>v.avisado);
+      return `<div class="item"><div class="t"><b>${esc(p.nome)}</b> ${es.length ? (avis?'<span class="tag ok">avisado</span>':'<span class="tag pend">escalado · falta avisar</span>') : '<span class="tag">não escalado</span>'}
+        <div>${p.telefone?telLink(p.telefone)+' · ':''}pode: ${p.regs.map(v=>{ const r = refDe(v.refeicao_id); return r ? `${v.escalado?'<b>✓ ':''}${TIPOS[r.tipo]} ${DIAS[deISO(r.dia).getDay()].slice(0,3).toLowerCase()}${v.escalado?'</b>':''}` : ''; }).join(', ')}</div>
+        ${p.regs.find(v=>v.obs)?`<div>📝 ${esc(p.regs.find(v=>v.obs).obs)}</div>`:''}</div>
+        ${eu.admin && es.length ? `<div class="a">${p.telefone?`<button class="btn sm zap" data-avisar="${esc(p.nome)}" type="button">Avisar no WhatsApp</button>`:`<button class="btn sm" data-avisar="${esc(p.nome)}" type="button">Copiar aviso</button>`}</div>` : ''}</div>`; }).join('') || '<p class="vazio">Ninguém se ofereceu ainda.</p>'}</div>`;
+    $$('[data-avisar]').forEach(b=>b.onclick=async ()=>{ const p = pessoasVol().find(x=>x.nome===b.dataset.avisar); if(!p) return; const txt = msgAviso(p);
+      const n = String(p.telefone||'').replace(/\D/g,'');
+      if(n) window.open(`https://wa.me/${n.length<=11?'55'+n:n}?text=${encodeURIComponent(txt)}`, '_blank', 'noopener');
+      else { try{ await navigator.clipboard.writeText(txt); toast('Aviso copiado'); }catch(e){ await perguntar('Copie o aviso', txt, {sim:'Ok'}); } }
+      if(await perguntar('Marcar como avisado?', `${p.nome} já recebeu o aviso?`, {sim:'Sim, avisado'})){
+        try{ await sb(`/fc_voluntarios?escalado=eq.true&id=in.(${p.regs.filter(v=>v.escalado).map(v=>v.id).join(',')})`, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({avisado:true})}); await carregarTudo(); render(); }
+        catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } } });
+  } else {
+    $('#volLista').innerHTML = modos + (eu.admin ? '<p class="hint" style="margin:0 0 8px">Toque em <b>Escalar</b> para escolher quem vai em cada refeição. Depois, em “Por pessoa”, avise cada um.</p>' : '<p class="hint" style="margin:0 0 8px">Aqui ficam as pessoas que podem ajudar. Os administradores escalam e avisam cada um.</p>')
+    + porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{ const vs = volsDe(r.id).sort((a,b)=>b.escalado-a.escalado || a.nome.localeCompare(b.nome)), es = escDe(r.id), cheia = es.length >= (r.vagas||0);
+      return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${es.length}/${r.vagas||0} escalados · ${vs.length} podem</span></div>
+        ${vs.length ? vs.map(v=>`<div class="item"><div class="t"><b>${v.escalado?'✓ ':''}${esc(v.nome)}</b><div>${[v.funcao?esc(v.funcao):'', v.telefone?telLink(v.telefone):'', v.obs?'📝 '+esc(v.obs):''].filter(Boolean).join(' · ')}</div></div>
+          <div class="a">${eu.admin ? `<button class="btn sm ${v.escalado?'ok':''}" data-escalar="${v.id}" type="button">${v.escalado?'✓ Escalado':'Escalar'}</button><button class="link red" data-vdel="${v.id}" type="button" aria-label="Apagar">✕</button>` : (v.escalado?'<span class="tag ok">escalado</span>':'')}</div></div>`).join('') : '<div class="hint" style="margin-top:6px">Ninguém se ofereceu ainda.</div>'}
+        <button class="link" data-vadd="${r.id}" type="button" style="margin-top:4px">+ Adicionar quem pode</button></div>`; }).join('')}</div>`).join('');
+    $$('[data-escalar]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.escalar), r = refDe(v.refeicao_id);
+      if(!v.escalado && escDe(r.id).length >= (r.vagas||0) && !(await perguntar('Refeição já completa', `${TIPOS[r.tipo]} de ${diaTxt(r.dia).toLowerCase()} já tem ${r.vagas} escalados. Escalar ${v.nome} mesmo assim?`, {sim:'Escalar'}))) return;
+      try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({escalado:!v.escalado, avisado:false})}); await carregarTudo(); const y = scrollY; render(); scrollTo(0,y); }
+      catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } });
+  }
+  $$('[data-vmodo]').forEach(b=>b.onclick=()=>{ volModo = b.dataset.vmodo; save('fc1_volmodo', volModo); renderVoluntarios(); });
   $$('[data-vadd]').forEach(b=>b.onclick=()=>abrirVoluntario([b.dataset.vadd]));
   $$('[data-vdel]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.vdel); const r = refDe(v.refeicao_id);
-    if(!(await perguntar('Tirar voluntário?', `${v.nome} — ${refNome(r)}`, {sim:'Tirar', perigo:true}))) return;
-    try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'DELETE'}); await carregarTudo(); render(); toast('Removido'); }catch(e){ toast('Não removeu: '+e.message,'var(--danger)'); } });
+    if(!(await perguntar('Apagar?', `${v.nome} — ${refNome(r)}`, {sim:'Apagar', perigo:true}))) return;
+    try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'DELETE'}); await carregarTudo(); render(); toast('Apagado'); }catch(e){ toast('Não apagou: '+e.message,'var(--danger)'); } });
 }
 function desenharVRefs(){
-  $('#vRefs').innerHTML = porDia().map(([dia, rs])=>`<div class="lb" style="margin-top:6px">${esc(diaTxt(dia))}</div><div class="chips">${rs.map(r=>{ const n = volsDe(r.id).length; return `<button type="button" class="chipsel ${vSel.has(r.id)?'on':''}" data-vr="${r.id}">${TIPOS[r.tipo]} <small>(${n}/${r.vagas||0})</small></button>`; }).join('')}</div>`).join('');
+  $('#vRefs').innerHTML = porDia().map(([dia, rs])=>`<div class="lb" style="margin-top:6px">${esc(diaTxt(dia))}</div><div class="chips">${rs.map(r=>{ const n = volsDe(r.id).length; return `<button type="button" class="chipsel ${vSel.has(r.id)?'on':''}" data-vr="${r.id}">${TIPOS[r.tipo]}${r.hora?` <small>${esc(r.hora)}</small>`:''}</button>`; }).join('')}</div>`).join('');
   $$('[data-vr]').forEach(b=>b.onclick=()=>{ vSel.has(b.dataset.vr) ? vSel.delete(b.dataset.vr) : vSel.add(b.dataset.vr); desenharVRefs(); });
   $('#vFun').innerHTML = FUNCOES.map(f=>`<button type="button" class="chipsel ${vFun===f?'on':''}" data-vf="${esc(f)}">${esc(f)}</button>`).join('');
   $$('[data-vf]').forEach(b=>b.onclick=()=>{ vFun = vFun===b.dataset.vf ? '' : b.dataset.vf; desenharVRefs(); });
@@ -575,7 +605,7 @@ $('#vSalvar').onclick = async ()=>{
   const b = $('#vSalvar'); b.disabled = true;
   try{
     await sb('/fc_voluntarios', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(novos.map(rid=>({nome, telefone:limpa($('#vTel').value)||null, refeicao_id:rid, funcao:vFun||null, obs:limpa($('#vObs').value)||null, criado_por:eu.nome})))});
-    await carregarTudo(); fechar('#voModal'); render(); toast(`${nome} cadastrado em ${novos.length} refeição${novos.length>1?'ões':''} 🙌`);
+    await carregarTudo(); fechar('#voModal'); render(); toast(`Anotado: ${nome} pode ajudar em ${novos.length} refeiç${novos.length>1?'ões':'ão'} 🙌`);
   }catch(e){ toast('Não salvou: '+(navigator.onLine?e.message:'sem internet'),'var(--danger)', 4000); }
   finally{ b.disabled = false; }
 };
