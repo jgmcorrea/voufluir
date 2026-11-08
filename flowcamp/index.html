@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#2c5016">
+<title>Flow Camp · Movimento Vou Fluir</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#efefea; --card:#ffffff; --ink:#1f2a17; --muted:#646e5c; --line:#dfe1d6;
+  --brand:#3d6b22; --brand2:#2c5016; --lime:#a4e02c; --accent:#e8661f; --accent2:#f5a524; --danger:#d23a2e; --ok:#3d8b2a; --warn:#d69a00;
+  --chip:#eef3e4; --soft:#eef5e6;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+[hidden]{display:none!important}
+header{background:var(--brand2);border-bottom:4px solid var(--lime);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:20}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:960px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-img{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.logo h1{font-family:'Black Ops One','Outfit',sans-serif;font-weight:400;font-size:21px;letter-spacing:.02em;margin:0;line-height:1.05}
+.logo small{display:block;font-size:12px;opacity:.85}
+.userbtn{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;width:34px;height:34px;font-weight:700;font-size:14px;flex:none}
+nav{display:flex;gap:4px;max-width:960px;margin:12px auto 0;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;background:transparent;color:#f0e6d8;padding:11px 12px;font-size:15px;font-weight:600;border-radius:12px 12px 0 0}
+nav button.on{background:var(--bg);color:var(--brand2)}
+main{max-width:960px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 6px;font-size:17px}
+.hint{font-size:13px;color:var(--muted)}
+.secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 8px;font-weight:600}
+.btn{padding:11px 14px;border-radius:12px;background:var(--chip);color:var(--ink);font-weight:600;font-size:15px}
+.btn.dark{background:var(--brand);color:#fff}
+.btn.red{background:#fde8ea;color:var(--danger)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.sm{padding:7px 10px;font-size:13.5px;border-radius:10px}
+.btn:disabled{opacity:.5}
+.btn:focus-visible,.chipsel:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.link{background:none;color:var(--accent);font-size:14px;font-weight:600;padding:4px}
+.link.red{color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+textarea.field{min-height:60px;resize:vertical;line-height:1.4}
+label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.go{width:100%;margin-top:14px;padding:15px;border-radius:14px;background:var(--brand);box-shadow:inset 0 -4px 0 var(--brand2);color:#fff;font-size:17px;font-weight:700}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);font-weight:600;white-space:nowrap}
+.tag.ok{background:#e1f3e7;color:#1f6e43}
+.tag.pend{background:#fff1d6;color:#8a5a00}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipsel{padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-size:14px;font-weight:600;color:var(--ink)}
+.chipsel.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* resumo */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.kpi b{display:block;font-size:24px;line-height:1.1}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.dia{margin-bottom:6px}
+.dia h4{margin:14px 0 8px;font-size:15px;color:var(--brand)}
+.ref{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+.ref .rh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ref .rh b{font-size:16px}
+.ref .card-txt{font-size:14px;margin-top:4px}
+.bar{height:8px;background:#efeae0;border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px}
+.bar.cheia i{background:var(--ok)}
+.vlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vlist span{background:var(--soft);border-radius:999px;padding:4px 10px;font-size:13.5px}
+.vlist span button{background:none;color:var(--danger);font-weight:700;padding:0 0 0 6px}
+
+/* listas */
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .t{min-width:0;flex:1}
+.item .t b{font-size:15px}
+.item .t div{font-size:13.5px;color:var(--muted);margin-top:2px}
+.item .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.nec{padding:10px 0;border-top:1px solid var(--line)}
+.nec:first-child{border-top:0}
+.nec .rh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.filtros{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+
+/* modal / toast / login */
+.modal{position:fixed;inset:0;background:rgba(18,30,22,.5);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 18px 24px;max-height:92vh;overflow:auto}
+@media(min-width:620px){.modal{align-items:center}.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 8px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ok);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;transition:.25s;z-index:80;max-width:92vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0)}
+#login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#login.on{display:flex}
+#login .box{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;width:100%;max-width:380px}
+#login h2{margin:16px 0 4px}
+.erro{color:var(--danger);font-size:14px;min-height:18px;margin-top:8px}
+.vazio{padding:18px;text-align:center;color:var(--muted);font-size:14px}
+.zap{background:#25d366;color:#fff}
+
+.capa{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:14px}
+.capa img{width:120px;border-radius:10px;display:block;transform:rotate(-2deg);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.capa h2{font-family:'Black Ops One',sans-serif;font-weight:400;color:var(--brand);margin:0;font-size:26px;line-height:1}
+.capa .cd{font-size:15px;margin-top:6px}
+.capa .cd b{color:var(--accent);font-size:20px}
+@media(max-width:420px){.capa{grid-template-columns:90px 1fr}.capa img{width:90px}.capa h2{font-size:22px}}
+#login .arte{width:150px;display:block;margin:0 auto 6px;border-radius:12px;transform:rotate(-2deg);box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.dia h4{font-family:'Black Ops One',sans-serif;font-weight:400;letter-spacing:.02em;font-size:17px}
+.bar i{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">
+      <img class="logo-img" src="/logo.png" alt="Movimento Vou Fluir">
+      <div><h1>Flow Camp</h1><small id="subTit">4 a 6 de dezembro · organização</small></div>
+    </div>
+    <button class="userbtn" id="userBtn" type="button" aria-label="Minha conta">?</button>
+  </div>
+  <nav id="nav">
+    <button data-v="painel" class="on" type="button">Resumo</button>
+    <button data-v="doacoes" type="button">Doações</button>
+    <button data-v="voluntarios" type="button">Voluntários</button>
+    <button data-v="lista" type="button">O que precisamos</button>
+    <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
+  </nav>
+</header>
+
+<main>
+  <!-- RESUMO -->
+  <section class="view on" id="v-painel">
+    <div class="capa"><img src="/flowcamp/arte.jpg" alt="Arte do Flow Camp 2026"><div><h2>FLOW CAMP 2026</h2><div class="hint">4 a 6 de dezembro · 10 a 16 anos</div><div class="cd" id="contagem"></div></div></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="row" style="margin-bottom:6px">
+      <button class="btn zap" id="zapBtn" type="button">📲 Mensagem do que falta (WhatsApp)</button>
+    </div>
+    <div class="secao">Refeições</div>
+    <div id="refs"></div>
+  </section>
+
+  <!-- DOAÇÕES -->
+  <section class="view" id="v-doacoes">
+    <button class="go" id="novaDoacao" type="button" style="margin:0 0 14px">+ Registrar doação</button>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Doações</h3><span class="hint" id="doConta"></span></div>
+      <input class="field" id="doBusca" type="search" placeholder="Buscar por nome ou item…" style="margin-top:10px" autocomplete="off">
+      <div class="filtros" id="doFiltros">
+        <button type="button" class="chipsel on" data-f="todas">Todas</button>
+        <button type="button" class="chipsel" data-f="prometido">A receber</button>
+        <button type="button" class="chipsel" data-f="entregue">Já entregues</button>
+        <button type="button" class="chipsel" data-f="dinheiro">Em dinheiro</button>
+      </div>
+      <div id="doLista"></div>
+    </div>
+  </section>
+
+  <!-- VOLUNTÁRIOS -->
+  <section class="view" id="v-voluntarios">
+    <button class="go" id="novoVol" type="button" style="margin:0 0 14px">+ Cadastrar voluntário</button>
+    <div id="volLista"></div>
+  </section>
+
+  <!-- O QUE PRECISAMOS -->
+  <section class="view" id="v-lista">
+    <div class="card">
+      <h3>O que precisamos</h3>
+      <p class="hint" style="margin:0 0 6px">Lista do que falta para as refeições. Cada doação registrada para um item entra na conta dele.</p>
+      <div id="necLista"></div>
+      <button class="btn dark" id="novoItem" type="button" hidden style="margin-top:10px">+ Item na lista</button>
+    </div>
+    <div class="card" id="cardRefs" hidden>
+      <h3>Refeições (horário, cardápio e vagas)</h3>
+      <p class="hint" style="margin:0 0 6px">Só os administradores alteram.</p>
+      <div id="refEdit"></div>
+    </div>
+  </section>
+
+  <!-- ACESSOS -->
+  <section class="view" id="v-acessos">
+    <div class="card">
+      <h3>Dar acesso ao Flow Camp</h3>
+      <p class="hint" style="margin:0 0 4px">Quem tem acesso aqui registra doações e voluntários. Isso não dá acesso ao caixa nem ao Flow dos cultos.</p>
+      <div class="grid2">
+        <div><label class="lb" for="acNome">Nome</label><input class="field" id="acNome" autocomplete="off"></div>
+        <div><label class="lb" for="acEmail">E-mail</label><input class="field" id="acEmail" type="email" autocomplete="off"></div>
+      </div>
+      <label class="lb" for="acSenha">Senha inicial (mín. 6)</label><input class="field" id="acSenha" type="text" autocomplete="off">
+      <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="acAdmin" style="width:18px;height:18px"> Administrador do evento (edita a lista, as refeições, apaga registros e dá acessos)</label>
+      <button class="go" id="acCriar" type="button">Liberar acesso</button>
+    </div>
+    <div class="card"><h3>Quem tem acesso</h3><div id="acLista"><p class="hint">Carregando…</p></div></div>
+  </section>
+</main>
+
+<!-- Login -->
+<div id="login">
+  <form class="box" id="loginForm">
+    <img class="arte" src="/flowcamp/arte.jpg" alt="Flow Camp 2026">
+    <h2 style="text-align:center">Organização do Flow Camp</h2>
+    <label class="lb" for="lEmail">E-mail</label>
+    <input id="lEmail" class="field" type="email" autocomplete="username" required>
+    <label class="lb" for="lSenha">Senha</label>
+    <input id="lSenha" class="field" type="password" autocomplete="current-password" required>
+    <div class="erro" id="lErro"></div>
+    <button class="go" id="lBtn" type="submit">Entrar</button>
+    <p class="hint" style="margin:12px 0 0">Ainda não tem acesso? Peça para um administrador do Flow Camp.</p>
+  </form>
+</div>
+
+<!-- Doação -->
+<div class="modal" id="doModal">
+  <div class="sheet">
+    <h3 id="doTit">Registrar doação</h3>
+    <div class="grid2">
+      <div><label class="lb" for="dNome">Quem vai doar</label><input class="field" id="dNome" autocomplete="off" list="dlNomes"></div>
+      <div><label class="lb" for="dTel">Telefone (opcional)</label><input class="field" id="dTel" inputmode="tel" autocomplete="off"></div>
+    </div>
+    <label class="lb">O que vai doar</label>
+    <div class="row" id="dTipo">
+      <button type="button" class="chipsel on" data-t="item">Alimento / item</button>
+      <button type="button" class="chipsel" data-t="dinheiro">Dinheiro</button>
+    </div>
+    <div id="dItemBox">
+      <label class="lb" for="dItem">Item da lista</label>
+      <select class="field" id="dItem"></select>
+      <div id="dDescBox"><label class="lb" for="dDesc">Descreva o item</label><input class="field" id="dDesc" placeholder="Ex.: 2 pacotes de café 500g" autocomplete="off"></div>
+      <div class="grid2">
+        <div><label class="lb" for="dQtd">Quantidade</label><input class="field" id="dQtd" type="number" min="0" step="any" inputmode="decimal"></div>
+        <div><label class="lb" for="dUn">Unidade</label><input class="field" id="dUn" placeholder="un, kg, L, pct…" autocomplete="off"></div>
+      </div>
+    </div>
+    <div id="dDinBox" hidden><label class="lb" for="dValor">Valor (R$)</label><input class="field" id="dValor" type="number" min="0" step="0.01" inputmode="decimal"></div>
+    <label class="lb">Situação</label>
+    <div class="row" id="dSt">
+      <button type="button" class="chipsel on" data-s="prometido">Vai entregar</button>
+      <button type="button" class="chipsel" data-s="entregue">Já entregou</button>
+    </div>
+    <label class="lb" for="dObs">Observação (opcional)</label><input class="field" id="dObs" placeholder="Ex.: entrega no sábado de manhã" autocomplete="off">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="dSalvar" type="button">Salvar</button>
+      <button class="btn" id="dFechar" type="button">Fechar</button>
+      <button class="link red" id="dExcluir" type="button" style="margin-left:auto" hidden>Apagar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Voluntário -->
+<div class="modal" id="voModal">
+  <div class="sheet">
+    <h3 id="voTit">Cadastrar voluntário</h3>
+    <div class="grid2">
+      <div><label class="lb" for="vNome">Nome</label><input class="field" id="vNome" autocomplete="off" list="dlNomes"></div>
+      <div><label class="lb" for="vTel">Telefone (opcional)</label><input class="field" id="vTel" inputmode="tel" autocomplete="off"></div>
+    </div>
+    <label class="lb">Em quais refeições vai ajudar? (pode marcar mais de uma)</label>
+    <div id="vRefs"></div>
+    <label class="lb">Vai ajudar com</label>
+    <div class="chips" id="vFun"></div>
+    <label class="lb" for="vObs">Observação (opcional)</label><input class="field" id="vObs" placeholder="Ex.: só consegue chegar às 18h" autocomplete="off">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="vSalvar" type="button">Salvar</button>
+      <button class="btn" id="vFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Item da lista -->
+<div class="modal" id="itModal">
+  <div class="sheet">
+    <h3 id="itTit">Item na lista</h3>
+    <label class="lb" for="iNome">Item</label><input class="field" id="iNome" placeholder="Ex.: Pão francês" autocomplete="off">
+    <div class="grid2">
+      <div><label class="lb" for="iMeta">Quanto precisamos</label><input class="field" id="iMeta" type="number" min="0" step="any" inputmode="decimal"></div>
+      <div><label class="lb" for="iUn">Unidade</label><input class="field" id="iUn" placeholder="un, kg, L, pct…" autocomplete="off"></div>
+    </div>
+    <label class="lb" for="iRef">Para qual refeição (opcional)</label><select class="field" id="iRef"></select>
+    <label class="lb" for="iObs">Observação (opcional)</label><input class="field" id="iObs" autocomplete="off">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="iSalvar" type="button">Salvar</button>
+      <button class="btn" id="iFechar" type="button">Fechar</button>
+      <button class="link red" id="iExcluir" type="button" style="margin-left:auto" hidden>Tirar da lista</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmação -->
+<div class="modal" id="confModal">
+  <div class="sheet">
+    <h3 id="cTitulo">Confirmar</h3>
+    <p id="cTexto" style="margin:0 0 6px;line-height:1.45;white-space:pre-line"></p>
+    <input id="cInput" class="field" hidden>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="cNao" type="button">Cancelar</button>
+      <button class="btn dark" id="cSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minha conta -->
+<div class="modal" id="contaModal">
+  <div class="sheet">
+    <h3 id="ctNome">Minha conta</h3>
+    <p class="hint" id="ctEmail" style="margin:0 0 10px"></p>
+    <label class="lb" for="ctSenha">Nova senha (mín. 6)</label>
+    <input id="ctSenha" class="field" type="password" autocomplete="new-password">
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="ctTrocar" type="button">Trocar senha</button>
+      <button class="btn red" id="ctSair" type="button">Sair</button>
+      <button class="btn" id="ctFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="dlNomes"></datalist>
+<div class="toast" id="toast"></div>
+<script>/* =========================================================
+   Flow Camp — organização de doações e voluntários das refeições
+   Acesso próprio (vf_membros.camp / camp_admin), mesma conta de login dos outros sistemas.
+   ========================================================= */
+const SB = 'https://wengqckoknqqgeucgubg.supabase.co';
+const SB_URL = SB + '/rest/v1';
+const SB_KEY = 'sb_publishable_JuPHTEh530A0RGsn4CugKg_L-DaKIBm';
+const K = {sess:'vf8_sess', eu:'fc1_eu', cache:'fc1_cache', aba:'fc1_aba'};
+const INICIO = '2026-12-04';
+const TIPOS = {cafe:'Café da manhã', almoco:'Almoço', lanche:'Café da tarde', jantar:'Jantar'};
+const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const FUNCOES = ['Cozinhar','Servir','Lavar louça / limpeza','Onde precisar'];
+
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const limpa = s => String(s||'').replace(/\s+/g,' ').trim();
+const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const num = v => { const n = parseFloat(String(v).replace(',','.')); return Number.isFinite(n) ? n : null; };
+const fmtN = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
+const brl = n => (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const deISO = s => new Date(s+'T12:00');
+const diaTxt = d => { const x = deISO(d); return `${DIAS[x.getDay()]}, ${x.getDate()}/${x.getMonth()+1}`; };
+function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2600); }
+function perguntar(titulo, texto, {sim='Confirmar', perigo=false, input=null}={}){
+  return new Promise(res=>{
+    $('#cTitulo').textContent = titulo; $('#cTexto').textContent = texto;
+    const inp = $('#cInput'); inp.hidden = !input; inp.type = input?.tipo||'text'; inp.value = input?.valor||''; inp.placeholder = input?.ph||'';
+    const b = $('#cSim'); b.textContent = sim; b.className = 'btn ' + (perigo?'red':'dark');
+    $('#confModal').classList.add('on'); if(input) setTimeout(()=>inp.focus(),50);
+    const fim = v=>{ $('#confModal').classList.remove('on'); $('#cSim').onclick = $('#cNao').onclick = null; res(v); };
+    $('#cSim').onclick = ()=>fim(input ? inp.value : true); $('#cNao').onclick = ()=>fim(input ? null : false);
+  });
+}
+const abrir = id => $(id).classList.add('on'), fechar = id => $(id).classList.remove('on');
+
+/* ---------- login (mesma conta dos outros sistemas) ---------- */
+let sess = load(K.sess, null), eu = load(K.eu, null);
+async function authReq(path, body, metodo='POST', tok){
+  const r = await fetch(SB+'/auth/v1/'+path, {method:metodo, headers:{apikey:SB_KEY,'Content-Type':'application/json', ...(tok?{Authorization:'Bearer '+tok}:{})}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.error_description||j.msg||j.message||('Erro '+r.status)), {status:r.status});
+  return j;
+}
+function guardaSessao(j){ sess = {access_token:j.access_token, refresh_token:j.refresh_token, expires_at:j.expires_at || (Math.floor(Date.now()/1000)+(j.expires_in||3600)), email:(j.user?.email||sess?.email||'').toLowerCase()}; save(K.sess, sess); }
+let renovando = null;
+async function renovar(){
+  if(!sess?.refresh_token) throw new Error('sem sessão');
+  if(!renovando) renovando = authReq('token?grant_type=refresh_token', {refresh_token:sess.refresh_token}).then(guardaSessao)
+    .catch(e=>{ if(e.status===400||e.status===401) sair(); throw e; }).finally(()=>{ renovando=null; });
+  return renovando;
+}
+async function tokenValido(){ if(!sess) throw new Error('sem sessão'); if(sess.expires_at*1000 - Date.now() < 90000) await renovar(); return sess.access_token; }
+async function sb(path, opt={}, tentativa=0){
+  const tok = await tokenValido();
+  const r = await fetch(SB_URL+path, {...opt, headers:{apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json', ...(opt.headers||{})}});
+  if(r.status===401 && !tentativa){ await renovar(); return sb(path, opt, 1); }
+  if(!r.ok) throw new Error(r.status+' '+await r.text());
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+async function equipe(body){
+  const tok = await tokenValido();
+  const r = await fetch(SB+'/functions/v1/vf-equipe', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json'}, body:JSON.stringify({sistema:'camp', ...body})});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.erro || ('Erro '+r.status)); return j;
+}
+async function carregarEu(){
+  const m = await sb('/vf_membros?select=email,nome,ativo,camp,camp_admin&email=eq.'+encodeURIComponent(sess.email));
+  const x = m && m[0];
+  if(!x || !x.ativo || !(x.camp || x.camp_admin)) throw Object.assign(new Error('Seu e-mail ainda não tem acesso ao Flow Camp. Peça para um administrador do evento liberar.'), {semAcesso:true});
+  eu = {email:x.email, nome:x.nome, admin:!!x.camp_admin}; save(K.eu, eu);
+}
+function sair(){ sess = null; eu = null; save(K.sess, null); save(K.eu, null); $('#login').classList.add('on'); }
+$('#loginForm').onsubmit = async e=>{
+  e.preventDefault(); $('#lErro').textContent=''; const b=$('#lBtn'); b.disabled=true; b.textContent='Entrando…';
+  try{
+    const j = await authReq('token?grant_type=password', {email:$('#lEmail').value.trim().toLowerCase(), password:$('#lSenha').value});
+    guardaSessao(j); await carregarEu(); $('#login').classList.remove('on'); $('#lSenha').value=''; iniciar();
+  }catch(err){
+    if(err.semAcesso){ sess=null; save(K.sess,null); }
+    $('#lErro').textContent = /invalid login|invalid_grant|credentials/i.test(err.message) ? 'E-mail ou senha incorretos.' : (navigator.onLine ? err.message : 'Sem internet. O login precisa de conexão.');
+  }finally{ b.disabled=false; b.textContent='Entrar'; }
+};
+
+/* ---------- dados ---------- */
+let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[]});
+async function carregarTudo(){
+  const [refeicoes, itens, doacoes, voluntarios] = await Promise.all([
+    sb('/fc_refeicoes?select=*&order=ordem'), sb('/fc_itens?select=*&order=ordem,criado_em'),
+    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em')]);
+  D = {refeicoes, itens, doacoes, voluntarios}; save(K.cache, D);
+}
+const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
+const refDe = id => D.refeicoes.find(r=>r.id===id);
+const itemDe = id => D.itens.find(i=>i.id===id);
+const volsDe = rid => D.voluntarios.filter(v=>v.refeicao_id===rid);
+const doadoDe = iid => D.doacoes.filter(d=>d.item_id===iid).reduce((s,d)=>s+(d.quantidade||0),0);
+const entregueDe = iid => D.doacoes.filter(d=>d.item_id===iid && d.status==='entregue').reduce((s,d)=>s+(d.quantidade||0),0);
+const descDoacao = d => { if(d.dinheiro) return brl(d.dinheiro); const it = itemDe(d.item_id);
+  const q = d.quantidade!=null ? `${fmtN(d.quantidade)} ${d.unidade || it?.unidade || ''} `.replace(/\s+$/,' ') : '';
+  return (q + (it ? it.nome : (d.descricao||'Doação'))).trim() + (it && d.descricao ? ` (${d.descricao})` : ''); };
+const telLink = t => { const n = String(t||'').replace(/\D/g,''); return n ? `<a href="https://wa.me/${n.length<=11?'55'+n:n}" target="_blank" rel="noopener">${esc(t)}</a>` : ''; };
+
+/* ---------- navegação ---------- */
+let vista = load(K.aba, 'painel');
+function irPara(v){
+  if(v==='acessos' && !eu?.admin) v = 'painel';
+  vista = v; save(K.aba, v);
+  $$('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  $$('.view').forEach(s=>s.classList.toggle('on', s.id==='v-'+v));
+  render(); window.scrollTo(0,0);
+}
+$$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
+function render(){
+  ({painel:renderPainel, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, acessos:renderAcessos}[vista]||renderPainel)();
+  $('#dlNomes').innerHTML = [...new Set([...D.doacoes.map(d=>d.doador), ...D.voluntarios.map(v=>v.nome)])].sort().map(n=>`<option value="${esc(n)}">`).join('');
+}
+
+/* ---------- resumo ---------- */
+function porDia(){ const m = {}; D.refeicoes.forEach(r=>(m[r.dia] ||= []).push(r)); return Object.entries(m).sort(([a],[b])=>a.localeCompare(b)); }
+function renderPainel(){
+  const dias = Math.ceil((deISO(INICIO) - new Date())/86400000);
+  $('#contagem').innerHTML = dias > 1 ? `Faltam <b>${dias}</b> dias` : dias === 1 ? '<b>É amanhã!</b>' : dias === 0 ? '<b>É hoje!</b>' : 'Evento realizado';
+  const vagas = D.refeicoes.reduce((s,r)=>s+(r.vagas||0),0), preench = D.refeicoes.reduce((s,r)=>s+Math.min(r.vagas||0, volsDe(r.id).length),0);
+  const pessoas = new Set(D.voluntarios.map(v=>semAcento(v.nome))).size;
+  const dinheiro = D.doacoes.reduce((s,d)=>s+(d.dinheiro||0),0);
+  const aReceber = D.doacoes.filter(d=>d.status==='prometido').length;
+  $('#kpis').innerHTML = [
+    [`${preench}/${vagas}`, 'vagas de voluntários preenchidas'], [pessoas, 'pessoas ajudando nas refeições'],
+    [D.doacoes.length, `doações (${aReceber} a receber)`], [brl(dinheiro), 'em dinheiro']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#refs').innerHTML = porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{
+    const vs = volsDe(r.id), cheia = vs.length >= (r.vagas||0), its = D.itens.filter(i=>i.refeicao_id===r.id);
+    return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${vs.length}/${r.vagas||0} voluntários</span></div>
+      ${r.cardapio?`<div class="card-txt">🍽️ ${esc(r.cardapio)}</div>`:''}
+      <div class="bar ${cheia?'cheia':''}"><i style="width:${Math.min(100, (r.vagas? vs.length/r.vagas*100 : 0))}%"></i></div>
+      ${vs.length?`<div class="vlist">${vs.map(v=>`<span>${esc(v.nome)}${v.funcao?` · <small>${esc(v.funcao)}</small>`:''}</span>`).join('')}</div>`:'<div class="hint" style="margin-top:6px">Ninguém ainda.</div>'}
+      ${its.length?`<div class="hint" style="margin-top:8px">Para esta refeição: ${its.map(i=>{ const f = i.meta ? Math.max(0, i.meta - doadoDe(i.id)) : null; return `${esc(i.nome)}${f===0?' ✅':f!=null?` (faltam ${fmtN(f)} ${esc(i.unidade)})`:''}`; }).join(' · ')}</div>`:''}</div>`; }).join('')}</div>`).join('') || '<p class="vazio">Nenhuma refeição cadastrada.</p>';
+}
+$('#zapBtn').onclick = async ()=>{
+  const linhas = ['*FLOW CAMP 2026* 🔥', '4 a 6 de dezembro', ''];
+  const faltaVol = D.refeicoes.filter(r=>volsDe(r.id).length < (r.vagas||0));
+  if(faltaVol.length){ linhas.push('*Precisamos de voluntários nas refeições:*'); faltaVol.forEach(r=>linhas.push(`• ${TIPOS[r.tipo]} de ${diaTxt(r.dia).toLowerCase()} — faltam ${(r.vagas||0) - volsDe(r.id).length}`)); linhas.push(''); }
+  const faltaIt = D.itens.filter(i=>!i.meta || doadoDe(i.id) < i.meta);
+  if(faltaIt.length){ linhas.push('*Doações que ainda precisamos:*'); faltaIt.forEach(i=>linhas.push(`• ${i.nome}${i.meta?` — faltam ${fmtN(i.meta - doadoDe(i.id))} ${i.unidade}`:''}`)); linhas.push(''); }
+  linhas.push('Quer ajudar? Fale com a gente! 🙌');
+  const txt = linhas.join('\n');
+  try{ await navigator.clipboard.writeText(txt); toast('Mensagem copiada. É só colar no WhatsApp.'); }
+  catch(e){ await perguntar('Copie a mensagem', txt, {sim:'Ok'}); }
+};
+
+/* ---------- doações ---------- */
+let doFiltro = 'todas', doEdit = null, dTipo = 'item', dSt = 'prometido';
+function renderDoacoes(){
+  const q = semAcento($('#doBusca').value);
+  let l = D.doacoes.filter(d=>!q || semAcento(d.doador+' '+descDoacao(d)+' '+(d.obs||'')).includes(q));
+  if(doFiltro==='prometido' || doFiltro==='entregue') l = l.filter(d=>d.status===doFiltro);
+  if(doFiltro==='dinheiro') l = l.filter(d=>d.dinheiro);
+  $('#doConta').textContent = `${l.length} de ${D.doacoes.length}`;
+  $('#doLista').innerHTML = l.map(d=>`<div class="item"><div class="t"><b>${esc(d.doador)}</b> ${d.status==='entregue'?'<span class="tag ok">entregue</span>':'<span class="tag pend">a receber</span>'}
+      <div>${esc(descDoacao(d))}${d.telefone?' · '+telLink(d.telefone):''}</div>${d.obs?`<div>📝 ${esc(d.obs)}</div>`:''}</div>
+    <div class="a">${d.status==='prometido'?`<button class="btn ok sm" data-entregue="${d.id}" type="button">Recebido</button>`:''}<button class="btn sm" data-doedit="${d.id}" type="button">Editar</button></div></div>`).join('')
+    || `<p class="vazio">${D.doacoes.length?'Nada encontrado.':'Nenhuma doação registrada ainda.'}</p>`;
+  $$('[data-entregue]').forEach(b=>b.onclick=()=>marcarEntregue(b.dataset.entregue));
+  $$('[data-doedit]').forEach(b=>b.onclick=()=>abrirDoacao(b.dataset.doedit));
+}
+$('#doBusca').oninput = renderDoacoes;
+$$('#doFiltros [data-f]').forEach(b=>b.onclick=()=>{ doFiltro = b.dataset.f; $$('#doFiltros [data-f]').forEach(x=>x.classList.toggle('on', x===b)); renderDoacoes(); });
+async function marcarEntregue(id){
+  try{ await sb('/fc_doacoes?id=eq.'+id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({status:'entregue', entregue_em:new Date().toISOString()})});
+    await carregarTudo(); render(); toast('Marcado como recebido'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+}
+function setTipo(t){ dTipo = t; $$('#dTipo [data-t]').forEach(b=>b.classList.toggle('on', b.dataset.t===t)); $('#dItemBox').hidden = t!=='item'; $('#dDinBox').hidden = t!=='dinheiro'; }
+function setSt(s){ dSt = s; $$('#dSt [data-s]').forEach(b=>b.classList.toggle('on', b.dataset.s===s)); }
+$$('#dTipo [data-t]').forEach(b=>b.onclick=()=>setTipo(b.dataset.t));
+$$('#dSt [data-s]').forEach(b=>b.onclick=()=>setSt(b.dataset.s));
+function atualizaItemSel(){ const it = itemDe($('#dItem').value); $('#dDescBox').querySelector('label').textContent = it ? 'Detalhe (opcional)' : 'Descreva o item'; $('#dDesc').placeholder = it ? 'Ex.: marca, tamanho…' : 'Ex.: 2 pacotes de café 500g'; if(it && !$('#dUn').value) $('#dUn').value = it.unidade; }
+$('#dItem').onchange = ()=>{ $('#dUn').value = itemDe($('#dItem').value)?.unidade || $('#dUn').value; atualizaItemSel(); };
+function abrirDoacao(id){
+  doEdit = id || null; const d = id ? D.doacoes.find(x=>x.id===id) : null;
+  $('#doTit').textContent = d ? 'Editar doação' : 'Registrar doação';
+  $('#dItem').innerHTML = `<option value="">Outro (descrever)</option>` + D.itens.map(i=>{ const f = i.meta ? i.meta - doadoDe(i.id) : null; return `<option value="${i.id}">${esc(i.nome)}${f!=null ? (f>0?` — faltam ${fmtN(f)} ${esc(i.unidade)}`:' — completo ✅') : ''}</option>`; }).join('');
+  $('#dNome').value = d?.doador||''; $('#dTel').value = d?.telefone||''; $('#dItem').value = d?.item_id||'';
+  $('#dDesc').value = d?.descricao||''; $('#dQtd').value = d?.quantidade??''; $('#dUn').value = d?.unidade||''; $('#dValor').value = d?.dinheiro??''; $('#dObs').value = d?.obs||'';
+  setTipo(d?.dinheiro ? 'dinheiro' : 'item'); setSt(d?.status||'prometido'); atualizaItemSel();
+  $('#dExcluir').hidden = !(d && eu.admin); abrir('#doModal'); if(!d) setTimeout(()=>$('#dNome').focus(), 60);
+}
+$('#novaDoacao').onclick = ()=>abrirDoacao(null);
+$('#dFechar').onclick = ()=>fechar('#doModal');
+$('#dSalvar').onclick = async ()=>{
+  const doador = limpa($('#dNome').value); if(!doador){ toast('Escreva quem vai doar','var(--danger)'); $('#dNome').focus(); return; }
+  const row = {doador, telefone:limpa($('#dTel').value)||null, obs:limpa($('#dObs').value)||null, status:dSt, entregue_em: dSt==='entregue' ? new Date().toISOString() : null};
+  if(dTipo==='dinheiro'){ const v = num($('#dValor').value); if(!v){ toast('Digite o valor','var(--danger)'); return; } Object.assign(row, {dinheiro:v, item_id:null, descricao:null, quantidade:null, unidade:null}); }
+  else { const item_id = $('#dItem').value || null, descricao = limpa($('#dDesc').value)||null;
+    if(!item_id && !descricao){ toast('Escolha o item ou descreva o que vai doar','var(--danger)'); return; }
+    Object.assign(row, {item_id, descricao, quantidade:num($('#dQtd').value), unidade:limpa($('#dUn').value)||null, dinheiro:null}); }
+  const b = $('#dSalvar'); b.disabled = true;
+  try{
+    if(doEdit){ const ant = D.doacoes.find(x=>x.id===doEdit); if(ant?.status==='entregue' && dSt==='entregue') row.entregue_em = ant.entregue_em;
+      await sb('/fc_doacoes?id=eq.'+doEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)}); }
+    else await sb('/fc_doacoes', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, criado_por:eu.nome})});
+    await carregarTudo(); fechar('#doModal'); render(); toast(doEdit ? 'Doação atualizada' : 'Doação registrada 🙌');
+  }catch(e){ toast('Não salvou: '+(navigator.onLine?e.message:'sem internet'),'var(--danger)', 4000); }
+  finally{ b.disabled = false; }
+};
+$('#dExcluir').onclick = async ()=>{
+  const d = D.doacoes.find(x=>x.id===doEdit); if(!d) return;
+  if(!(await perguntar('Apagar doação?', `${d.doador} — ${descDoacao(d)}`, {sim:'Apagar', perigo:true}))) return;
+  try{ await sb('/fc_doacoes?id=eq.'+d.id, {method:'DELETE'}); await carregarTudo(); fechar('#doModal'); render(); toast('Doação apagada'); }
+  catch(e){ toast('Não apagou: '+e.message,'var(--danger)'); }
+};
+
+/* ---------- voluntários ---------- */
+let vSel = new Set(), vFun = '';
+function renderVoluntarios(){
+  $('#volLista').innerHTML = porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{ const vs = volsDe(r.id), cheia = vs.length >= (r.vagas||0);
+    return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${vs.length}/${r.vagas||0}</span></div>
+      ${vs.length ? vs.map(v=>`<div class="item"><div class="t"><b>${esc(v.nome)}</b><div>${[v.funcao?esc(v.funcao):'', v.telefone?telLink(v.telefone):'', v.obs?'📝 '+esc(v.obs):''].filter(Boolean).join(' · ')}</div></div>
+        ${eu.admin?`<div class="a"><button class="link red" data-vdel="${v.id}" type="button">Tirar</button></div>`:''}</div>`).join('') : '<div class="hint" style="margin-top:6px">Ninguém ainda.</div>'}
+      <button class="link" data-vadd="${r.id}" type="button" style="margin-top:4px">+ Adicionar aqui</button></div>`; }).join('')}</div>`).join('');
+  $$('[data-vadd]').forEach(b=>b.onclick=()=>abrirVoluntario([b.dataset.vadd]));
+  $$('[data-vdel]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.vdel); const r = refDe(v.refeicao_id);
+    if(!(await perguntar('Tirar voluntário?', `${v.nome} — ${refNome(r)}`, {sim:'Tirar', perigo:true}))) return;
+    try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'DELETE'}); await carregarTudo(); render(); toast('Removido'); }catch(e){ toast('Não removeu: '+e.message,'var(--danger)'); } });
+}
+function desenharVRefs(){
+  $('#vRefs').innerHTML = porDia().map(([dia, rs])=>`<div class="lb" style="margin-top:6px">${esc(diaTxt(dia))}</div><div class="chips">${rs.map(r=>{ const n = volsDe(r.id).length; return `<button type="button" class="chipsel ${vSel.has(r.id)?'on':''}" data-vr="${r.id}">${TIPOS[r.tipo]} <small>(${n}/${r.vagas||0})</small></button>`; }).join('')}</div>`).join('');
+  $$('[data-vr]').forEach(b=>b.onclick=()=>{ vSel.has(b.dataset.vr) ? vSel.delete(b.dataset.vr) : vSel.add(b.dataset.vr); desenharVRefs(); });
+  $('#vFun').innerHTML = FUNCOES.map(f=>`<button type="button" class="chipsel ${vFun===f?'on':''}" data-vf="${esc(f)}">${esc(f)}</button>`).join('');
+  $$('[data-vf]').forEach(b=>b.onclick=()=>{ vFun = vFun===b.dataset.vf ? '' : b.dataset.vf; desenharVRefs(); });
+}
+function abrirVoluntario(refs){
+  vSel = new Set(refs||[]); vFun = '';
+  $('#vNome').value = ''; $('#vTel').value = ''; $('#vObs').value = '';
+  desenharVRefs(); abrir('#voModal'); setTimeout(()=>$('#vNome').focus(), 60);
+}
+$('#novoVol').onclick = ()=>abrirVoluntario([]);
+$('#vFechar').onclick = ()=>fechar('#voModal');
+$('#vNome').addEventListener('change', ()=>{ const n = semAcento(limpa($('#vNome').value)); if(!n || $('#vTel').value) return;
+  const t = [...D.voluntarios, ...D.doacoes.map(d=>({nome:d.doador, telefone:d.telefone}))].find(x=>semAcento(x.nome)===n && x.telefone); if(t) $('#vTel').value = t.telefone; });
+$('#dNome').addEventListener('change', ()=>{ const n = semAcento(limpa($('#dNome').value)); if(!n || $('#dTel').value) return;
+  const t = [...D.doacoes.map(d=>({nome:d.doador, telefone:d.telefone})), ...D.voluntarios].find(x=>semAcento(x.nome)===n && x.telefone); if(t) $('#dTel').value = t.telefone; });
+$('#vSalvar').onclick = async ()=>{
+  const nome = limpa($('#vNome').value); if(!nome){ toast('Escreva o nome','var(--danger)'); $('#vNome').focus(); return; }
+  if(!vSel.size){ toast('Marque pelo menos uma refeição','var(--danger)'); return; }
+  const ja = [...vSel].filter(rid=>volsDe(rid).some(v=>semAcento(v.nome)===semAcento(nome)));
+  const novos = [...vSel].filter(rid=>!ja.includes(rid));
+  if(!novos.length){ toast(`${nome} já está nessas refeições`,'var(--danger)'); return; }
+  const b = $('#vSalvar'); b.disabled = true;
+  try{
+    await sb('/fc_voluntarios', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(novos.map(rid=>({nome, telefone:limpa($('#vTel').value)||null, refeicao_id:rid, funcao:vFun||null, obs:limpa($('#vObs').value)||null, criado_por:eu.nome})))});
+    await carregarTudo(); fechar('#voModal'); render(); toast(`${nome} cadastrado em ${novos.length} refeição${novos.length>1?'ões':''} 🙌`);
+  }catch(e){ toast('Não salvou: '+(navigator.onLine?e.message:'sem internet'),'var(--danger)', 4000); }
+  finally{ b.disabled = false; }
+};
+
+/* ---------- o que precisamos + refeições ---------- */
+let itEdit = null;
+function renderLista(){
+  $('#novoItem').hidden = !eu.admin; $('#cardRefs').hidden = !eu.admin;
+  $('#necLista').innerHTML = D.itens.map(i=>{ const d = doadoDe(i.id), e = entregueDe(i.id), pct = i.meta ? Math.min(100, d/i.meta*100) : 0, ok = i.meta && d >= i.meta;
+    return `<div class="nec"><div class="rh"><b>${esc(i.nome)}</b>${eu.admin?`<button class="link" data-iedit="${i.id}" type="button">Editar</button>`:''}</div>
+      <div class="hint">${i.meta ? `${fmtN(d)} de ${fmtN(i.meta)} ${esc(i.unidade)} prometidos${e?` · ${fmtN(e)} já recebidos`:''}${ok?' ✅':''}` : `${fmtN(d)} ${esc(i.unidade)} prometidos`}${i.refeicao_id?` · ${esc(refNome(refDe(i.refeicao_id)))}`:''}${i.obs?` · ${esc(i.obs)}`:''}</div>
+      ${i.meta?`<div class="bar ${ok?'cheia':''}"><i style="width:${pct}%"></i></div>`:''}</div>`; }).join('')
+    || `<p class="vazio">${eu.admin ? 'A lista ainda está vazia. Use “+ Item na lista” para dizer o que precisa.' : 'Os administradores ainda vão montar a lista.'}</p>`;
+  $$('[data-iedit]').forEach(b=>b.onclick=()=>abrirItem(b.dataset.iedit));
+  if(eu.admin){
+    $('#refEdit').innerHTML = D.refeicoes.map(r=>`<div class="nec" data-ref="${r.id}"><b>${esc(refNome(r))}</b>
+      <div class="grid2"><div><label class="lb">Horário</label><input class="field" data-rh value="${esc(r.hora||'')}"></div><div><label class="lb">Vagas de voluntários</label><input class="field" data-rv type="number" min="0" value="${r.vagas??0}"></div></div>
+      <label class="lb">Cardápio</label><input class="field" data-rc value="${esc(r.cardapio||'')}" placeholder="Ex.: Cachorro-quente e suco">
+      <button class="btn sm dark" data-rsalvar type="button" style="margin-top:8px">Salvar</button></div>`).join('');
+    $$('[data-rsalvar]').forEach(b=>b.onclick=async ()=>{ const el = b.closest('[data-ref]');
+      try{ await sb('/fc_refeicoes?id=eq.'+el.dataset.ref, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:limpa(el.querySelector('[data-rh]').value)||null, vagas:Math.max(0, parseInt(el.querySelector('[data-rv]').value,10)||0), cardapio:limpa(el.querySelector('[data-rc]').value)||null})});
+        await carregarTudo(); toast('Refeição salva'); }catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } });
+  }
+}
+function abrirItem(id){
+  itEdit = id || null; const i = id ? itemDe(id) : null;
+  $('#itTit').textContent = i ? 'Editar item' : 'Item na lista';
+  $('#iRef').innerHTML = `<option value="">Geral (qualquer refeição)</option>` + D.refeicoes.map(r=>`<option value="${r.id}">${esc(refNome(r))}</option>`).join('');
+  $('#iNome').value = i?.nome||''; $('#iMeta').value = i?.meta??''; $('#iUn').value = i?.unidade||''; $('#iRef').value = i?.refeicao_id||''; $('#iObs').value = i?.obs||'';
+  $('#iExcluir').hidden = !i; abrir('#itModal'); setTimeout(()=>$('#iNome').focus(), 60);
+}
+$('#novoItem').onclick = ()=>abrirItem(null);
+$('#iFechar').onclick = ()=>fechar('#itModal');
+$('#iSalvar').onclick = async ()=>{
+  const nome = limpa($('#iNome').value); if(!nome){ toast('Escreva o item','var(--danger)'); return; }
+  const row = {nome, meta:num($('#iMeta').value), unidade:limpa($('#iUn').value)||'un', refeicao_id:$('#iRef').value||null, obs:limpa($('#iObs').value)||null};
+  try{ if(itEdit) await sb('/fc_itens?id=eq.'+itEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    else await sb('/fc_itens', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, ordem:D.itens.length+1})});
+    await carregarTudo(); fechar('#itModal'); render(); toast('Lista atualizada'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+};
+$('#iExcluir').onclick = async ()=>{
+  const i = itemDe(itEdit); const n = D.doacoes.filter(d=>d.item_id===i.id).length;
+  if(!(await perguntar('Tirar da lista?', `${i.nome}${n?`\nAs ${n} doações registradas para ele continuam salvas, como “outro item”.`:''}`, {sim:'Tirar', perigo:true}))) return;
+  try{ if(n) await sb('/fc_doacoes?item_id=eq.'+i.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({descricao:i.nome})});
+    await sb('/fc_itens?id=eq.'+i.id, {method:'DELETE'}); await carregarTudo(); fechar('#itModal'); render(); toast('Item retirado'); }
+  catch(e){ toast('Não tirou: '+e.message,'var(--danger)'); }
+};
+
+/* ---------- acessos ---------- */
+async function renderAcessos(){
+  const box = $('#acLista');
+  try{ const {membros} = await equipe({acao:'listar'});
+    box.innerHTML = membros.map(m=>`<div class="item"><div class="t"><b>${esc(m.nome||m.email)}</b> ${m.camp_admin?'<span class="tag ok">administrador</span>':''}${!m.ativo?' <span class="tag">desativado</span>':''}<div>${esc(m.email)}${m.outros?' · também usa caixa/Flow':''}</div></div>
+      <div class="a">${m.email!==eu.email?`<button class="btn sm" data-acadm="${esc(m.email)}" data-v="${m.camp_admin?0:1}" type="button">${m.camp_admin?'Tirar admin':'Tornar admin'}</button>`:''}
+        ${m.outros?'':`<button class="btn sm" data-acsenha="${esc(m.email)}" type="button">Senha</button>`}
+        ${m.email!==eu.email?`<button class="btn sm red" data-acrem="${esc(m.email)}" type="button">Tirar acesso</button>`:''}</div></div>`).join('') || '<p class="vazio">Ninguém ainda.</p>';
+    $$('[data-acadm]').forEach(b=>b.onclick=async ()=>{ try{ await equipe({acao:'acesso', email:b.dataset.acadm, camp_admin:b.dataset.v==='1'}); toast('Acesso atualizado'); renderAcessos(); }catch(e){ toast(e.message,'var(--danger)'); } });
+    $$('[data-acrem]').forEach(b=>b.onclick=async ()=>{ if(!(await perguntar('Tirar acesso?', `${b.dataset.acrem} não vai mais entrar no Flow Camp.`, {sim:'Tirar', perigo:true}))) return;
+      try{ await equipe({acao:'acesso', email:b.dataset.acrem, camp:false}); toast('Acesso retirado'); renderAcessos(); }catch(e){ toast(e.message,'var(--danger)'); } });
+    $$('[data-acsenha]').forEach(b=>b.onclick=async ()=>{ const s = await perguntar('Nova senha', `Nova senha para ${b.dataset.acsenha} (mín. 6):`, {sim:'Trocar', input:{ph:'Nova senha'}}); if(!s) return;
+      try{ await equipe({acao:'senha', email:b.dataset.acsenha, senha:s}); toast('Senha trocada'); }catch(e){ toast(e.message,'var(--danger)'); } });
+  }catch(e){ box.innerHTML = `<p class="hint">Não consegui carregar: ${esc(e.message)}</p>`; }
+}
+$('#acCriar').onclick = async ()=>{
+  const nome = limpa($('#acNome').value), email = $('#acEmail').value.trim().toLowerCase(), senha = $('#acSenha').value;
+  if(!nome || !email){ toast('Preencha nome e e-mail','var(--danger)'); return; }
+  const b = $('#acCriar'); b.disabled = true;
+  try{ const j = await equipe({acao:'criar', nome, email, senha, camp_admin:$('#acAdmin').checked});
+    $('#acNome').value = $('#acEmail').value = $('#acSenha').value = ''; $('#acAdmin').checked = false; toast(j.msg, undefined, 4000); renderAcessos(); }
+  catch(e){ toast(e.message,'var(--danger)', 4500); }
+  finally{ b.disabled = false; }
+};
+
+/* ---------- minha conta ---------- */
+$('#userBtn').onclick = ()=>{ $('#ctNome').textContent = eu?.nome || 'Minha conta'; $('#ctEmail').textContent = (eu?.email||'') + (eu?.admin ? ' · administrador' : ''); $('#ctSenha').value=''; abrir('#contaModal'); };
+$('#ctFechar').onclick = ()=>fechar('#contaModal');
+$('#ctSair').onclick = ()=>{ fechar('#contaModal'); sair(); };
+$('#ctTrocar').onclick = async ()=>{ const s = $('#ctSenha').value; if(s.length<6){ toast('Mínimo 6 caracteres','var(--danger)'); return; }
+  try{ await authReq('user', {password:s}, 'PUT', await tokenValido()); toast('Senha trocada'); fechar('#contaModal'); }catch(e){ toast('Não trocou: '+e.message,'var(--danger)'); } };
+$$('.modal').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m && m.id!=='confModal') m.classList.remove('on'); }));
+
+/* ---------- início ---------- */
+async function iniciar(){
+  $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
+  $('#navAcessos').hidden = !eu?.admin;
+  irPara(vista);
+  try{ await carregarTudo(); render(); }catch(e){ toast(navigator.onLine ? 'Não consegui atualizar: '+e.message : 'Sem internet — mostrando o último carregado','var(--danger)', 4000); }
+  carregarEu().then(()=>{ $('#navAcessos').hidden = !eu.admin; $('#userBtn').textContent = (eu.nome||'?').trim().charAt(0).toUpperCase(); }).catch(e=>{ if(e.semAcesso){ sair(); $('#lErro').textContent = e.message; } });
+}
+setInterval(()=>{ if(sess && document.visibilityState==='visible' && !$$('.modal.on').length) carregarTudo().then(render).catch(()=>{}); }, 30000);
+if(sess && eu) iniciar(); else $('#login').classList.add('on');
+</script>
+</body>
+</html>
