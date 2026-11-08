@@ -230,6 +230,13 @@ label.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .escfn .func.vozes .fh{display:none}
 
 .padrao{background:#eef7ff;border:1px solid #bcdcf5;color:#1c4f75;border-radius:10px;padding:8px 10px;font-size:14px;margin:4px 0 8px}
+
+.ordn{width:46px!important;min-width:46px;flex:none;padding:6px 4px!important;text-align:center;border:1.5px solid var(--accent);border-radius:8px;font:inherit;font-weight:700;background:#fff}
+.agsel label .ordn{margin:-4px 2px 0 0}
+.avrow{display:flex;gap:8px;align-items:center;margin-top:6px}
+.avrow .field{flex:1;margin:0}
+.avrow .btn{padding:8px 11px}
+.avprev{margin-top:10px;background:#f7fafc;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -472,11 +479,25 @@ function agendaPadrao(data){   // pré-marca o que acontece nas próximas 4 sema
   const lim = iso(new Date(deISO(data).getTime()+28*86400000));
   return eventosAPartir(data).filter(ev=>ev.data<=lim).map(ev=>({id:ev.id, extra:ev.detalhe||''}));
 }
-function linhasAvisos(b, data){
-  const sel = (b.agenda||[]).map(s=>{ const ev = (D.agenda||[]).find(x=>x.id===s.id); return ev ? {ev, extra:s.extra} : (s.texto ? {texto:s.texto, extra:s.extra} : null); }).filter(Boolean)
-    .sort((x,y)=>(x.ev?.data||'').localeCompare(y.ev?.data||''));
-  return [...sel.map(x=>(x.ev?eventoTxt(x.ev):x.texto) + (x.extra?` - ${x.extra}`:'')), ...(b.itens||[])];
+// outros avisos: antes eram só textos; agora {texto, ordem}
+const itensAv = b => (b.itens||[]).map(x=>typeof x==='string' ? {texto:x, ordem:null} : x).filter(x=>x && (x.texto||'').trim()!=='' || x?.novo);
+// todos os avisos (eventos marcados + outros) na ordem escolhida; sem número, seguem a ordem padrão (eventos por data, depois os outros)
+function avisosOrdenados(b){
+  const evs = (b.agenda||[]).map(s=>{ const ev = (D.agenda||[]).find(x=>x.id===s.id); return ev ? {tipo:'ev', id:s.id, data:ev.data, txt:eventoTxt(ev)+(s.extra?` - ${s.extra}`:''), ordem:s.ordem} : (s.texto ? {tipo:'ev', id:s.id, data:'', txt:s.texto+(s.extra?` - ${s.extra}`:''), ordem:s.ordem} : null); }).filter(Boolean)
+    .sort((x,y)=>x.data.localeCompare(y.data));
+  const outros = itensAv(b).filter(x=>(x.texto||'').trim()).map((x,k)=>({tipo:'it', k, txt:x.texto, ordem:x.ordem}));
+  // com número vêm primeiro, na ordem dos números; sem número, depois, na ordem padrão
+  return [...evs, ...outros].map((x,i)=>({...x, pad:i+1})).sort((x,y)=>(x.ordem==null) - (y.ordem==null) || (x.ordem??0) - (y.ordem??0) || x.pad - y.pad);
 }
+// leva um aviso para a posição n e renumera todos (1, 2, 3…)
+function moverAviso(b, tipo, id, n){
+  const lista = avisosOrdenados(b), i = lista.findIndex(x=>x.tipo===tipo && (tipo==='ev' ? x.id===id : x.k===id)); if(i<0) return;
+  const [x] = lista.splice(i,1); if(n) lista.splice(Math.max(0, Math.min(lista.length, n-1)), 0, x); else lista.push(x);
+  const its = itensAv(b);
+  lista.forEach((y,pos)=>{ if(y.tipo==='ev'){ const a = (b.agenda||[]).find(z=>z.id===y.id); if(a) a.ordem = pos+1; } else if(its[y.k]) its[y.k].ordem = pos+1; });
+  b.itens = its;
+}
+function linhasAvisos(b, data){ return avisosOrdenados(b).map(x=>x.txt); }
 
 /* =========================================================
    Login (mesma conta do caixa)
@@ -896,16 +917,21 @@ function secPrograma(){
 }
 
 function avisosEditor(b, i){
+  b.itens = itensAv(b); const ordem = avisosOrdenados(b);
+  const posDe = (t, id) => { const n = ordem.findIndex(x=>x.tipo===t && (t==='ev' ? x.id===id : x.k===id)); return n<0 ? '' : n+1; };
   const evs = eventosAPartir(dataAberta), sel = new Map((b.agenda||[]).map(x=>[x.id,x]));
   const orfaos = (b.agenda||[]).filter(x=>!(D.agenda||[]).some(ev=>ev.id===x.id));
   return `<div class="lb" style="margin-top:10px">Próximos eventos da Agenda — marque os que serão avisados</div>
     ${evs.length ? evs.map(ev=>{ const s = sel.get(ev.id); return `<div class="agsel ${s?'on':''}">
-      <label><input type="checkbox" data-ag="${i}" value="${ev.id}" ${s?'checked':''}> <span><b>${esc(dataEventoTxt(ev))}</b> - ${esc(ev.titulo)}</span></label>
+      <label>${s?`<input class="ordn" type="number" min="1" inputmode="numeric" data-ago="${ev.id}" value="${s.ordem??''}" placeholder="${posDe('ev', ev.id)}" aria-label="Ordem do aviso" onclick="event.stopPropagation()">`:''}<input type="checkbox" data-ag="${i}" value="${ev.id}" ${s?'checked':''}> <span><b>${esc(dataEventoTxt(ev))}</b> - ${esc(ev.titulo)}</span></label>
       ${s?`<input data-agx="${ev.id}" value="${esc(s.extra||'')}" placeholder="Complemento (ex.: Chamar a Paula - NOVA ARTE)">`:''}</div>`; }).join('')
       : '<p class="hint" style="margin:4px 0">Nenhum evento futuro na Agenda.</p>'}
     ${orfaos.map(x=>`<div class="agsel on"><label><input type="checkbox" data-ag="${i}" value="${x.id}" checked> <span>${esc(x.texto||'Evento removido da Agenda')}</span></label></div>`).join('')}
     <button type="button" class="link" data-iragenda style="margin-top:4px">+ Cadastrar evento na Agenda</button>
-    <label class="lb">Outros avisos (um por linha)</label><textarea data-bi="${i}" rows="2" placeholder="Ex.: Débora vai falar dos avisos das crianças">${esc((b.itens||[]).join('\n'))}</textarea>`;
+    <div class="lb">Outros avisos</div>
+    ${itensAv(b).map((x,k)=>`<div class="avrow"><input class="ordn" type="number" min="1" inputmode="numeric" data-io="${k}" value="${x.ordem??''}" placeholder="${posDe('it', k)}" aria-label="Ordem do aviso"><input class="field" data-it="${k}" value="${esc(x.texto||'')}" placeholder="Ex.: Débora vai falar dos avisos das crianças"><button type="button" class="btn" data-idel="${k}" aria-label="Tirar aviso">✕</button></div>`).join('')}
+    <button type="button" class="link" data-iadd="${i}" style="margin-top:6px">+ Outro aviso</button>
+    ${ordem.length ? `<div class="avprev"><b>Ordem no Flow</b>${ordem.map((x,n)=>`<div>${n+1}. ${esc(x.txt)}</div>`).join('')}<div class="hint" style="margin-top:4px">Digite o número no quadradinho ao lado de cada aviso para mudar a ordem.</div></div>` : ''}`;
 }
 
 /* ----- Eventos da tela do culto ----- */
@@ -941,14 +967,23 @@ function ligarCulto(){
     if(cb.checked){ const ev = (D.agenda||[]).find(x=>x.id===cb.value); if(!bl.agenda.some(x=>x.id===cb.value)) bl.agenda.push({id:cb.value, extra:ev?.detalhe||''}); }
     else bl.agenda = bl.agenda.filter(x=>x.id!==cb.value);
     marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-iadd]').forEach(b=>b.onclick=()=>{ lerPrograma(); const bl = rasc.programa.blocos[+b.dataset.iadd]; bl.itens = [...itensAv(bl), {texto:'', ordem:null, novo:true}]; marcarSujo(); redesenhar('programa'); const ins = $$('[data-sec="programa"] [data-it]'); ins[ins.length-1]?.focus(); });
+  box.querySelectorAll('[data-idel]').forEach(b=>b.onclick=()=>{ lerPrograma(); rasc.programa.blocos.forEach(bl=>{ if(bl.tipo==='avisos'){ const it = itensAv(bl); it.splice(+b.dataset.idel,1); bl.itens = it; } }); marcarSujo(); redesenhar('programa'); });
+  box.querySelectorAll('[data-io],[data-ago]').forEach(x=>x.addEventListener('change', ()=>{ lerPrograma(); const n = parseInt(x.value,10);
+    rasc.programa.blocos.forEach(bl=>{ if(bl.tipo==='avisos') moverAviso(bl, x.dataset.ago ? 'ev' : 'it', x.dataset.ago || +x.dataset.io, n>0 ? n : null); });
+    marcarSujo(); redesenhar('programa'); }));
+  box.querySelectorAll('[data-it]').forEach(x=>x.addEventListener('change', ()=>{ lerPrograma(); redesenhar('programa'); }));
   box.querySelectorAll('[data-iragenda]').forEach(b=>b.onclick=async ()=>{ if(sujo && !(await perguntar('Sair sem salvar?', 'Salve a programação antes de ir para a Agenda, senão as mudanças se perdem.', {sim:'Ir assim mesmo', perigo:true}))) return; sujo=false; irPara('agenda'); setTimeout(()=>$('#agData').focus(),100); });
   const ba = $('#bAdd'); if(ba) ba.onclick=()=>{ lerPrograma(); const bl = rasc.programa.blocos; const pos = Math.max(0, bl.findIndex(b=>b.tipo==='pregacao')); bl.splice(pos, 0, {id:uid(), tipo:'livre', hora:'', titulo:'', resp:'', notas:''}); marcarSujo(); redesenhar('programa'); };
   box.querySelectorAll('[data-salvar]').forEach(b=>b.onclick=()=>salvarSecao(b.dataset.salvar, b));
 }
+let redesenhando = false;
 function redesenhar(id){
   const el = $(`[data-sec="${id}"]`); if(!el) return;
-  const tmp = document.createElement('div'); tmp.innerHTML = id==='programa' ? secPrograma() : secMinisterio(id);
-  el.replaceWith(tmp.firstElementChild); ligarCulto();
+  if(redesenhando) return; redesenhando = true;
+  try{ const tmp = document.createElement('div'); tmp.innerHTML = id==='programa' ? secPrograma() : secMinisterio(id);
+    if(el.isConnected) el.replaceWith(tmp.firstElementChild); }
+  finally{ redesenhando = false; } ligarCulto();
 }
 function lerSecao(mid){
   const el = $(`[data-sec="${mid}"]`); if(!el) return; const r = rasc[mid];
@@ -967,7 +1002,10 @@ function lerPrograma(){
   el.querySelectorAll('[data-bt]').forEach(i=>p.blocos[+i.dataset.bt].titulo = limpa(i.value));
   el.querySelectorAll('[data-br]').forEach(i=>p.blocos[+i.dataset.br].resp = limpa(i.value));
   el.querySelectorAll('[data-bn]').forEach(i=>p.blocos[+i.dataset.bn].notas = i.value.trim());
-  el.querySelectorAll('[data-bi]').forEach(i=>p.blocos[+i.dataset.bi].itens = i.value.split('\n').map(limpa).filter(Boolean));
+  const numOuNulo = v => { const n = parseInt(v, 10); return Number.isFinite(n) && n>0 ? n : null; };
+  p.blocos.forEach(b=>{ if(b.tipo!=='avisos') return; b.itens = itensAv(b);
+    el.querySelectorAll('[data-it]').forEach(i=>{ const x = b.itens[+i.dataset.it]; if(x){ x.texto = limpa(i.value); delete x.novo; } });
+    b.itens = b.itens.filter(x=>(x.texto||'').trim()); });
   el.querySelectorAll('[data-agx]').forEach(i=>{ p.blocos.forEach(b=>{ if(b.tipo==='avisos'){ const x = (b.agenda||[]).find(a=>a.id===i.dataset.agx); if(x) x.extra = limpa(i.value); } }); });
   p.blocos.forEach(b=>{ if(b.tipo==='avisos') (b.agenda||[]).forEach(x=>{ const ev = (D.agenda||[]).find(e=>e.id===x.id); if(ev) x.texto = eventoTxt(ev); }); });
   el.querySelectorAll('[data-bon]').forEach(i=>p.blocos[+i.dataset.bon].ativo = i.checked);
