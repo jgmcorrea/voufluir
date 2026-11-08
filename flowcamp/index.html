@@ -492,7 +492,7 @@ function renderDoacoes(){
   if(doFiltro==='prometido' || doFiltro==='entregue') l = l.filter(d=>d.status===doFiltro);
   if(doFiltro==='dinheiro') l = l.filter(d=>d.dinheiro);
   $('#doConta').textContent = `${l.length} de ${D.doacoes.length}`;
-  $('#doLista').innerHTML = l.map(d=>`<div class="item"><div class="t"><b>${esc(d.doador)}</b> ${d.status==='entregue'?'<span class="tag ok">entregue</span>':'<span class="tag pend">a receber</span>'}
+  $('#doLista').innerHTML = l.map(d=>`<div class="item"><div class="t"><b>${esc(d.doador)}</b>${d.origem==='formulário'?' <span class="tag">via QR</span>':''} ${d.status==='entregue'?'<span class="tag ok">entregue</span>':'<span class="tag pend">a receber</span>'}
       <div>${esc(descDoacao(d))}${d.telefone?' · '+telLink(d.telefone):''}</div>${d.obs?`<div>📝 ${esc(d.obs)}</div>`:''}</div>
     <div class="a">${d.status==='prometido'?`<button class="btn ok sm" data-entregue="${d.id}" type="button">Recebido</button>`:''}<button class="btn sm" data-doedit="${d.id}" type="button">Editar</button></div></div>`).join('')
     || `<p class="vazio">${D.doacoes.length?'Nada encontrado.':'Nenhuma doação registrada ainda.'}</p>`;
@@ -554,7 +554,7 @@ function msgAviso(p){
   return `Oi, ${p.nome.split(' ')[0]}! Obrigado por se oferecer para ajudar no *Flow Camp* 🔥\n\nVocê ficou escalado(a) para:\n${es.map(r=>`• ${TIPOS[r.tipo]} — ${diaTxt(r.dia).toLowerCase()}${r.hora?` às ${r.hora}`:''}`).join('\n')}\n\nQualquer imprevisto, avise a gente. Deus abençoe! 🙌`;
 }
 function renderVoluntarios(){
-  const qr = `<details class="card qrbox"><summary><b>📱 QR Code de inscrição</b> <span class="hint">— quem quiser ajudar se inscreve sozinho, sem login</span></summary>
+  const qr = `<details class="card qrbox"><summary><b>📱 QR Code de inscrição</b> <span class="hint">— voluntários e doações, sem login</span></summary>
     <div class="qrin"><img src="/flowcamp/qr-ajudar.png" alt="QR Code para a inscrição de voluntários"><div>
       <p class="hint" style="margin:0 0 8px">As inscrições entram aqui como “pode ajudar”, marcadas com <span class="tag">via QR</span>. Depois é só escalar e avisar.</p>
       <div class="row"><a class="btn sm dark" href="/flowcamp/cartaz-ajudar.png" download="Flow Camp - cartaz voluntarios.png">⬇️ Cartaz para imprimir</a><a class="btn sm" href="/flowcamp/qr-ajudar.png" download="Flow Camp - QR voluntarios.png">⬇️ Só o QR</a>

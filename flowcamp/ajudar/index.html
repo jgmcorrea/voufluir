@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2c5016">
 <title>Quero ajudar · Flow Camp 2026</title>
-<meta name="description" content="Inscreva-se para ajudar nas refeições do Flow Camp 2026 — 4 a 6 de dezembro.">
+<meta name="description" content="Ajude o Flow Camp 2026 (4 a 6 de dezembro): seja voluntário nas refeições ou doe o que estamos precisando.">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +42,20 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 .ok{text-align:center;padding:10px 4px}
 .ok .big{font-size:52px;line-height:1}
 .ok h2{margin:10px 0 6px}
+.abas{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:5px;margin:-14px 0 14px;box-shadow:0 6px 20px rgba(0,0,0,.06);position:relative}
+.abas button{flex:1;padding:12px 8px;border-radius:12px;background:none;font-size:15.5px;font-weight:700;color:var(--muted)}
+.abas button.on{background:var(--brand);color:#fff}
+.card.sem-topo{margin-top:0}
+.it{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.it:first-child{border-top:0}
+.it input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--brand)}
+.it .n{flex:1;min-width:0}
+.it .n b{display:block;font-size:15.5px}
+.it .n small{color:var(--muted);font-size:13px}
+.it .q{width:92px;flex:none;display:flex;align-items:center;gap:4px}
+.it .q input{width:60px;padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;text-align:center}
+.it .q span{font-size:13px;color:var(--muted)}
+.it.cheio{opacity:.55}
 .link{background:none;color:var(--brand);font-weight:700;font-size:15px;margin-top:14px;padding:6px}
 </style>
 </head>
@@ -49,10 +63,14 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 <div class="topo">
   <img src="/flowcamp/arte.jpg" alt="Flow Camp 2026 — 4 a 6 de dezembro">
   <h1>QUERO AJUDAR!</h1>
-  <p>Voluntários para as refeições do Flow Camp</p>
+  <p>Seja voluntário nas refeições ou doe o que precisamos</p>
 </div>
 <main>
-  <div class="card" id="form">
+  <div class="abas" role="tablist">
+    <button type="button" class="on" data-aba="vol" role="tab">🍽️ Ser voluntário</button>
+    <button type="button" data-aba="doar" role="tab">🎁 Quero doar</button>
+  </div>
+  <div class="card sem-topo" id="form">
     <h2>Deixe seu nome</h2>
     <p class="hint" style="margin:0">Marque as refeições em que você <b>pode</b> ajudar. Depois a equipe organiza todo mundo e entra em contato para confirmar. 🙌</p>
     <label class="lb" for="nome">Seu nome</label>
@@ -68,11 +86,27 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
     <div class="erro" id="erro" role="alert"></div>
     <button class="go" id="enviar" type="button">Quero ajudar</button>
   </div>
-  <div class="card ok" id="pronto" hidden>
+  <div class="card sem-topo" id="formDoar" hidden>
+    <h2>O que você pode doar?</h2>
+    <p class="hint" style="margin:0">Marque os itens e, se souber, a quantidade. A equipe entra em contato para combinar a entrega. 🙏</p>
+    <label class="lb" for="dNome">Seu nome</label>
+    <input class="field" id="dNome" autocomplete="name" maxlength="80">
+    <label class="lb" for="dTel">Telefone / WhatsApp</label>
+    <input class="field" id="dTel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="(47) 99999-9999">
+    <div class="lb">Do que estamos precisando</div>
+    <div id="itens"><p class="hint">Carregando…</p></div>
+    <label class="lb" for="dOutro">Quer doar outra coisa? <small>(opcional)</small></label>
+    <input class="field" id="dOutro" maxlength="200" placeholder="Ex.: 2 bolos caseiros">
+    <label class="lb" for="dObs">Alguma observação? <small>(opcional)</small></label>
+    <input class="field" id="dObs" maxlength="300" placeholder="Ex.: entrego no sábado de manhã">
+    <div class="erro" id="dErro" role="alert"></div>
+    <button class="go" id="doar" type="button">Quero doar</button>
+  </div>
+  <div class="card ok sem-topo" id="pronto" hidden>
     <div class="big">🔥</div>
     <h2>Obrigado, <span id="pNome"></span>!</h2>
-    <p class="hint">Recebemos seu nome. A equipe do Flow Camp vai organizar as refeições e falar com você pelo WhatsApp para confirmar.</p>
-    <button class="link" id="outro" type="button">Inscrever outra pessoa</button>
+    <p class="hint" id="pMsg"></p>
+    <button class="link" id="outro" type="button">Enviar outra resposta</button>
   </div>
 </main>
 <script>
@@ -108,11 +142,47 @@ $('#enviar').onclick = async ()=>{
   const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
     await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:$('#obs').value.trim()||null});
-    $('#pNome').textContent = nome.split(' ')[0]; $('#form').hidden = true; $('#pronto').hidden = false; window.scrollTo(0,0);
+    pronto(nome, 'Recebemos seu nome. A equipe do Flow Camp vai organizar as refeições e falar com você pelo WhatsApp para confirmar.');
   }catch(e){ $('#erro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.'; }
   finally{ b.disabled = false; b.textContent = 'Quero ajudar'; }
 };
-$('#outro').onclick = ()=>{ $('#nome').value = $('#tel').value = $('#obs').value = ''; sel = new Set(); fun = ''; desenhar(REFS); $('#pronto').hidden = true; $('#form').hidden = false; };
+let aba = 'vol', ITENS = [], marc = new Map();
+function pronto(nome, msg){ $('#pNome').textContent = nome.split(' ')[0]; $('#pMsg').textContent = msg; $('#form').hidden = $('#formDoar').hidden = true; document.querySelector('.abas').hidden = true; $('#pronto').hidden = false; window.scrollTo(0,0); }
+function mostrarAba(a){ aba = a; document.querySelectorAll('[data-aba]').forEach(b=>{ b.classList.toggle('on', b.dataset.aba===a); b.setAttribute('aria-selected', b.dataset.aba===a); });
+  $('#form').hidden = a!=='vol'; $('#formDoar').hidden = a!=='doar';
+  // quem já digitou nome/telefone numa aba não precisa digitar de novo
+  if(a==='doar'){ if(!$('#dNome').value) $('#dNome').value = $('#nome').value; if(!$('#dTel').value) $('#dTel').value = $('#tel').value; }
+  else { if(!$('#nome').value) $('#nome').value = $('#dNome').value; if(!$('#tel').value) $('#tel').value = $('#dTel').value; }
+  try{ history.replaceState(null, '', a==='doar' ? '#doar' : '#'); }catch(e){} }
+document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>mostrarAba(b.dataset.aba));
+const fmt = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
+function desenharItens(){
+  $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, m = marc.get(i.id);
+    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${m?'checked':''}>
+      <span class="n"><b>${esc(i.nome)}</b><small>${cheio ? '✅ já temos o suficiente' : i.faltam !== null ? `faltam ${fmt(Number(i.faltam))} ${esc(i.unidade)}` : ''}${i.refeicao?`${!cheio && i.faltam!==null?' · ':''}${esc(i.refeicao)}`:''}</small></span>
+      ${m ? `<span class="q"><input type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(m.q||'')}" placeholder="qtd" aria-label="Quantidade de ${esc(i.nome)}"><span>${esc(i.unidade)}</span></span>` : ''}</label>`; }).join('')
+    : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
+  document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, {q:''}) : marc.delete(c.dataset.i); $('#dErro').textContent=''; desenharItens(); });
+  document.querySelectorAll('[data-q]').forEach(x=>{ x.onclick = e=>e.preventDefault(); x.oninput = ()=>{ marc.get(x.dataset.q).q = x.value; }; });
+}
+rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; desenharItens(); }).catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
+$('#doar').onclick = async ()=>{
+  const nome = $('#dNome').value.replace(/\s+/g,' ').trim(), tel = $('#dTel').value.trim(), outro = $('#dOutro').value.trim();
+  $('#dErro').textContent = '';
+  if(nome.length < 2){ $('#dErro').textContent = 'Digite seu nome.'; $('#dNome').focus(); return; }
+  if(tel.replace(/\D/g,'').length < 8){ $('#dErro').textContent = 'Digite seu telefone com DDD.'; $('#dTel').focus(); return; }
+  if(!marc.size && !outro){ $('#dErro').textContent = 'Marque pelo menos um item (ou escreva o que quer doar).'; return; }
+  const b = $('#doar'); b.disabled = true; b.textContent = 'Enviando…';
+  try{
+    await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(([id,m])=>({id, quantidade:String(m.q||'').replace(',','.')})), p_outro:outro||null, p_obs:$('#dObs').value.trim()||null});
+    pronto(nome, 'Recebemos sua doação. A equipe do Flow Camp vai falar com você pelo WhatsApp para combinar a entrega. Deus abençoe!');
+  }catch(e){ $('#dErro').textContent = navigator.onLine ? e.message : 'Sem internet. Tente de novo.'; }
+  finally{ b.disabled = false; b.textContent = 'Quero doar'; }
+};
+$('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dNome','#dTel','#dOutro','#dObs'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Map(); desenhar(REFS); desenharItens();
+  rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; desenharItens(); }).catch(()=>{});
+  $('#pronto').hidden = true; document.querySelector('.abas').hidden = false; mostrarAba(aba); };
+if(location.hash==='#doar') mostrarAba('doar');
 </script>
 </body>
 </html>
