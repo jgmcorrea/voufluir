@@ -88,7 +88,7 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
   </div>
   <div class="card sem-topo" id="formDoar" hidden>
     <h2>O que você pode doar?</h2>
-    <p class="hint" style="margin:0">Marque o que você vai doar — cada item é a quantidade toda que precisamos. A equipe entra em contato para combinar a entrega. 🙏</p>
+    <p class="hint" style="margin:0">Marque o que você vai doar. A equipe entra em contato para combinar a entrega. 🙏</p>
     <label class="lb" for="dNome">Seu nome</label>
     <input class="field" id="dNome" autocomplete="name" maxlength="80">
     <label class="lb" for="dTel">Telefone / WhatsApp</label>
@@ -159,7 +159,7 @@ const fmt = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
   $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, m = marc.get(i.id);
     return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${m?'checked':''} ${cheio?'disabled':''}>
-      <span class="n"><b>${!cheio && i.faltam !== null ? `${fmt(Number(i.faltam))} ${esc(i.unidade)} de ` : ''}${esc(i.nome)}</b><small>${cheio ? '✅ já tem quem vai doar' : esc(i.refeicao||'')}</small></span></label>`; }).join('')
+      <span class="n"><b>${esc(i.nome)}</b><small>${cheio ? '✅ já tem quem vai doar' : esc(i.refeicao||'')}</small></span></label>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
   document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, {q:''}) : marc.delete(c.dataset.i); $('#dErro').textContent=''; desenharItens(); });
 }
