@@ -115,6 +115,14 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 #login .arte{width:150px;display:block;margin:0 auto 6px;border-radius:12px;transform:rotate(-2deg);box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .dia h4{font-family:'Black Ops One',sans-serif;font-weight:400;letter-spacing:.02em;font-size:17px}
 .bar i{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+
+.qrbox{padding:12px 16px}
+.qrbox summary{cursor:pointer;list-style:none}
+.qrbox summary::-webkit-details-marker{display:none}
+.qrin{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;margin-top:12px}
+.qrin img{width:150px;border-radius:10px;border:1px solid var(--line)}
+@media(max-width:480px){.qrin{grid-template-columns:1fr}.qrin img{width:180px;margin:0 auto}}
+a.btn{text-decoration:none;display:inline-block}
 </style>
 </head>
 <body>
@@ -546,11 +554,16 @@ function msgAviso(p){
   return `Oi, ${p.nome.split(' ')[0]}! Obrigado por se oferecer para ajudar no *Flow Camp* 🔥\n\nVocê ficou escalado(a) para:\n${es.map(r=>`• ${TIPOS[r.tipo]} — ${diaTxt(r.dia).toLowerCase()}${r.hora?` às ${r.hora}`:''}`).join('\n')}\n\nQualquer imprevisto, avise a gente. Deus abençoe! 🙌`;
 }
 function renderVoluntarios(){
-  const modos = `<div class="filtros" style="margin:0 0 12px"><button type="button" class="chipsel ${volModo==='refeicao'?'on':''}" data-vmodo="refeicao">Por refeição</button><button type="button" class="chipsel ${volModo==='pessoa'?'on':''}" data-vmodo="pessoa">Por pessoa${eu.admin?' (avisar)':''}</button></div>`;
+  const qr = `<details class="card qrbox"><summary><b>📱 QR Code de inscrição</b> <span class="hint">— quem quiser ajudar se inscreve sozinho, sem login</span></summary>
+    <div class="qrin"><img src="/flowcamp/qr-ajudar.png" alt="QR Code para a inscrição de voluntários"><div>
+      <p class="hint" style="margin:0 0 8px">As inscrições entram aqui como “pode ajudar”, marcadas com <span class="tag">via QR</span>. Depois é só escalar e avisar.</p>
+      <div class="row"><a class="btn sm dark" href="/flowcamp/cartaz-ajudar.png" download="Flow Camp - cartaz voluntarios.png">⬇️ Cartaz para imprimir</a><a class="btn sm" href="/flowcamp/qr-ajudar.png" download="Flow Camp - QR voluntarios.png">⬇️ Só o QR</a>
+      <button class="btn sm zap" type="button" id="qrLink">Copiar link</button><a class="btn sm" href="/flowcamp/ajudar/" target="_blank" rel="noopener">Ver formulário</a></div></div></div></details>`;
+  const modos = qr + `<div class="filtros" style="margin:0 0 12px"><button type="button" class="chipsel ${volModo==='refeicao'?'on':''}" data-vmodo="refeicao">Por refeição</button><button type="button" class="chipsel ${volModo==='pessoa'?'on':''}" data-vmodo="pessoa">Por pessoa${eu.admin?' (avisar)':''}</button></div>`;
   if(volModo==='pessoa'){
     const ps = pessoasVol();
     $('#volLista').innerHTML = modos + `<div class="card">${ps.map(p=>{ const es = p.regs.filter(v=>v.escalado), avis = es.length && es.every(v=>v.avisado);
-      return `<div class="item"><div class="t"><b>${esc(p.nome)}</b> ${es.length ? (avis?'<span class="tag ok">avisado</span>':'<span class="tag pend">escalado · falta avisar</span>') : '<span class="tag">não escalado</span>'}
+      return `<div class="item"><div class="t"><b>${esc(p.nome)}</b>${p.regs.some(v=>v.origem==='formulário')?' <span class="tag">via QR</span>':''} ${es.length ? (avis?'<span class="tag ok">avisado</span>':'<span class="tag pend">escalado · falta avisar</span>') : '<span class="tag">não escalado</span>'}
         <div>${p.telefone?telLink(p.telefone)+' · ':''}pode: ${p.regs.map(v=>{ const r = refDe(v.refeicao_id); return r ? `${v.escalado?'<b>✓ ':''}${TIPOS[r.tipo]} ${DIAS[deISO(r.dia).getDay()].slice(0,3).toLowerCase()}${v.escalado?'</b>':''}` : ''; }).join(', ')}</div>
         ${p.regs.find(v=>v.obs)?`<div>📝 ${esc(p.regs.find(v=>v.obs).obs)}</div>`:''}</div>
         ${eu.admin && es.length ? `<div class="a">${p.telefone?`<button class="btn sm zap" data-avisar="${esc(p.nome)}" type="button">Avisar no WhatsApp</button>`:`<button class="btn sm" data-avisar="${esc(p.nome)}" type="button">Copiar aviso</button>`}</div>` : ''}</div>`; }).join('') || '<p class="vazio">Ninguém se ofereceu ainda.</p>'}</div>`;
@@ -565,7 +578,7 @@ function renderVoluntarios(){
     $('#volLista').innerHTML = modos + (eu.admin ? '<p class="hint" style="margin:0 0 8px">Toque em <b>Escalar</b> para escolher quem vai em cada refeição. Depois, em “Por pessoa”, avise cada um.</p>' : '<p class="hint" style="margin:0 0 8px">Aqui ficam as pessoas que podem ajudar. Os administradores escalam e avisam cada um.</p>')
     + porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{ const vs = volsDe(r.id).sort((a,b)=>b.escalado-a.escalado || a.nome.localeCompare(b.nome)), es = escDe(r.id), cheia = es.length >= (r.vagas||0);
       return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${es.length}/${r.vagas||0} escalados · ${vs.length} podem</span></div>
-        ${vs.length ? vs.map(v=>`<div class="item"><div class="t"><b>${v.escalado?'✓ ':''}${esc(v.nome)}</b><div>${[v.funcao?esc(v.funcao):'', v.telefone?telLink(v.telefone):'', v.obs?'📝 '+esc(v.obs):''].filter(Boolean).join(' · ')}</div></div>
+        ${vs.length ? vs.map(v=>`<div class="item"><div class="t"><b>${v.escalado?'✓ ':''}${esc(v.nome)}</b>${v.origem==='formulário'?' <span class="tag">via QR</span>':''}<div>${[v.funcao?esc(v.funcao):'', v.telefone?telLink(v.telefone):'', v.obs?'📝 '+esc(v.obs):''].filter(Boolean).join(' · ')}</div></div>
           <div class="a">${eu.admin ? `<button class="btn sm ${v.escalado?'ok':''}" data-escalar="${v.id}" type="button">${v.escalado?'✓ Escalado':'Escalar'}</button><button class="link red" data-vdel="${v.id}" type="button" aria-label="Apagar">✕</button>` : (v.escalado?'<span class="tag ok">escalado</span>':'')}</div></div>`).join('') : '<div class="hint" style="margin-top:6px">Ninguém se ofereceu ainda.</div>'}
         <button class="link" data-vadd="${r.id}" type="button" style="margin-top:4px">+ Adicionar quem pode</button></div>`; }).join('')}</div>`).join('');
     $$('[data-escalar]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.escalar), r = refDe(v.refeicao_id);
@@ -573,6 +586,7 @@ function renderVoluntarios(){
       try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({escalado:!v.escalado, avisado:false})}); await carregarTudo(); const y = scrollY; render(); scrollTo(0,y); }
       catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } });
   }
+  const ql = $('#qrLink'); if(ql) ql.onclick = async ()=>{ const u = location.origin + '/flowcamp/ajudar/'; try{ await navigator.clipboard.writeText(u); toast('Link copiado'); }catch(e){ await perguntar('Link da inscrição', u, {sim:'Ok'}); } };
   $$('[data-vmodo]').forEach(b=>b.onclick=()=>{ volModo = b.dataset.vmodo; save('fc1_volmodo', volModo); renderVoluntarios(); });
   $$('[data-vadd]').forEach(b=>b.onclick=()=>abrirVoluntario([b.dataset.vadd]));
   $$('[data-vdel]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.vdel); const r = refDe(v.refeicao_id);
