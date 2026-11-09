@@ -315,7 +315,7 @@ a.btn{text-decoration:none;display:inline-block}
       <div><label class="lb" for="iMeta">Quanto precisamos</label><input class="field" id="iMeta" type="number" min="0" step="any" inputmode="decimal"></div>
       <div><label class="lb" for="iUn">Unidade</label><input class="field" id="iUn" placeholder="un, kg, L, pct…" autocomplete="off"></div>
     </div>
-    <label class="lb" for="iRef">Para qual refeição (opcional)</label><select class="field" id="iRef"></select>
+    <div class="lb">Para quais refeições <small>(opcional — pode marcar várias; sem marcar = geral)</small></div><div id="iRef"></div>
     <label class="lb" for="iObs">Observação (opcional)</label><input class="field" id="iObs" autocomplete="off">
     <div class="row" style="margin-top:14px">
       <button class="btn dark" id="iSalvar" type="button">Salvar</button>
@@ -450,6 +450,7 @@ async function carregarTudo(){
   D = {refeicoes, itens, doacoes, voluntarios, participantes}; save(K.cache, D);
 }
 const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
+const refCurto = r => `${TIPOS[r.tipo]} ${DIAS[deISO(r.dia).getDay()].slice(0,3).toLowerCase()}`;
 const refDe = id => D.refeicoes.find(r=>r.id===id);
 const itemDe = id => D.itens.find(i=>i.id===id);
 const volsDe = rid => D.voluntarios.filter(v=>v.refeicao_id===rid);            // quem pode ajudar
@@ -491,7 +492,7 @@ function renderPainel(){
   const restr = (D.participantes||[]).filter(p=>p.alergias);
   const avisoCozinha = restr.length ? `<div class="alerta"><b>⚠️ Atenção na cozinha e no cuidado:</b> ${restr.map(p=>`${esc(primeiroNome(p.nome))} — ${esc(p.alergias)}`).join(' · ')}</div>` : '';
   $('#refs').innerHTML = avisoCozinha + porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{
-    const vs = volsDe(r.id), es = escDe(r.id), cheia = es.length >= (r.vagas||0), its = D.itens.filter(i=>i.refeicao_id===r.id);
+    const vs = volsDe(r.id), es = escDe(r.id), cheia = es.length >= (r.vagas||0), its = D.itens.filter(i=>(i.refeicoes||[]).includes(r.id));
     return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${es.length}/${r.vagas||0} escalados</span></div>
       ${r.cardapio?`<div class="card-txt">🍽️ ${esc(r.cardapio)}</div>`:''}
       <div class="bar ${cheia?'cheia':''}"><i style="width:${Math.min(100, (r.vagas? es.length/r.vagas*100 : 0))}%"></i></div>
@@ -711,12 +712,16 @@ $('#vSalvar').onclick = async ()=>{
 };
 
 /* ---------- o que precisamos + refeições ---------- */
-let itEdit = null;
+let itEdit = null, itRefs = new Set();
+function desenharItRefs(){
+  $('#iRef').innerHTML = porDia().map(([dia, rs])=>`<div class="lb" style="margin-top:6px">${esc(diaTxt(dia))}</div><div class="chips">${rs.map(r=>`<button type="button" class="chipsel ${itRefs.has(r.id)?'on':''}" data-ir="${r.id}">${TIPOS[r.tipo]}</button>`).join('')}</div>`).join('');
+  $$('[data-ir]').forEach(b=>b.onclick=()=>{ itRefs.has(b.dataset.ir) ? itRefs.delete(b.dataset.ir) : itRefs.add(b.dataset.ir); desenharItRefs(); });
+}
 function renderLista(){
   $('#novoItem').hidden = !eu.admin; $('#cardRefs').hidden = !eu.admin;
   $('#necLista').innerHTML = D.itens.map(i=>{ const d = doadoDe(i.id), e = entregueDe(i.id), pct = i.meta ? Math.min(100, d/i.meta*100) : 0, ok = i.meta && d >= i.meta;
     return `<div class="nec"><div class="rh"><b>${esc(i.nome)}</b>${eu.admin?`<button class="link" data-iedit="${i.id}" type="button">Editar</button>`:''}</div>
-      <div class="hint">${i.meta ? `${fmtN(d)} de ${fmtN(i.meta)} ${esc(i.unidade)} prometidos${e?` · ${fmtN(e)} já recebidos`:''}${ok?' ✅':''}` : `${fmtN(d)} ${esc(i.unidade)} prometidos`}${i.refeicao_id?` · ${esc(refNome(refDe(i.refeicao_id)))}`:''}${i.obs?` · ${esc(i.obs)}`:''}</div>
+      <div class="hint">${i.meta ? `${fmtN(d)} de ${fmtN(i.meta)} ${esc(i.unidade)} prometidos${e?` · ${fmtN(e)} já recebidos`:''}${ok?' ✅':''}` : `${fmtN(d)} ${esc(i.unidade)} prometidos`}${(i.refeicoes||[]).length?` · ${esc((i.refeicoes||[]).map(refDe).filter(Boolean).sort((a,b)=>a.ordem-b.ordem).map(refCurto).join(', '))}`:''}${i.obs?` · ${esc(i.obs)}`:''}</div>
       ${i.meta?`<div class="bar ${ok?'cheia':''}"><i style="width:${pct}%"></i></div>`:''}</div>`; }).join('')
     || `<p class="vazio">${eu.admin ? 'A lista ainda está vazia. Use “+ Item na lista” para dizer o que precisa.' : 'Os administradores ainda vão montar a lista.'}</p>`;
   $$('[data-iedit]').forEach(b=>b.onclick=()=>abrirItem(b.dataset.iedit));
@@ -733,15 +738,15 @@ function renderLista(){
 function abrirItem(id){
   itEdit = id || null; const i = id ? itemDe(id) : null;
   $('#itTit').textContent = i ? 'Editar item' : 'Item na lista';
-  $('#iRef').innerHTML = `<option value="">Geral (qualquer refeição)</option>` + D.refeicoes.map(r=>`<option value="${r.id}">${esc(refNome(r))}</option>`).join('');
-  $('#iNome').value = i?.nome||''; $('#iMeta').value = i?.meta??''; $('#iUn').value = i?.unidade||''; $('#iRef').value = i?.refeicao_id||''; $('#iObs').value = i?.obs||'';
+  itRefs = new Set(i?.refeicoes||[]); desenharItRefs();
+  $('#iNome').value = i?.nome||''; $('#iMeta').value = i?.meta??''; $('#iUn').value = i?.unidade||''; $('#iObs').value = i?.obs||'';
   $('#iExcluir').hidden = !i; abrir('#itModal'); setTimeout(()=>$('#iNome').focus(), 60);
 }
 $('#novoItem').onclick = ()=>abrirItem(null);
 $('#iFechar').onclick = ()=>fechar('#itModal');
 $('#iSalvar').onclick = async ()=>{
   const nome = limpa($('#iNome').value); if(!nome){ toast('Escreva o item','var(--danger)'); return; }
-  const row = {nome, meta:num($('#iMeta').value), unidade:limpa($('#iUn').value)||'un', refeicao_id:$('#iRef').value||null, obs:limpa($('#iObs').value)||null};
+  const row = {nome, meta:num($('#iMeta').value), unidade:limpa($('#iUn').value)||'un', refeicoes:[...itRefs].sort((a,b)=>(refDe(a)?.ordem||0)-(refDe(b)?.ordem||0)), refeicao_id:null, obs:limpa($('#iObs').value)||null};
   try{ if(itEdit) await sb('/fc_itens?id=eq.'+itEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
     else await sb('/fc_itens', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, ordem:D.itens.length+1})});
     await carregarTudo(); fechar('#itModal'); render(); toast('Lista atualizada'); }
