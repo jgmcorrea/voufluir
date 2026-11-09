@@ -66,6 +66,7 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 .qrow label{color:var(--muted);flex:1}
 .qrow input{width:84px;padding:9px 8px;border:1.5px solid var(--brand);border-radius:10px;text-align:center;font-size:16px}
 .qrow span{color:var(--muted);min-width:28px}
+.n small .falta{color:var(--accent);font-weight:700}
 .parte{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:16px}
 .parte:has(input:checked){border-color:var(--brand);background:#f6faf1}
 .ptit{display:flex;gap:10px;align-items:center;font-size:16.5px;font-weight:700;cursor:pointer}
@@ -145,10 +146,10 @@ function desenharRefs(){
 const fmtQ = n => (Math.round(Number(n)*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
   $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, marcado = marc.has(i.id);
-    const info = cheio ? '✅ já tem quem vai doar' : i.meta !== null ? `Precisamos de ${fmtQ(i.meta)} ${esc(i.unidade)}${Number(i.faltam) < Number(i.meta) ? ` · faltam ${fmtQ(i.faltam)}` : ''}` : '';
+    const info = cheio ? '✅ já tem quem vai doar' : i.meta !== null ? `Precisamos de ${fmtQ(i.meta)} ${esc(i.unidade)} · <b class="falta">faltam ${fmtQ(i.faltam)}</b>` : '';
     return `<div class="itw ${marcado?'on':''}"><label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marcado?'checked':''} ${cheio?'disabled':''}>
       <span class="n"><b>${esc(i.nome)}</b>${info?`<small>${info}</small>`:''}</span></label>
-      ${marcado ? `<div class="qrow"><label for="q-${esc(i.id)}">Quantos você vai doar?</label><input id="q-${esc(i.id)}" type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(marc.get(i.id)||'')}" placeholder="${i.faltam!==null?fmtQ(i.faltam):''}"><span>${esc(i.unidade)}</span></div>` : ''}</div>`; }).join('')
+      ${marcado ? `<div class="qrow"><label for="q-${esc(i.id)}">Quantos você vai doar?</label><input id="q-${esc(i.id)}" type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(marc.get(i.id)||'')}" placeholder="${i.faltam!==null?fmtQ(i.faltam):''}" ${i.faltam!==null?`max="${Number(i.faltam)}"`:''}><span>${esc(i.unidade)}</span></div>` : ''}</div>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
   document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, '') : marc.delete(c.dataset.i); $('#erro').textContent=''; desenharItens(); if(c.checked) $(`[data-q="${c.dataset.i}"]`)?.focus(); });
   document.querySelectorAll('[data-q]').forEach(x=>x.oninput=()=>{ marc.set(x.dataset.q, x.value); });
@@ -174,7 +175,9 @@ $('#enviar').onclick = async ()=>{
   if(vol && !sel.size) return erro('Marque pelo menos uma refeição em que pode ajudar.');
   if(doar && !marc.size && !outro) return erro('Marque pelo menos um item para doar (ou escreva o que quer doar).');
   if(doar){ const semQ = [...marc].filter(([id,q])=>{ const i = ITENS.find(x=>x.id===id); return !(Number(String(q).replace(',','.'))>0) && i && i.meta===null; });
-    if(semQ.length) return erro(`Diga quantos vai doar de: ${semQ.map(([id])=>ITENS.find(x=>x.id===id).nome).join(', ')}.`); }
+    if(semQ.length) return erro(`Diga quantos vai doar de: ${semQ.map(([id])=>ITENS.find(x=>x.id===id).nome).join(', ')}.`);
+    const demais = [...marc].map(([id,q])=>[ITENS.find(x=>x.id===id), Number(String(q).replace(',','.'))]).filter(([i,q])=>i && i.faltam!==null && q > Number(i.faltam));
+    if(demais.length) return erro(demais.map(([i])=>`De ${i.nome} faltam só ${fmtQ(i.faltam)} ${i.unidade}.`).join(' ') + ' Se quiser ajudar com mais, escolha outro item ou escreva em “outra coisa”.'); }
   const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
     if(vol && !feitoVol){ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
