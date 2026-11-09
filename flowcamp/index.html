@@ -586,7 +586,7 @@ function renderVoluntarios(){
       try{ await sb('/fc_voluntarios?id=eq.'+v.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({escalado:!v.escalado, avisado:false})}); await carregarTudo(); const y = scrollY; render(); scrollTo(0,y); }
       catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } });
   }
-  const ql = $('#qrLink'); if(ql) ql.onclick = async ()=>{ const u = location.origin + '/flowcamp/ajudar/'; try{ await navigator.clipboard.writeText(u); toast('Link copiado'); }catch(e){ await perguntar('Link da inscrição', u, {sim:'Ok'}); } };
+  const ql = $('#qrLink'); if(ql) ql.onclick = async ()=>{ const u = 'https://bit.ly/4etgoVY'; try{ await navigator.clipboard.writeText(u); toast('Link copiado'); }catch(e){ await perguntar('Link da inscrição', u, {sim:'Ok'}); } };
   $$('[data-vmodo]').forEach(b=>b.onclick=()=>{ volModo = b.dataset.vmodo; save('fc1_volmodo', volModo); renderVoluntarios(); });
   $$('[data-vadd]').forEach(b=>b.onclick=()=>abrirVoluntario([b.dataset.vadd]));
   $$('[data-vdel]').forEach(b=>b.onclick=async ()=>{ const v = D.voluntarios.find(x=>x.id===b.dataset.vdel); const r = refDe(v.refeicao_id);
