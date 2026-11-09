@@ -138,7 +138,7 @@ function desenharRefs(){
 function desenharItens(){
   $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0;
     return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marc.has(i.id)?'checked':''} ${cheio?'disabled':''}>
-      <span class="n"><b>${esc(i.nome)}</b><small>${cheio ? '✅ já tem quem vai doar' : esc(i.refeicao||'')}</small></span></label>`; }).join('')
+      <span class="n"><b>${esc(i.nome)}</b>${cheio ? '<small>✅ já tem quem vai doar</small>' : ''}</span></label>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
   document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.add(c.dataset.i) : marc.delete(c.dataset.i); $('#erro').textContent=''; });
 }
