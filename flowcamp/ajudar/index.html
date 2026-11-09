@@ -59,6 +59,13 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 .it .q input{width:60px;padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;text-align:center}
 .it .q span{font-size:13px;color:var(--muted)}
 .it.cheio{opacity:.55}
+.itw{border-top:1px solid var(--line)}
+.itw:first-child{border-top:0}
+.itw .it{border-top:0}
+.qrow{display:flex;align-items:center;gap:8px;padding:0 0 12px 32px;font-size:14px}
+.qrow label{color:var(--muted);flex:1}
+.qrow input{width:84px;padding:9px 8px;border:1.5px solid var(--brand);border-radius:10px;text-align:center;font-size:16px}
+.qrow span{color:var(--muted);min-width:28px}
 .parte{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:16px}
 .parte:has(input:checked){border-color:var(--brand);background:#f6faf1}
 .ptit{display:flex;gap:10px;align-items:center;font-size:16.5px;font-weight:700;cursor:pointer}
@@ -121,7 +128,7 @@ const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const FUN = ['Cozinhar','Servir','Lavar louça / limpeza','Onde precisar'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let sel = new Set(), fun = '', REFS = [], ITENS = [], marc = new Set();
+let sel = new Set(), fun = '', REFS = [], ITENS = [], marc = new Map();   // item → quantidade que a pessoa vai doar
 async function rpc(fn, body){
   const r = await fetch(`${SB}/rpc/${fn}`, {method:'POST', headers:{apikey:KEY, Authorization:'Bearer '+KEY, 'Content-Type':'application/json'}, body:JSON.stringify(body||{})});
   const t = await r.text(); let j = null; try{ j = t ? JSON.parse(t) : null; }catch(e){}
@@ -135,14 +142,18 @@ function desenharRefs(){
   $('#funs').innerHTML = FUN.map(f=>`<button type="button" class="chip ${fun===f?'on':''}" data-f="${esc(f)}" aria-pressed="${fun===f}">${esc(f)}</button>`).join('');
   document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ fun = fun===b.dataset.f ? '' : b.dataset.f; desenharRefs(); });
 }
+const fmtQ = n => (Math.round(Number(n)*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
-  $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0;
-    return `<label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marc.has(i.id)?'checked':''} ${cheio?'disabled':''}>
-      <span class="n"><b>${esc(i.nome)}</b>${cheio ? '<small>✅ já tem quem vai doar</small>' : ''}</span></label>`; }).join('')
+  $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, marcado = marc.has(i.id);
+    const info = cheio ? '✅ já tem quem vai doar' : i.meta !== null ? `Precisamos de ${fmtQ(i.meta)} ${esc(i.unidade)}${Number(i.faltam) < Number(i.meta) ? ` · faltam ${fmtQ(i.faltam)}` : ''}` : '';
+    return `<div class="itw ${marcado?'on':''}"><label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marcado?'checked':''} ${cheio?'disabled':''}>
+      <span class="n"><b>${esc(i.nome)}</b>${info?`<small>${info}</small>`:''}</span></label>
+      ${marcado ? `<div class="qrow"><label for="q-${esc(i.id)}">Quantos você vai doar?</label><input id="q-${esc(i.id)}" type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(marc.get(i.id)||'')}" placeholder="${i.faltam!==null?fmtQ(i.faltam):''}"><span>${esc(i.unidade)}</span></div>` : ''}</div>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
-  document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.add(c.dataset.i) : marc.delete(c.dataset.i); $('#erro').textContent=''; });
+  document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, '') : marc.delete(c.dataset.i); $('#erro').textContent=''; desenharItens(); if(c.checked) $(`[data-q="${c.dataset.i}"]`)?.focus(); });
+  document.querySelectorAll('[data-q]').forEach(x=>x.oninput=()=>{ marc.set(x.dataset.q, x.value); });
 }
-const carregarItens = ()=> rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
+const carregarItens = ()=> rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
 rpc('fc_refeicoes_publicas').then(r=>{ REFS = r||[]; desenharRefs(); }).catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
 carregarItens().catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
 const abrirParte = (cb, box)=>{ $(box).hidden = !$(cb).checked; $('#erro').textContent=''; };
@@ -162,11 +173,13 @@ $('#enviar').onclick = async ()=>{
   if(!vol && !doar) return erro('Marque se quer ser voluntário, doar, ou os dois.');
   if(vol && !sel.size) return erro('Marque pelo menos uma refeição em que pode ajudar.');
   if(doar && !marc.size && !outro) return erro('Marque pelo menos um item para doar (ou escreva o que quer doar).');
+  if(doar){ const semQ = [...marc].filter(([id,q])=>{ const i = ITENS.find(x=>x.id===id); return !(Number(String(q).replace(',','.'))>0) && i && i.meta===null; });
+    if(semQ.length) return erro(`Diga quantos vai doar de: ${semQ.map(([id])=>ITENS.find(x=>x.id===id).nome).join(', ')}.`); }
   const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
     if(vol && !feitoVol){ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
     if(doar && !feitoDoar){
-      try{ await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(id=>({id})), p_outro:outro||null, p_obs:obs}); feitoDoar = true; }
+      try{ await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(([id,q])=>({id, quantidade:String(q||'').replace(',','.')})), p_outro:outro||null, p_obs:obs}); feitoDoar = true; }
       catch(e){ carregarItens().catch(()=>{}); throw new Error((feitoVol ? 'Seu nome como voluntário já foi registrado. Sobre a doação: ' : '') + e.message); }
     }
     const msg = vol && doar ? 'Recebemos seu nome para as refeições e a sua doação. A equipe vai falar com você pelo WhatsApp para confirmar.'
@@ -176,7 +189,7 @@ $('#enviar').onclick = async ()=>{
   }catch(e){ erro(navigator.onLine ? e.message : 'Sem internet. Tente de novo.'); }
   finally{ b.disabled = false; b.textContent = 'Enviar'; }
 };
-$('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dOutro'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Set(); feitoVol = feitoDoar = false;
+$('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dOutro'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Map(); feitoVol = feitoDoar = false;
   $('#querVol').checked = $('#querDoar').checked = false; $('#boxVol').hidden = $('#boxDoar').hidden = true;
   desenharRefs(); carregarItens().catch(()=>{}); $('#pronto').hidden = true; $('#form').hidden = false; window.scrollTo(0,0); };
 </script>
