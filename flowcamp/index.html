@@ -325,6 +325,27 @@ a.btn{text-decoration:none;display:inline-block}
   </div>
 </div>
 
+<!-- Participante -->
+<div class="modal" id="paModal">
+  <div class="sheet">
+    <h3>Corrigir participante</h3>
+    <p class="hint" style="margin:0 0 4px">A correção fica salva aqui e não é desfeita quando a planilha for importada de novo.</p>
+    <label class="lb" for="peNome">Nome completo</label><input class="field" id="peNome" autocomplete="off">
+    <div class="grid2">
+      <div><label class="lb" for="peNasc">Data de nascimento</label><input class="field" id="peNasc" type="date"></div>
+      <div><label class="lb" for="peResp">Responsável</label><input class="field" id="peResp" autocomplete="off"></div>
+    </div>
+    <label class="lb" for="peTel">Telefones (separe com /)</label><input class="field" id="peTel" inputmode="tel" autocomplete="off" placeholder="47 99999-1111 / 47 98888-2222">
+    <label class="lb" for="peAlerg">Alergia ou necessidade especial</label><input class="field" id="peAlerg" autocomplete="off" placeholder="Deixe em branco se não tiver">
+    <label class="lb" for="peObs">Observação da inscrição</label><input class="field" id="peObs" autocomplete="off">
+    <label class="lb" for="peEq">Anotação da equipe</label><input class="field" id="peEq" autocomplete="off" placeholder="Ex.: confirmado com a mãe por telefone">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="peSalvar" type="button">Salvar correção</button>
+      <button class="btn" id="peFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirmação -->
 <div class="modal" id="confModal">
   <div class="sheet">
@@ -539,12 +560,30 @@ function renderParticipantes(){
   if(paFiltro==='atencao') l = l.filter(p=>atencaoDe(p).length);
   $('#paConta').textContent = `${l.length} de ${P.length}`;
   $('#paLista').innerHTML = l.map(p=>{ const i = idadeNoEvento(p.nascimento), at = atencaoDe(p), fs = fonesDe(p.telefones);
-    return `<div class="item"><div class="t"><b>${esc(nomeBonito(p.nome))}</b> ${i!=null?`<span class="tag">${i} anos</span>`:''} ${p.alergias?`<span class="tag alerg">⚠️ ${esc(p.alergias)}</span>`:''}
-      <div>Responsável: ${esc(p.responsavel||'—')}</div>
+    const nasc = p.nascimento ? p.nascimento.split('-').reverse().join('/') : '';
+    return `<div class="item"><div class="t"><b>${esc(nomeBonito(p.nome))}</b> ${i!=null?`<span class="tag">${i} anos</span>`:''}${p.corrigido?' <span class="tag">corrigido</span>':''} ${p.alergias?`<span class="tag alerg">⚠️ ${esc(p.alergias)}</span>`:''}
+      <div>${nasc?`Nascimento: ${nasc} · `:''}Responsável: ${esc(p.responsavel||'—')}</div>
       <div>${fs.length ? fs.map(f=>{ const w = waFone(f); return w ? `<a href="${w}" target="_blank" rel="noopener">📱 ${esc(f.txt)}</a>` : `<span title="${f.semDDD?'sem DDD':'confira o número'}">${esc(f.txt)} <small>(${f.semDDD?'sem DDD':'confira'})</small></span>`; }).join(' · ') : `<span style="color:var(--danger)">Telefone: “${esc(p.telefones||'—')}”</span>`}</div>
-      ${p.obs?`<div>📝 ${esc(p.obs)}</div>`:''}${at.length?`<div style="color:#8a5a00">⚠️ ${esc(at.join(' · '))}</div>`:''}</div></div>`; }).join('') || `<p class="vazio">${P.length?'Ninguém encontrado.':'Nenhum participante ainda.'}</p>`;
+      ${p.obs?`<div>📝 ${esc(p.obs)}</div>`:''}${p.observacao_equipe?`<div>🗒️ ${esc(p.observacao_equipe)}</div>`:''}${at.length?`<div style="color:#8a5a00">⚠️ ${esc(at.join(' · '))}</div>`:''}</div>
+      ${eu.admin?`<div class="a"><button class="btn sm" data-paed="${p.id}" type="button">Corrigir</button></div>`:''}</div>`; }).join('') || `<p class="vazio">${P.length?'Ninguém encontrado.':'Nenhum participante ainda.'}</p>`;
 }
 $('#paBusca').oninput = renderParticipantes;
+let paEdit = null;
+document.addEventListener('click', e=>{ const b = e.target.closest('[data-paed]'); if(b) abrirParticipante(b.dataset.paed); });
+function abrirParticipante(id){
+  const p = (D.participantes||[]).find(x=>x.id===id); if(!p) return; paEdit = id;
+  $('#peNome').value = nomeBonito(p.nome); $('#peNasc').value = p.nascimento||''; $('#peResp').value = p.responsavel||''; $('#peTel').value = p.telefones||'';
+  $('#peAlerg').value = p.alergias||''; $('#peObs').value = p.obs||''; $('#peEq').value = p.observacao_equipe||'';
+  abrir('#paModal'); }
+$('#peFechar').onclick = ()=>fechar('#paModal');
+$('#peSalvar').onclick = async ()=>{
+  const nome = limpa($('#peNome').value); if(!nome){ toast('O nome não pode ficar vazio','var(--danger)'); return; }
+  const row = {nome, nascimento:$('#peNasc').value||null, responsavel:limpa($('#peResp').value)||null, telefones:limpa($('#peTel').value)||null,
+    alergias:limpa($('#peAlerg').value)||null, obs:limpa($('#peObs').value)||null, observacao_equipe:limpa($('#peEq').value)||null, corrigido:true, atualizado_em:new Date().toISOString()};
+  try{ await sb('/fc_participantes?id=eq.'+paEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    await carregarTudo(); fechar('#paModal'); render(); toast('Participante corrigido'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+};
 $$('#paFiltros [data-pf]').forEach(b=>b.onclick=()=>{ paFiltro = b.dataset.pf; $$('#paFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderParticipantes(); });
 function lerCsv(txt){ const rows = []; let row = [], cel = '', q = false;
   for(let i=0;i<txt.length;i++){ const c = txt[i];
@@ -561,12 +600,13 @@ $('#paCsv').onchange = async e=>{
     const col = re => h.findIndex(x=>re.test(x));
     const c = {ts:col(/carimbo|data\/hora/), nome:col(/nome completo|participante/), nasc:col(/nascimento/), tel:col(/telefone/), resp:col(/responsavel/), alerg:col(/alergia|necessidade/), obs:col(/observ/)};
     if(c.nome<0) throw new Error('Não achei a coluna do nome do participante.');
-    const lin = rows.slice(1).map(r=>{ const nome = (r[c.nome]||'').replace(/\s+/g,' ').trim(); if(!nome) return null; const nasc = dataBr(r[c.nasc])?.d || null;
+    let lin = rows.slice(1).map(r=>{ const nome = (r[c.nome]||'').replace(/\s+/g,' ').trim(); if(!nome) return null; const nasc = dataBr(r[c.nasc])?.d || null;
       return {chave:`${nome.toLowerCase()}|${nasc||''}`, nome, nascimento:nasc, telefones:(r[c.tel]||'').replace(/\s*[\r\n]+\s*/g,' / ').replace(/\s+/g,' ').trim()||null, responsavel:(r[c.resp]||'').trim()||null,
         alergias:semNao(r[c.alerg]), obs:c.obs>=0?semNao(r[c.obs]):null, inscrito_em:c.ts>=0?dataBr(r[c.ts])?.ts:null, atualizado_em:new Date().toISOString()}; }).filter(Boolean);
-    const antes = (D.participantes||[]).length;
-    await sb('/fc_participantes?on_conflict=chave', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(lin)});
-    await carregarTudo(); render(); toast(`${D.participantes.length - antes} novo(s) participante(s); ${lin.length} conferidos na planilha`, undefined, 4500);
+    const antes = (D.participantes||[]).length, corrigidos = new Set((D.participantes||[]).filter(p=>p.corrigido).map(p=>p.chave));
+    const pulados = lin.filter(l=>corrigidos.has(l.chave)).length; lin = lin.filter(l=>!corrigidos.has(l.chave));
+    if(lin.length) await sb('/fc_participantes?on_conflict=chave', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(lin)});
+    await carregarTudo(); render(); toast(`${D.participantes.length - antes} novo(s) participante(s)${pulados?` · ${pulados} corrigido(s) por vocês mantido(s)`:''}`, undefined, 4500);
   }catch(err){ toast('Não consegui importar: '+err.message,'var(--danger)', 5000); }
   e.target.value = '';
 };
