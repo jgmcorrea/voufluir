@@ -123,6 +123,9 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .qrin img{width:150px;border-radius:10px;border:1px solid var(--line)}
 @media(max-width:480px){.qrin{grid-template-columns:1fr}.qrin img{width:180px;margin:0 auto}}
 a.btn{text-decoration:none;display:inline-block}
+
+.alerta{background:#fff3e8;border:1.5px solid #f2b37f;color:#7a3a0a;border-radius:14px;padding:10px 14px;margin-bottom:12px;font-size:14.5px;line-height:1.5}
+.tag.alerg{background:#fde3d6;color:#9b3510}
 </style>
 </head>
 <body>
@@ -136,6 +139,7 @@ a.btn{text-decoration:none;display:inline-block}
   </div>
   <nav id="nav">
     <button data-v="painel" class="on" type="button">Resumo</button>
+    <button data-v="participantes" type="button">Participantes</button>
     <button data-v="doacoes" type="button">Doações</button>
     <button data-v="voluntarios" type="button">Voluntários</button>
     <button data-v="lista" type="button">O que precisamos</button>
@@ -153,6 +157,27 @@ a.btn{text-decoration:none;display:inline-block}
     </div>
     <div class="secao">Refeições</div>
     <div id="refs"></div>
+  </section>
+
+  <!-- PARTICIPANTES -->
+  <section class="view" id="v-participantes">
+    <div class="kpis" id="paKpis"></div>
+    <div id="paAvisos"></div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Participantes</h3><span class="hint" id="paConta"></span></div>
+      <input class="field" id="paBusca" type="search" placeholder="Buscar participante ou responsável…" style="margin-top:10px" autocomplete="off">
+      <div class="filtros" id="paFiltros">
+        <button type="button" class="chipsel on" data-pf="todos">Todos</button>
+        <button type="button" class="chipsel" data-pf="alergia">Com alergia / restrição</button>
+        <button type="button" class="chipsel" data-pf="atencao">Precisa de atenção</button>
+      </div>
+      <div id="paLista"></div>
+    </div>
+    <div class="card" id="paImport" hidden>
+      <h3>Atualizar com novas inscrições</h3>
+      <p class="hint" style="margin:0 0 8px">Na planilha de respostas do Google: <b>Arquivo → Fazer download → Valores separados por vírgula (.csv)</b>. Depois escolha o arquivo aqui. Quem já está na lista não é duplicado. Ou peça ao Claude para atualizar direto da planilha.</p>
+      <input type="file" id="paCsv" accept=".csv,text/csv" class="field">
+    </div>
   </section>
 
   <!-- DOAÇÕES -->
@@ -417,12 +442,12 @@ $('#loginForm').onsubmit = async e=>{
 };
 
 /* ---------- dados ---------- */
-let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[]});
+let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[], participantes:[]});
 async function carregarTudo(){
-  const [refeicoes, itens, doacoes, voluntarios] = await Promise.all([
+  const [refeicoes, itens, doacoes, voluntarios, participantes] = await Promise.all([
     sb('/fc_refeicoes?select=*&order=ordem'), sb('/fc_itens?select=*&order=ordem,criado_em'),
-    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em')]);
-  D = {refeicoes, itens, doacoes, voluntarios}; save(K.cache, D);
+    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em'), sb('/fc_participantes?select=*&order=nome')]);
+  D = {refeicoes, itens, doacoes, voluntarios, participantes}; save(K.cache, D);
 }
 const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
 const refDe = id => D.refeicoes.find(r=>r.id===id);
@@ -447,7 +472,7 @@ function irPara(v){
 }
 $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 function render(){
-  ({painel:renderPainel, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, acessos:renderAcessos}[vista]||renderPainel)();
+  ({painel:renderPainel, participantes:renderParticipantes, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, acessos:renderAcessos}[vista]||renderPainel)();
   $('#dlNomes').innerHTML = [...new Set([...D.doacoes.map(d=>d.doador), ...D.voluntarios.map(v=>v.nome)])].sort().map(n=>`<option value="${esc(n)}">`).join('');
 }
 
@@ -462,8 +487,10 @@ function renderPainel(){
   const aReceber = D.doacoes.filter(d=>d.status==='prometido').length;
   $('#kpis').innerHTML = [
     [`${preench}/${vagas}`, 'vagas já escaladas'], [pessoas, 'pessoas se ofereceram para ajudar'],
-    [D.doacoes.length, `doações (${aReceber} a receber)`], [brl(dinheiro), 'em dinheiro']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
-  $('#refs').innerHTML = porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{
+    [(D.participantes||[]).length, 'participantes inscritos'], [D.doacoes.length, `doações (${aReceber} a receber)`], [brl(dinheiro), 'em dinheiro']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  const restr = (D.participantes||[]).filter(p=>p.alergias);
+  const avisoCozinha = restr.length ? `<div class="alerta"><b>⚠️ Atenção na cozinha e no cuidado:</b> ${restr.map(p=>`${esc(primeiroNome(p.nome))} — ${esc(p.alergias)}`).join(' · ')}</div>` : '';
+  $('#refs').innerHTML = avisoCozinha + porDia().map(([dia, rs])=>`<div class="dia"><h4>${esc(diaTxt(dia))}</h4>${rs.map(r=>{
     const vs = volsDe(r.id), es = escDe(r.id), cheia = es.length >= (r.vagas||0), its = D.itens.filter(i=>i.refeicao_id===r.id);
     return `<div class="ref"><div class="rh"><b>${TIPOS[r.tipo]}${r.hora?` · ${esc(r.hora)}`:''}</b><span class="tag ${cheia?'ok':'pend'}">${es.length}/${r.vagas||0} escalados</span></div>
       ${r.cardapio?`<div class="card-txt">🍽️ ${esc(r.cardapio)}</div>`:''}
@@ -482,6 +509,65 @@ $('#zapBtn').onclick = async ()=>{
   const txt = linhas.join('\n');
   try{ await navigator.clipboard.writeText(txt); toast('Mensagem copiada. É só colar no WhatsApp.'); }
   catch(e){ await perguntar('Copie a mensagem', txt, {sim:'Ok'}); }
+};
+
+/* ---------- participantes (vindos da planilha de inscrição) ---------- */
+const IDADE_MIN = 10, IDADE_MAX = 17;
+const primeiroNome = n => String(n||'').split(' ')[0];
+const nomeBonito = n => String(n||'').toLowerCase().replace(/(^|\s)(\S)/g, (m,a,b)=>a+b.toUpperCase()).replace(/ (De|Da|Do|Dos|Das|E) /g, m=>m.toLowerCase());
+const idadeNoEvento = d => { if(!d) return null; const n = deISO(d), e = deISO(INICIO); let i = e.getFullYear()-n.getFullYear(); if(e.getMonth()<n.getMonth() || (e.getMonth()===n.getMonth() && e.getDate()<n.getDate())) i--; return i; };
+// separa "47 9999-1111 / 47 98888-2222", "(47)9.. (47)9..", "… e …", "… ou …" em telefones; ok = tem DDD e tamanho certo
+const fonesDe = t => String(t||'').split(/\s*(?:\/|\bou\b|\be\b|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/i).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
+  .map(x=>{ const n = x.replace(/\D/g,''); return {txt:x, ok: n.length===10 || n.length===11 || (n.length===13 && n.startsWith('55')), semDDD: n.length===8 || n.length===9, n}; });
+const waFone = f => f.ok ? `https://wa.me/${f.n.length<=11 ? '55'+f.n : f.n}` : null;
+function atencaoDe(p){ const a = [], i = idadeNoEvento(p.nascimento);
+  if(i!=null && (i<IDADE_MIN || i>IDADE_MAX)) a.push(`${i} anos no evento (faixa ${IDADE_MIN}–${IDADE_MAX})`);
+  const fs = fonesDe(p.telefones);
+  if(!fs.length) a.push('sem telefone'); else if(!fs.some(f=>f.ok)) a.push('telefone sem DDD ou incompleto'); else if(fs.some(f=>!f.ok && !f.semDDD)) a.push('um dos telefones está com dígitos a mais ou a menos');
+  return a; }
+let paFiltro = 'todos';
+function renderParticipantes(){
+  const P = D.participantes||[]; $('#paImport').hidden = !eu.admin;
+  const idades = P.map(p=>idadeNoEvento(p.nascimento)).filter(x=>x!=null);
+  $('#paKpis').innerHTML = [[P.length,'inscritos'], [P.filter(p=>p.alergias).length,'com alergia / restrição'], [idades.length?`${Math.min(...idades)}–${Math.max(...idades)}`:'–','anos (idade no evento)'], [P.filter(p=>atencaoDe(p).length).length,'precisam de atenção']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  const restr = P.filter(p=>p.alergias);
+  $('#paAvisos').innerHTML = restr.length ? `<div class="alerta"><b>⚠️ Alergias e restrições</b>${restr.map(p=>`<div>${esc(nomeBonito(p.nome))} — <b>${esc(p.alergias)}</b></div>`).join('')}</div>` : '';
+  const q = semAcento($('#paBusca').value);
+  let l = P.filter(p=>!q || semAcento(p.nome+' '+(p.responsavel||'')).includes(q));
+  if(paFiltro==='alergia') l = l.filter(p=>p.alergias);
+  if(paFiltro==='atencao') l = l.filter(p=>atencaoDe(p).length);
+  $('#paConta').textContent = `${l.length} de ${P.length}`;
+  $('#paLista').innerHTML = l.map(p=>{ const i = idadeNoEvento(p.nascimento), at = atencaoDe(p), fs = fonesDe(p.telefones);
+    return `<div class="item"><div class="t"><b>${esc(nomeBonito(p.nome))}</b> ${i!=null?`<span class="tag">${i} anos</span>`:''} ${p.alergias?`<span class="tag alerg">⚠️ ${esc(p.alergias)}</span>`:''}
+      <div>Responsável: ${esc(p.responsavel||'—')}</div>
+      <div>${fs.length ? fs.map(f=>{ const w = waFone(f); return w ? `<a href="${w}" target="_blank" rel="noopener">📱 ${esc(f.txt)}</a>` : `<span title="${f.semDDD?'sem DDD':'confira o número'}">${esc(f.txt)} <small>(${f.semDDD?'sem DDD':'confira'})</small></span>`; }).join(' · ') : `<span style="color:var(--danger)">Telefone: “${esc(p.telefones||'—')}”</span>`}</div>
+      ${p.obs?`<div>📝 ${esc(p.obs)}</div>`:''}${at.length?`<div style="color:#8a5a00">⚠️ ${esc(at.join(' · '))}</div>`:''}</div></div>`; }).join('') || `<p class="vazio">${P.length?'Ninguém encontrado.':'Nenhum participante ainda.'}</p>`;
+}
+$('#paBusca').oninput = renderParticipantes;
+$$('#paFiltros [data-pf]').forEach(b=>b.onclick=()=>{ paFiltro = b.dataset.pf; $$('#paFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderParticipantes(); });
+function lerCsv(txt){ const rows = []; let row = [], cel = '', q = false;
+  for(let i=0;i<txt.length;i++){ const c = txt[i];
+    if(q){ if(c==='"'){ if(txt[i+1]==='"'){ cel+='"'; i++; } else q = false; } else cel += c; }
+    else if(c==='"') q = true; else if(c===','){ row.push(cel); cel=''; } else if(c==='\n' || c==='\r'){ if(c==='\r' && txt[i+1]==='\n') i++; row.push(cel); rows.push(row); row=[]; cel=''; } else cel += c; }
+  if(cel || row.length){ row.push(cel); rows.push(row); } return rows.filter(r=>r.some(x=>x.trim())); }
+const dataBr = s => { const m = String(s||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/); if(!m) return null; const p = x=>String(x).padStart(2,'0');
+  return {d:`${m[3]}-${p(m[2])}-${p(m[1])}`, ts: m[4] ? `${m[3]}-${p(m[2])}-${p(m[1])}T${p(m[4])}:${m[5]}:${p(m[6]||0)}-03:00` : null}; };
+const semNao = t => { const x = String(t||'').trim(); return /^(n[aã]o|n|nenhum[a]?|-)?\.?$/i.test(x) ? null : x; };
+$('#paCsv').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const rows = lerCsv(await f.text()); const h = rows[0].map(x=>semAcento(x));
+    const col = re => h.findIndex(x=>re.test(x));
+    const c = {ts:col(/carimbo|data\/hora/), nome:col(/nome completo|participante/), nasc:col(/nascimento/), tel:col(/telefone/), resp:col(/responsavel/), alerg:col(/alergia|necessidade/), obs:col(/observ/)};
+    if(c.nome<0) throw new Error('Não achei a coluna do nome do participante.');
+    const lin = rows.slice(1).map(r=>{ const nome = (r[c.nome]||'').replace(/\s+/g,' ').trim(); if(!nome) return null; const nasc = dataBr(r[c.nasc])?.d || null;
+      return {chave:`${nome.toLowerCase()}|${nasc||''}`, nome, nascimento:nasc, telefones:(r[c.tel]||'').replace(/\s*[\r\n]+\s*/g,' / ').replace(/\s+/g,' ').trim()||null, responsavel:(r[c.resp]||'').trim()||null,
+        alergias:semNao(r[c.alerg]), obs:c.obs>=0?semNao(r[c.obs]):null, inscrito_em:c.ts>=0?dataBr(r[c.ts])?.ts:null, atualizado_em:new Date().toISOString()}; }).filter(Boolean);
+    const antes = (D.participantes||[]).length;
+    await sb('/fc_participantes?on_conflict=chave', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(lin)});
+    await carregarTudo(); render(); toast(`${D.participantes.length - antes} novo(s) participante(s); ${lin.length} conferidos na planilha`, undefined, 4500);
+  }catch(err){ toast('Não consegui importar: '+err.message,'var(--danger)', 5000); }
+  e.target.value = '';
 };
 
 /* ---------- doações ---------- */
