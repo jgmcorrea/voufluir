@@ -539,7 +539,7 @@ const primeiroNome = n => String(n||'').split(' ')[0];
 const nomeBonito = n => String(n||'').toLowerCase().replace(/(^|\s)(\S)/g, (m,a,b)=>a+b.toUpperCase()).replace(/ (De|Da|Do|Dos|Das|E) /g, m=>m.toLowerCase());
 const idadeNoEvento = d => { if(!d) return null; const n = deISO(d), e = deISO(INICIO); let i = e.getFullYear()-n.getFullYear(); if(e.getMonth()<n.getMonth() || (e.getMonth()===n.getMonth() && e.getDate()<n.getDate())) i--; return i; };
 // separa "47 9999-1111 / 47 98888-2222", "(47)9.. (47)9..", "… e …", "… ou …" em telefones; ok = tem DDD e tamanho certo
-const fonesDe = t => String(t||'').split(/\s*(?:\/|\bou\b|\be\b|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/i).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
+const fonesDe = t => String(t||'').split(/\s*(?:\/|\||\bou\b|\be\b|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/i).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
   .map(x=>{ const n = x.replace(/\D/g,''); return {txt:x, ok: n.length===10 || n.length===11 || (n.length===13 && n.startsWith('55')), semDDD: n.length===8 || n.length===9, n}; });
 const waFone = f => f.ok ? `https://wa.me/${f.n.length<=11 ? '55'+f.n : f.n}` : null;
 function atencaoDe(p){ const a = [], i = idadeNoEvento(p.nascimento);
