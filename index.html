@@ -292,6 +292,16 @@ nav button{flex:1 0 auto;padding:11px 12px}
 .pay .doabtn{grid-column:1/-1;background:#f1ecfb}
 .pay .doabtn.on{border-color:#7a55c7;background:#e4daf7}
 .tag.doa{background:#efe7ff;color:#5b3aa8}
+
+.cfgcor{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:#fff;padding:5px;flex:none;cursor:pointer}
+.cfgcor span{display:block;width:100%;height:100%;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.cfgcor .semcor{background:repeating-linear-gradient(45deg,#eee 0 4px,#fff 4px 8px)}
+.paleta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:10px 0 12px;border-bottom:1px solid var(--line)}
+.paleta .hint{flex-basis:100%;margin:0}
+.paleta .hint:last-child{flex-basis:auto}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid rgba(0,0,0,.15);cursor:pointer}
+.sw.on{outline:3px solid var(--accent);outline-offset:2px}
+.sw.sem{background:#fff;color:#888;font-weight:700}
 </style>
 </head>
 <body>
@@ -598,9 +608,7 @@ nav button{flex:1 0 auto;padding:11px 12px}
 </div>
 
 <div class="toast" id="toast"></div>
-
-<script>
-/* =========================================================
+<script>/* =========================================================
    Caixa Movimento Vou Fluir — v2
    Caixa do ano todo + eventos · login por pessoa · fiado por pessoa · estoque
    ========================================================= */
@@ -626,8 +634,16 @@ const CORES = {
   aguag:['#43AFCB','#ffffff','azul'], suco:['#111A2A','#ffffff','preto'], pipoca:['#4E9F69','#ffffff','verde'],
   picole:['#9B3CA6','#ffffff','roxo'], gelad:['#C6C62A','#ffffff','amarelo'], pacoca:['#1F4A5E','#ffffff','azul-petróleo']
 };
-const corStyle = id => { const c = CORES[id]; return c ? `style="--cbg:${c[0]};--cfg:${c[1]}"` : ''; };
-const corChip = id => { const c = CORES[id]; return c ? `<span class="cchip" style="background:${c[0]}" title="Cartão ${c[2]}"></span>` : ''; };
+// cores dos cartões que a pessoa recebe ao pagar; cada produto pode ter a sua (p.cor), senão vale a padrão acima
+const PALETA = {
+  branco:['#ffffff','#1d2a36'], cinza:['#A9A7AD','#ffffff'], preto:['#111A2A','#ffffff'], vermelho:['#D23A3A','#ffffff'], laranja:['#EE7B4F','#ffffff'],
+  amarelo:['#C6C62A','#ffffff'], verde:['#4E9F69','#ffffff'], azul:['#43AFCB','#ffffff'], 'azul-petróleo':['#1F4A5E','#ffffff'], roxo:['#9B3CA6','#ffffff'],
+  rosa:['#E86FA5','#ffffff'], marrom:['#7A4E2D','#ffffff']
+};
+const corDe = p => { if(!p) return null; if(p.cor==='sem') return null; if(p.cor && PALETA[p.cor]) return [...PALETA[p.cor], p.cor]; return CORES[p.id] || null; };
+const prodDe = x => typeof x==='string' ? ((typeof produtos!=='undefined' && produtos.find(p=>p.id===x)) || {id:x}) : x;
+const corStyle = x => { const c = corDe(prodDe(x)); return c ? `style="--cbg:${c[0]};--cfg:${c[1]}"` : ''; };
+const corChip = x => { const c = corDe(prodDe(x)); return c ? `<span class="cchip" style="background:${c[0]}" title="Cartão ${c[2]}"></span>` : ''; };
 const TIPOS = {
   livro:    {pid:'livro',    nome:'Livro',          ico:'📚', ph:'Título do livro'},
   biblia:   {pid:'biblia',   nome:'Bíblia',         ico:'📖', ph:'Qual Bíblia (ex.: NVI letra grande)'},
@@ -992,7 +1008,7 @@ function renderCatalogo(){
   $('#catalogo').innerHTML = cats.map(c=>{
     const ps = produtos.filter(p=>(p.cat||'Outros')===c); if(!ps.length) return '';
     return `<div class="group"><h3>${esc(c)}</h3><div class="grid">${ps.map(p=>`
-      <button class="prod ${p.preco==null?'free':''} ${CORES[p.id]?'cor':''} ${p.id==='cafe'?'branco':''}" data-id="${p.id}" ${corStyle(p.id)}>
+      <button class="prod ${p.preco==null?'free':''} ${corDe(p)?'cor':''} ${corDe(p)?.[2]==='branco'?'branco':''}" data-id="${p.id}" ${corStyle(p)}>
         ${qtdPor[p.id]?`<span class="q">${qtdPor[p.id]}</span>`:''}
         <span class="n">${esc(p.nome)}</span>
         <span class="p">${p.preco==null?'Digitar valor':brl(p.preco)}</span>
@@ -1102,7 +1118,7 @@ $('#finalizar').onclick = ()=>{
   pendentes.push(venda); save(K.q, pendentes);
   const agora = new Date().toISOString();
   peds.forEach(id=>{ setPedido(id, {status:'pago', venda_id:venda.id, pago_em:agora}); if(vistos) vistos[id]='pago'; });
-  const cart = {}; carrinho.forEach(l=>{ const c=CORES[l.pid]; if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
+  const cart = {}; carrinho.forEach(l=>{ if(l.pedido) return; const c = corDe(prodDe(l.pid)); if(c) cart[c[2]]=(cart[c[2]]||0)+l.qtd; });
   const txtCart = Object.entries(cart).map(([n,q])=>`${q} ${n}`).join(', ');
   toast((metodo==='Doação' ? `🎁 Doação registrada · ${brl(total)} em itens${venda.doacao_obs?' · '+venda.doacao_obs:''}` : metodo==='Fiado' ? `📝 Fiado na conta de ${venda.fiado_nome} · ${brl(total)}` : metodo==='Dinheiro' && venda.troco>0 ? `Venda ok · Troco ${brl(venda.troco)}` : `Venda registrada · ${brl(total)}${peds.length?' · livraria avisada':''}`) + (txtCart?` · Cartões: ${txtCart}`:''), undefined, txtCart?4500:2400);
   resetPedido(); atualizarTelas(); sync();
@@ -1503,21 +1519,26 @@ $('#csv').onclick = async ()=>{
 /* =========================================================
    Produtos (do contexto atual)
    ========================================================= */
-let cfgProdutos = [];
+let cfgProdutos = [], cfgCor = null;
 function renderConfig(){
-  cfgProdutos = JSON.parse(JSON.stringify(produtosCtx()));
+  cfgProdutos = JSON.parse(JSON.stringify(produtosCtx())); cfgCor = null;
   desenharCfg();
 }
 function desenharCfg(){
   const cats = [...new Set([...CATS, ...cfgProdutos.map(p=>p.cat||'Outros')])];
   $('#cfgList').innerHTML = cfgProdutos.map((p,i)=>`
     <div class="cfg" data-i="${i}">
-      ${corChip(p.id)}
+      <button type="button" class="cfgcor" data-cor="${i}" aria-label="Cor do cartão de ${esc(p.nome)}" title="Cor do cartão">${corDe(p) ? `<span style="background:${corDe(p)[0]}"></span>` : '<span class="semcor"></span>'}</button>
       <input class="nm" value="${esc(p.nome)}" placeholder="Nome">
       <input class="pr" inputmode="decimal" value="${p.preco==null?'':String(p.preco).replace('.',',')}" placeholder="Variável">
       <select>${cats.map(c=>`<option ${c===(p.cat||'Outros')?'selected':''}>${esc(c)}</option>`).join('')}</select>
       <button class="link" data-del="${i}" aria-label="Apagar produto">✕</button>
-    </div>`).join('');
+    </div>${cfgCor===i ? `<div class="paleta"><span class="hint">Cor do cartão de <b>${esc(p.nome)}</b>:</span>
+      ${Object.entries(PALETA).map(([k,c])=>`<button type="button" class="sw ${corDe(p)?.[2]===k?'on':''}" data-sw="${k}" style="background:${c[0]}" title="${k}" aria-label="${k}"></button>`).join('')}
+      <button type="button" class="sw sem ${!corDe(p)?'on':''}" data-sw="sem" title="sem cartão" aria-label="sem cartão">✕</button>
+      <span class="hint">${corDe(p) ? 'cartão '+corDe(p)[2] : 'sem cartão'}</span></div>` : ''}`).join('');
+  $$('#cfgList [data-cor]').forEach(b=>b.onclick=()=>{ lerConfig(); cfgCor = cfgCor===+b.dataset.cor ? null : +b.dataset.cor; desenharCfg(); });
+  $$('#cfgList [data-sw]').forEach(b=>b.onclick=()=>{ lerConfig(); cfgProdutos[cfgCor].cor = b.dataset.sw; desenharCfg(); });
   $$('#cfgList [data-del]').forEach(b=>b.onclick=()=>{ lerConfig(); cfgProdutos.splice(+b.dataset.del,1); desenharCfg(); });
 }
 function lerConfig(){
@@ -1526,7 +1547,7 @@ function lerConfig(){
 }
 $('#addProd').onclick = ()=>{ lerConfig(); cfgProdutos.push({id:'p'+Date.now(), nome:'Novo produto', preco:null, cat:'Comida'}); desenharCfg(); };
 $('#salvarCfg').onclick = async ()=>{
-  lerConfig();
+  lerConfig(); cfgCor = null;
   try{
     if(ctx==='perm') await sb('/vf_caixa_config', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({id:'produtos', valor:cfgProdutos, atualizado_em:new Date().toISOString()})});
     else await sb('/vf_eventos?id=eq.'+ctx, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({produtos:cfgProdutos})});
