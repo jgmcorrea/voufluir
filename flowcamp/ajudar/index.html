@@ -66,6 +66,8 @@ label.lb,.lb{display:block;font-size:14px;font-weight:600;margin:16px 0 6px}
 .qrow label{color:var(--muted);flex:1}
 .qrow input{width:84px;padding:9px 8px;border:1.5px solid var(--brand);border-radius:10px;text-align:center;font-size:16px}
 .qrow span{color:var(--muted);min-width:28px}
+.chip .vg{color:var(--accent);font-weight:700}
+.chip.on .vg{color:inherit}
 .n small .falta{color:var(--accent);font-weight:700}
 .parte{border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:16px}
 .parte:has(input:checked){border-color:var(--brand);background:#f6faf1}
@@ -135,13 +137,27 @@ async function rpc(fn, body){
   const t = await r.text(); let j = null; try{ j = t ? JSON.parse(t) : null; }catch(e){}
   if(!r.ok) throw new Error(j?.message || 'Não foi possível enviar agora.'); return j;
 }
+const temVaga = r => r.vagas !== 0 && (r.faltam === null || r.faltam === undefined || Number(r.faltam) > 0);
+const nomeRef = r => { const x = new Date(r.dia+'T12:00'); return `${TIPOS[r.tipo]||r.tipo} de ${DIAS[x.getDay()].toLowerCase()}`; };
 function desenharRefs(){
-  const dias = {}; REFS.forEach(r=>(dias[r.dia] ||= []).push(r));
-  $('#refs').innerHTML = Object.entries(dias).map(([d, rs])=>{ const x = new Date(d+'T12:00');
-    return `<div class="dia"><b>${DIAS[x.getDay()]}, ${x.getDate()}/${x.getMonth()+1}</b><div class="chips">${rs.map(r=>`<button type="button" class="chip ${sel.has(r.id)?'on':''}" data-r="${esc(r.id)}" aria-pressed="${sel.has(r.id)}">${TIPOS[r.tipo]||r.tipo}${r.hora?` <small>${esc(r.hora)}</small>`:''}</button>`).join('')}</div></div>`; }).join('');
+  const abertas = REFS.filter(temVaga), dias = {}; abertas.forEach(r=>(dias[r.dia] ||= []).push(r));
+  $('#refs').innerHTML = abertas.length ? Object.entries(dias).map(([d, rs])=>{ const x = new Date(d+'T12:00');
+    return `<div class="dia"><b>${DIAS[x.getDay()]}, ${x.getDate()}/${x.getMonth()+1}</b><div class="chips">${rs.map(r=>`<button type="button" class="chip ${sel.has(r.id)?'on':''}" data-r="${esc(r.id)}" aria-pressed="${sel.has(r.id)}">${TIPOS[r.tipo]||r.tipo}${r.hora?` <small>${esc(r.hora)}</small>`:''}${r.faltam!=null?` <small class="vg">· ${Number(r.faltam)===1?'falta 1':'faltam '+Number(r.faltam)}</small>`:''}</button>`).join('')}</div></div>`; }).join('')
+    : '<p class="hint">🙌 Todas as vagas de voluntário já foram preenchidas. Obrigado! Você ainda pode ajudar com uma doação.</p>';
   document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ sel.has(b.dataset.r) ? sel.delete(b.dataset.r) : sel.add(b.dataset.r); $('#erro').textContent=''; desenharRefs(); });
+  $('#funs').closest('#boxVol').querySelectorAll('.lb')[1].hidden = $('#funs').hidden = !abertas.length;
   $('#funs').innerHTML = FUN.map(f=>`<button type="button" class="chip ${fun===f?'on':''}" data-f="${esc(f)}" aria-pressed="${fun===f}">${esc(f)}</button>`).join('');
   document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{ fun = fun===b.dataset.f ? '' : b.dataset.f; desenharRefs(); });
+}
+// atualiza as vagas sozinho: quando alguém preenche a última vaga de uma refeição, ela some para todo mundo
+let refsJson = '';
+async function carregarRefs(){
+  const r = await rpc('fc_refeicoes_publicas'), j = JSON.stringify(r||[]);
+  if(j === refsJson) return; refsJson = j; REFS = r||[];
+  const sairam = [...sel].map(id=>REFS.find(x=>x.id===id)).filter(x=>!x || !temVaga(x));
+  sairam.forEach(x=>{ if(x) sel.delete(x.id); });
+  if(sairam.length && !$('#form').hidden) $('#erro').textContent = `A vaga de ${sairam.filter(Boolean).map(nomeRef).join(', ')} acabou de ser preenchida por outra pessoa e saiu da lista.`;
+  desenharRefs();
 }
 const fmtQ = n => (Math.round(Number(n)*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
@@ -155,8 +171,18 @@ function desenharItens(){
   document.querySelectorAll('[data-q]').forEach(x=>x.oninput=()=>{ marc.set(x.dataset.q, x.value); });
 }
 const carregarItens = ()=> rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
-rpc('fc_refeicoes_publicas').then(r=>{ REFS = r||[]; desenharRefs(); }).catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
+carregarRefs().catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
 carregarItens().catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
+let itensJson = '';
+function atualizar(){
+  if(document.hidden || $('#form').hidden) return;
+  carregarRefs().catch(()=>{});
+  rpc('fc_itens_publicos').then(r=>{ const j = JSON.stringify(r||[]); if(j === itensJson) return;
+    if(document.activeElement?.dataset?.q) return;   // não atrapalha quem está digitando a quantidade
+    itensJson = j; ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); }).catch(()=>{});
+}
+setInterval(atualizar, 6000);
+document.addEventListener('visibilitychange', atualizar);
 const abrirParte = (cb, box)=>{ $(box).hidden = !$(cb).checked; $('#erro').textContent=''; };
 $('#querVol').onchange = ()=>abrirParte('#querVol', '#boxVol');
 $('#querDoar').onchange = ()=>abrirParte('#querDoar', '#boxDoar');
@@ -180,7 +206,8 @@ $('#enviar').onclick = async ()=>{
     if(demais.length) return erro(demais.map(([i])=>`De ${i.nome} faltam só ${fmtQ(i.faltam)} ${i.unidade}.`).join(' ') + ' Se quiser ajudar com mais, escolha outro item ou escreva em “outra coisa”.'); }
   const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
-    if(vol && !feitoVol){ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
+    if(vol && !feitoVol){ try{ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
+      catch(e){ refsJson = ''; await carregarRefs().catch(()=>{}); throw e; } }
     if(doar && !feitoDoar){
       try{ await rpc('fc_doar', {p_nome:nome, p_telefone:tel, p_itens:[...marc].map(([id,q])=>({id, quantidade:String(q||'').replace(',','.')})), p_outro:outro||null, p_obs:obs}); feitoDoar = true; }
       catch(e){ carregarItens().catch(()=>{}); throw new Error((feitoVol ? 'Seu nome como voluntário já foi registrado. Sobre a doação: ' : '') + e.message); }
@@ -194,7 +221,7 @@ $('#enviar').onclick = async ()=>{
 };
 $('#outro').onclick = ()=>{ ['#nome','#tel','#obs','#dOutro'].forEach(s=>$(s).value=''); sel = new Set(); fun = ''; marc = new Map(); feitoVol = feitoDoar = false;
   $('#querVol').checked = $('#querDoar').checked = false; $('#boxVol').hidden = $('#boxDoar').hidden = true;
-  desenharRefs(); carregarItens().catch(()=>{}); $('#pronto').hidden = true; $('#form').hidden = false; window.scrollTo(0,0); };
+  refsJson = ''; carregarRefs().catch(()=>{}); carregarItens().catch(()=>{}); $('#pronto').hidden = true; $('#form').hidden = false; window.scrollTo(0,0); };
 </script>
 </body>
 </html>
