@@ -89,6 +89,22 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .grp::before{content:'';display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:4px;vertical-align:-3px;margin-right:6px}
 .grp.on{background:#25d366;border-color:#25d366;color:#fff}
 .grp.on::before{display:none}
+.pg{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.pg:first-child{border-top:0}
+.pg .h{flex:none;width:76px;font-weight:800;font-size:15px;color:var(--brand2);line-height:1.25}
+.pg .h small{display:block;font-weight:600;font-size:12.5px;color:var(--muted)}
+.pg .t{flex:1;min-width:0}
+.pg .t b{font-size:15.5px}
+.pg .t div{font-size:13px;color:var(--muted);margin-top:3px}
+.pg.pgref{cursor:default}
+.pg.pgref .h{color:var(--accent)}
+.pg.agora{background:#f1f8e8;border-radius:12px;padding-left:8px;padding-right:8px;border-top-color:transparent}
+.pg .pp{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.pp .tag.vol{background:#fff1d6;color:#8a5a00}
+.pp .tag.vazio{background:#fde8ea;color:var(--danger)}
+#pgPessoas{max-height:260px;overflow:auto;margin-top:8px}
+#pgPessoas .gt{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 6px}
+#pgPessoas .chips{display:flex;gap:6px;flex-wrap:wrap}
 .tkadd{background:#f7f5ef;border-radius:12px;padding:12px;margin:12px 0 4px}
 .tk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)}
 .tk:first-child{border-top:0}
@@ -158,6 +174,7 @@ a.btn{text-decoration:none;display:inline-block}
     <button data-v="voluntarios" type="button">Voluntários</button>
     <button data-v="lista" type="button">O que precisamos</button>
     <button data-v="checklist" type="button">Checklist</button>
+    <button data-v="programacao" type="button">Programação</button>
     <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
   </nav>
 </header>
@@ -255,6 +272,17 @@ a.btn{text-decoration:none;display:inline-block}
     </div>
   </section>
 
+  <!-- PROGRAMAÇÃO (dias do evento) -->
+  <section class="view" id="v-programacao">
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Programação do acampamento</h3><span class="hint" id="pgConta"></span></div>
+      <div class="filtros" id="pgDias"></div>
+      <button class="btn dark" id="pgNovo" type="button" style="margin:6px 0 4px">+ Adicionar horário</button>
+      <div id="pgLista"></div>
+      <p class="hint" style="margin:12px 0 0">🍽️ As refeições entram sozinhas, com quem foi escalado na aba Voluntários. Para mudar o horário delas, use “O que precisamos → Refeições”.</p>
+    </div>
+  </section>
+
   <!-- ACESSOS -->
   <section class="view" id="v-acessos">
     <div class="card">
@@ -345,6 +373,27 @@ a.btn{text-decoration:none;display:inline-block}
 </div>
 
 <!-- Item da lista -->
+<div class="modal" id="pgModal">
+  <div class="sheet">
+    <h3 id="pgTit">Adicionar horário</h3>
+    <label class="lb" for="pgDia">Dia</label><select class="field" id="pgDia"></select>
+    <div class="grid2">
+      <div><label class="lb" for="pgIni">Começa</label><input class="field" id="pgIni" type="time"></div>
+      <div><label class="lb" for="pgFim">Termina <small>(opcional)</small></label><input class="field" id="pgFim" type="time"></div>
+    </div>
+    <label class="lb" for="pgAtv">O que vai acontecer</label><input class="field" id="pgAtv" maxlength="200" placeholder="Ex.: Culto de abertura" autocomplete="off">
+    <label class="lb" for="pgLocal">Local <small>(opcional)</small></label><input class="field" id="pgLocal" maxlength="100" placeholder="Ex.: Salão principal" autocomplete="off">
+    <div class="lb">Quem vai estar disponível <small id="pgQtd"></small></div>
+    <input class="field" id="pgBusca" type="search" placeholder="Buscar nome…" autocomplete="off">
+    <div id="pgPessoas"></div>
+    <label class="lb" for="pgObs">Observação <small>(opcional)</small></label><input class="field" id="pgObs" maxlength="300" autocomplete="off">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="pgSalvar" type="button">Salvar</button>
+      <button class="btn" id="pgFechar" type="button">Fechar</button>
+      <button class="link red" id="pgExcluir" type="button" style="margin-left:auto" hidden>Excluir</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="tkModal">
   <div class="sheet">
     <h3>Editar tarefa</h3>
@@ -518,12 +567,12 @@ $('#loginForm').onsubmit = async e=>{
 };
 
 /* ---------- dados ---------- */
-let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[], participantes:[], tarefas:[]});
+let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[], participantes:[], tarefas:[], programacao:[]});
 async function carregarTudo(){
-  const [refeicoes, itens, doacoes, voluntarios, participantes, tarefas, equipe] = await Promise.all([
+  const [refeicoes, itens, doacoes, voluntarios, participantes, tarefas, equipe, programacao] = await Promise.all([
     sb('/fc_refeicoes?select=*&order=ordem'), sb('/fc_itens?select=*&order=ordem,criado_em'),
-    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em'), sb('/fc_participantes?select=*&order=nome'), sb('/fc_tarefas?select=*&order=criado_em').catch(()=>[]), sb('/rpc/fc_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[])]);
-  D = {refeicoes, itens, doacoes, voluntarios, participantes, tarefas, equipe}; save(K.cache, D);
+    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em'), sb('/fc_participantes?select=*&order=nome'), sb('/fc_tarefas?select=*&order=criado_em').catch(()=>[]), sb('/rpc/fc_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[]), sb('/fc_programacao?select=*&order=dia,inicio').catch(()=>D.programacao||[])]);
+  D = {refeicoes, itens, doacoes, voluntarios, participantes, tarefas, equipe, programacao}; save(K.cache, D);
 }
 const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
 const refCurto = r => `${TIPOS[r.tipo]} ${DIAS[deISO(r.dia).getDay()].slice(0,3).toLowerCase()}`;
@@ -549,7 +598,7 @@ function irPara(v){
 }
 $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 function render(){
-  ({painel:renderPainel, participantes:renderParticipantes, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, checklist:renderChecklist, acessos:renderAcessos}[vista]||renderPainel)();
+  ({painel:renderPainel, participantes:renderParticipantes, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, checklist:renderChecklist, programacao:renderProgramacao, acessos:renderAcessos}[vista]||renderPainel)();
   $('#dlNomes').innerHTML = [...new Set([...D.doacoes.map(d=>d.doador), ...D.voluntarios.map(v=>v.nome)])].sort().map(n=>`<option value="${esc(n)}">`).join('');
 }
 
@@ -930,6 +979,80 @@ $('#teSalvar').onclick = async ()=>{ const titulo = limpa($('#teTit').value); if
 $('#teExcluir').onclick = async ()=>{ const t = (D.tarefas||[]).find(x=>x.id===tkEdit); if(!t) return;
   if(!(await perguntar('Excluir tarefa?', t.titulo, {sim:'Excluir', perigo:true}))) return;
   try{ await sb('/fc_tarefas?id=eq.'+t.id, {method:'DELETE'}); await carregarTudo(); fechar('#tkModal'); renderChecklist(); toast('Tarefa excluída'); }
+  catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
+
+/* ---------- programação dos dias do evento ---------- */
+const DIAS_EVT = ['2026-12-04','2026-12-05','2026-12-06'];
+let pgDiaSel = DIAS_EVT.includes(hojeISO()) ? hojeISO() : DIAS_EVT[0], pgEdit = null, pgSel = new Set();
+const hhmm = t => t ? String(t).slice(0,5) : '';
+const horaRef = h => { const m = String(h||'').match(/(\d{1,2})\s*(?:h|:)\s*(\d{2})?/i); return m ? `${m[1].padStart(2,'0')}:${m[2]||'00'}` : null; };
+// disponíveis = quem tem acesso ao sistema + voluntários
+function pessoasDisp(){
+  const eq = [...new Set((D.equipe||[]).map(m=>limpa(m.nome)).filter(Boolean))], low = new Set(eq.map(n=>n.toLowerCase())), vs = [];
+  D.voluntarios.forEach(v=>{ const n = limpa(v.nome); if(n && !low.has(n.toLowerCase())){ low.add(n.toLowerCase()); vs.push(n); } });
+  return {equipe: eq.sort((a,b)=>a.localeCompare(b,'pt')), vols: vs.sort((a,b)=>a.localeCompare(b,'pt'))};
+}
+function itensDoDia(dia){
+  const prog = (D.programacao||[]).filter(x=>x.dia===dia).map(x=>({...x, ini:hhmm(x.inicio), tipo:'prog'}));
+  const refs = D.refeicoes.filter(r=>r.dia===dia).map(r=>({id:r.id, ini:horaRef(r.hora), atividade:TIPOS[r.tipo]||r.tipo, obs:r.cardapio?`Cardápio: ${r.cardapio}`:'', pessoas:escDe(r.id).map(v=>limpa(v.nome)), tipo:'ref', vagas:r.vagas}));
+  return [...prog, ...refs].sort((a,b)=>(a.ini||'99').localeCompare(b.ini||'99') || (a.tipo==='ref')-(b.tipo==='ref'));
+}
+function renderProgramacao(){
+  const eqLow = new Set((D.equipe||[]).map(m=>limpa(m.nome).toLowerCase()));
+  $('#pgDias').innerHTML = DIAS_EVT.map(d=>`<button type="button" class="chipsel ${d===pgDiaSel?'on':''}" data-pgd="${d}">${diaTxt(d)}</button>`).join('');
+  $$('#pgDias [data-pgd]').forEach(b=>b.onclick=()=>{ pgDiaSel = b.dataset.pgd; renderProgramacao(); });
+  const l = itensDoDia(pgDiaSel), agoraH = new Date().toTimeString().slice(0,5), ehHoje = hojeISO()===pgDiaSel;
+  const progDia = l.filter(x=>x.tipo==='prog');
+  $('#pgConta').textContent = `${(D.programacao||[]).length} ${(D.programacao||[]).length===1?'horário':'horários'} nos 3 dias`;
+  const atual = ehHoje ? [...progDia].reverse().find(x=>x.ini<=agoraH && (!x.fim || hhmm(x.fim)>agoraH)) : null;
+  $('#pgLista').innerHTML = l.map(x=>{
+    const ppl = (x.pessoas||[]).map(n=>`<span class="tag ${eqLow.has(n.toLowerCase())?'':'vol'}">${esc(nomeBonito(n))}</span>`).join('')
+      || (x.tipo==='ref' ? (x.vagas ? '<span class="tag vazio">ninguém escalado ainda</span>' : '') : '<span class="tag vazio">ninguém definido</span>');
+    return `<div class="pg ${x.tipo==='ref'?'pgref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:''}>
+      <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
+      <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?`<div>📝 ${esc(x.obs)}</div>`:''}${x.tipo==='ref'&&!x.ini?'<div>Horário ainda não definido</div>':''}
+      ${ppl?`<div class="pp">${ppl}</div>`:''}</div></div>`; }).join('')
+    || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
+}
+function desenharPgPessoas(){
+  const {equipe, vols} = pessoasDisp(), q = semAcento($('#pgBusca').value);
+  const f = l => l.filter(n=>!q || semAcento(n).includes(q));
+  const extras = [...pgSel].filter(n=>!equipe.includes(n) && !vols.includes(n));   // nome antigo que não está mais nas listas
+  const grupo = (tit, l, cls='') => l.length ? `<div class="gt">${tit}</div><div class="chips">${l.map(n=>`<button type="button" class="chipsel ${pgSel.has(n)?'on':''} ${cls}" data-pgp="${esc(n)}">${esc(nomeBonito(n))}</button>`).join('')}</div>` : '';
+  $('#pgPessoas').innerHTML = grupo('Equipe (acesso ao sistema)', f(equipe)) + grupo('Voluntários', f(vols)) + grupo('Marcados antes', f(extras))
+    || '<p class="hint">Ninguém encontrado.</p>';
+  $('#pgQtd').textContent = pgSel.size ? `(${pgSel.size} marcado${pgSel.size>1?'s':''})` : '';
+  $$('#pgPessoas [data-pgp]').forEach(b=>b.onclick=()=>{ const n = b.dataset.pgp; pgSel.has(n) ? pgSel.delete(n) : pgSel.add(n); desenharPgPessoas(); });
+}
+$('#pgBusca').oninput = desenharPgPessoas;
+function abrirProg(id){
+  const x = id ? (D.programacao||[]).find(p=>p.id===id) : null; pgEdit = x ? x.id : null;
+  $('#pgTit').textContent = x ? 'Editar horário' : 'Adicionar horário';
+  $('#pgDia').innerHTML = DIAS_EVT.map(d=>`<option value="${d}" ${(x?x.dia:pgDiaSel)===d?'selected':''}>${diaTxt(d)}</option>`).join('');
+  $('#pgIni').value = x ? hhmm(x.inicio) : ''; $('#pgFim').value = x ? hhmm(x.fim) : '';
+  $('#pgAtv').value = x?.atividade||''; $('#pgLocal').value = x?.local||''; $('#pgObs').value = x?.obs||''; $('#pgBusca').value = '';
+  pgSel = new Set(x?.pessoas||[]); desenharPgPessoas(); $('#pgExcluir').hidden = !x;
+  abrir('#pgModal'); setTimeout(()=>$(x?'#pgAtv':'#pgIni').focus(), 60);
+}
+$('#pgNovo').onclick = ()=>abrirProg(null);
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-pged]'); if(el) abrirProg(el.dataset.pged); });
+$('#pgFechar').onclick = ()=>fechar('#pgModal');
+$('#pgSalvar').onclick = async ()=>{
+  const ini = $('#pgIni').value, fim = $('#pgFim').value, atividade = limpa($('#pgAtv').value);
+  if(!ini){ toast('Coloque o horário de início','var(--danger)'); $('#pgIni').focus(); return; }
+  if(!atividade){ toast('Escreva o que vai acontecer','var(--danger)'); $('#pgAtv').focus(); return; }
+  if(fim && fim <= ini){ toast('O fim precisa ser depois do início','var(--danger)'); $('#pgFim').focus(); return; }
+  const row = {dia:$('#pgDia').value, inicio:ini, fim:fim||null, atividade, local:limpa($('#pgLocal').value)||null, pessoas:[...pgSel], obs:limpa($('#pgObs').value)||null};
+  const b = $('#pgSalvar'); b.disabled = true;
+  try{ if(pgEdit) await sb('/fc_programacao?id=eq.'+pgEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    else await sb('/fc_programacao', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, criado_por:eu.nome||eu.email})});
+    pgDiaSel = row.dia; await carregarTudo(); fechar('#pgModal'); renderProgramacao(); toast('Programação salva'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; }
+};
+$('#pgExcluir').onclick = async ()=>{ const x = (D.programacao||[]).find(p=>p.id===pgEdit); if(!x) return;
+  if(!(await perguntar('Excluir este horário?', `${hhmm(x.inicio)} · ${x.atividade}`, {sim:'Excluir', perigo:true}))) return;
+  try{ await sb('/fc_programacao?id=eq.'+x.id, {method:'DELETE'}); await carregarTudo(); fechar('#pgModal'); renderProgramacao(); toast('Horário excluído'); }
   catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
 
 /* ---------- acessos ---------- */
