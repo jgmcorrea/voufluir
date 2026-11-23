@@ -104,6 +104,10 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 #rfEquipe .chipsel.on{background:#e1f3e7;border-color:#3d8b2a;color:#1f6e43}
 #rfVols .chipsel.on{background:#fff1d6;border-color:#d69a00;color:#8a5a00}
 #rfEquipe,#rfVols{display:flex;gap:6px;flex-wrap:wrap}
+textarea.field{resize:vertical;font:inherit;line-height:1.4}
+.pg .tops{margin:5px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)}
+.pg .tops li{margin:2px 0}
+.pg .tops li::marker{color:var(--accent)}
 .pp .tag.eq{background:#e1f3e7;color:#1f6e43}
 .pp .tag.vol{background:#fff1d6;color:#8a5a00}
 .pp .tag.vazio{background:#fde8ea;color:var(--danger)}
@@ -409,7 +413,9 @@ a.btn{text-decoration:none;display:inline-block}
     <div class="lb">Quem vai estar disponível <small id="pgQtd"></small></div>
     <input class="field" id="pgBusca" type="search" placeholder="Buscar nome…" autocomplete="off">
     <div id="pgPessoas"></div>
-    <label class="lb" for="pgObs">Observação <small>(opcional)</small></label><input class="field" id="pgObs" maxlength="300" autocomplete="off">
+    <label class="lb" for="pgObs">Observações <small>(opcional — um tópico por linha)</small></label><textarea class="field" id="pgObs" rows="4" maxlength="1500" placeholder="Ex.:
+Levar microfone
+Oração de abertura com a Pra. Ana"></textarea>
     <div class="row" style="margin-top:14px">
       <button class="btn dark" id="pgSalvar" type="button">Salvar</button>
       <button class="btn" id="pgFechar" type="button">Fechar</button>
@@ -1007,6 +1013,8 @@ $('#teExcluir').onclick = async ()=>{ const t = (D.tarefas||[]).find(x=>x.id===t
 /* ---------- programação dos dias do evento ---------- */
 const DIAS_EVT = ['2026-12-04','2026-12-05','2026-12-06'];
 let pgDiaSel = DIAS_EVT.includes(hojeISO()) ? hojeISO() : DIAS_EVT[0], pgEdit = null, pgSel = new Set();
+// observações em tópicos: uma linha = um tópico (tira marcadores digitados como -, •, *)
+const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*·–]\s*/,'')).filter(Boolean);
 const hhmm = t => t ? String(t).slice(0,5) : '';
 const horaRef = h => { const m = String(h||'').match(/(\d{1,2})\s*(?:h|:)\s*(\d{2})?/i); return m ? `${m[1].padStart(2,'0')}:${m[2]||'00'}` : null; };
 // disponíveis = quem tem acesso ao sistema + voluntários
@@ -1035,7 +1043,7 @@ function renderProgramacao(){
       || (x.tipo==='ref' ? (x.vagas ? '<span class="tag vazio">ninguém escalado ainda</span>' : '') : '<span class="tag vazio">ninguém definido</span>');
     return `<div class="pg ${x.tipo==='ref'&&!eu.admin?'pgref':''} ${x.tipo==='ref'?'ehref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:eu.admin?`data-pgrf="${x.id}"`:''}>
       <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
-      <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?`<div>📝 ${esc(x.obs)}</div>`:''}${x.tipo==='ref'&&!x.ini?`<div style="color:var(--accent)">${eu.admin?'⏰ Toque para colocar o horário':'Horário ainda não definido'}</div>`:''}
+      <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?(x.tipo==='prog'?`<ul class="tops">${topicos(x.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:`<div>📝 ${esc(x.obs)}</div>`):''}${x.tipo==='ref'&&!x.ini?`<div style="color:var(--accent)">${eu.admin?'⏰ Toque para colocar o horário':'Horário ainda não definido'}</div>`:''}
       ${ppl?`<div class="pp">${ppl}</div>`:''}</div></div>`; }).join('')
     || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
 }
@@ -1087,7 +1095,7 @@ $('#pgSalvar').onclick = async ()=>{
   if(!ini){ toast('Coloque o horário de início','var(--danger)'); $('#pgIni').focus(); return; }
   if(!atividade){ toast('Escreva o que vai acontecer','var(--danger)'); $('#pgAtv').focus(); return; }
   if(fim && fim <= ini){ toast('O fim precisa ser depois do início','var(--danger)'); $('#pgFim').focus(); return; }
-  const row = {dia:$('#pgDia').value, inicio:ini, fim:fim||null, atividade, local:limpa($('#pgLocal').value)||null, pessoas:[...pgSel], obs:limpa($('#pgObs').value)||null};
+  const row = {dia:$('#pgDia').value, inicio:ini, fim:fim||null, atividade, local:limpa($('#pgLocal').value)||null, pessoas:[...pgSel], obs:topicos($('#pgObs').value).join('\n')||null};
   const b = $('#pgSalvar'); b.disabled = true;
   try{ if(pgEdit) await sb('/fc_programacao?id=eq.'+pgEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
     else await sb('/fc_programacao', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, criado_por:eu.nome||eu.email})});
