@@ -89,6 +89,16 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .grp::before{content:'';display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:4px;vertical-align:-3px;margin-right:6px}
 .grp.on{background:#25d366;border-color:#25d366;color:#fff}
 .grp.on::before{display:none}
+.tkadd{background:#f7f5ef;border-radius:12px;padding:12px;margin:12px 0 4px}
+.tk{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid var(--line)}
+.tk:first-child{border-top:0}
+.tk input[type=checkbox]{width:24px;height:24px;flex:none;margin-top:1px;accent-color:var(--ok);cursor:pointer}
+.tk .t{flex:1;min-width:0;cursor:pointer}
+.tk .t b{font-size:15px;font-weight:600}
+.tk .t div{font-size:13px;color:var(--muted);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tk.ok .t b{text-decoration:line-through;color:var(--muted)}
+.tag.atraso{background:#fde8ea;color:var(--danger)}
+.tag.hoje{background:#fff1d6;color:#8a5a00}
 .nec{padding:10px 0;border-top:1px solid var(--line)}
 .nec:first-child{border-top:0}
 .nec .rh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
@@ -147,6 +157,7 @@ a.btn{text-decoration:none;display:inline-block}
     <button data-v="doacoes" type="button">Doações</button>
     <button data-v="voluntarios" type="button">Voluntários</button>
     <button data-v="lista" type="button">O que precisamos</button>
+    <button data-v="checklist" type="button">Checklist</button>
     <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
   </nav>
 </header>
@@ -219,6 +230,28 @@ a.btn{text-decoration:none;display:inline-block}
       <h3>Refeições (horário, cardápio e vagas)</h3>
       <p class="hint" style="margin:0 0 6px">Só os administradores alteram.</p>
       <div id="refEdit"></div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="view" id="v-checklist">
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Checklist do evento</h3><span class="hint" id="tkConta"></span></div>
+      <div class="bar" id="tkBar"><i></i></div>
+      <div class="tkadd">
+        <input class="field" id="tkNovo" maxlength="200" placeholder="O que precisa ser feito?" autocomplete="off">
+        <div class="grid2">
+          <div><label class="lb" for="tkResp">Responsável <small>(opcional)</small></label><input class="field" id="tkResp" maxlength="80" autocomplete="off" list="dlNomes"></div>
+          <div><label class="lb" for="tkPrazo">Concluir até <small>(opcional)</small></label><input class="field" id="tkPrazo" type="date"></div>
+        </div>
+        <button class="btn dark" id="tkAdd" type="button" style="margin-top:10px">+ Adicionar</button>
+      </div>
+      <div class="filtros" id="tkFiltros">
+        <button type="button" class="chipsel on" data-tf="pend">A fazer</button>
+        <button type="button" class="chipsel" data-tf="feitas">Concluídas</button>
+        <button type="button" class="chipsel" data-tf="todas">Todas</button>
+      </div>
+      <div id="tkLista"></div>
     </div>
   </section>
 
@@ -312,6 +345,23 @@ a.btn{text-decoration:none;display:inline-block}
 </div>
 
 <!-- Item da lista -->
+<div class="modal" id="tkModal">
+  <div class="sheet">
+    <h3>Editar tarefa</h3>
+    <label class="lb" for="teTit">O que precisa ser feito</label><input class="field" id="teTit" maxlength="200" autocomplete="off">
+    <div class="grid2">
+      <div><label class="lb" for="teResp">Responsável</label><input class="field" id="teResp" maxlength="80" autocomplete="off" list="dlNomes"></div>
+      <div><label class="lb" for="tePrazo">Concluir até</label><input class="field" id="tePrazo" type="date"></div>
+    </div>
+    <label class="lb" for="teObs">Observação (opcional)</label><input class="field" id="teObs" maxlength="300" autocomplete="off">
+    <div class="hint" id="teFeito" style="margin-top:8px"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="teSalvar" type="button">Salvar</button>
+      <button class="btn" id="teFechar" type="button">Fechar</button>
+      <button class="link red" id="teExcluir" type="button" style="margin-left:auto">Excluir</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="itModal">
   <div class="sheet">
     <h3 id="itTit">Item na lista</h3>
@@ -468,12 +518,12 @@ $('#loginForm').onsubmit = async e=>{
 };
 
 /* ---------- dados ---------- */
-let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[], participantes:[]});
+let D = load(K.cache, {refeicoes:[], itens:[], doacoes:[], voluntarios:[], participantes:[], tarefas:[]});
 async function carregarTudo(){
-  const [refeicoes, itens, doacoes, voluntarios, participantes] = await Promise.all([
+  const [refeicoes, itens, doacoes, voluntarios, participantes, tarefas] = await Promise.all([
     sb('/fc_refeicoes?select=*&order=ordem'), sb('/fc_itens?select=*&order=ordem,criado_em'),
-    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em'), sb('/fc_participantes?select=*&order=nome')]);
-  D = {refeicoes, itens, doacoes, voluntarios, participantes}; save(K.cache, D);
+    sb('/fc_doacoes?select=*&order=criado_em.desc'), sb('/fc_voluntarios?select=*&order=criado_em'), sb('/fc_participantes?select=*&order=nome'), sb('/fc_tarefas?select=*&order=criado_em').catch(()=>[])]);
+  D = {refeicoes, itens, doacoes, voluntarios, participantes, tarefas}; save(K.cache, D);
 }
 const refNome = r => r ? `${TIPOS[r.tipo]} · ${diaTxt(r.dia)}` : '';
 const refCurto = r => `${TIPOS[r.tipo]} ${DIAS[deISO(r.dia).getDay()].slice(0,3).toLowerCase()}`;
@@ -499,7 +549,7 @@ function irPara(v){
 }
 $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 function render(){
-  ({painel:renderPainel, participantes:renderParticipantes, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, acessos:renderAcessos}[vista]||renderPainel)();
+  ({painel:renderPainel, participantes:renderParticipantes, doacoes:renderDoacoes, voluntarios:renderVoluntarios, lista:renderLista, checklist:renderChecklist, acessos:renderAcessos}[vista]||renderPainel)();
   $('#dlNomes').innerHTML = [...new Set([...D.doacoes.map(d=>d.doador), ...D.voluntarios.map(v=>v.nome)])].sort().map(n=>`<option value="${esc(n)}">`).join('');
 }
 
@@ -815,6 +865,65 @@ $('#iExcluir').onclick = async ()=>{
     await sb('/fc_itens?id=eq.'+i.id, {method:'DELETE'}); await carregarTudo(); fechar('#itModal'); render(); toast('Item retirado'); }
   catch(e){ toast('Não tirou: '+e.message,'var(--danger)'); }
 };
+
+/* ---------- checklist do evento ---------- */
+let tkFiltro = 'pend', tkEdit = null;
+const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const dataCurta = iso => { const x = deISO(iso); return `${DIAS[x.getDay()].slice(0,3).toLowerCase()} ${x.getDate()}/${x.getMonth()+1}`; };
+const quandoFeito = ts => { const x = new Date(ts); return `${x.getDate()}/${x.getMonth()+1} às ${String(x.getHours()).padStart(2,'0')}h${String(x.getMinutes()).padStart(2,'0')}`; };
+function ordemTarefas(l){ return [...l].sort((a,b)=> a.feito!==b.feito ? (a.feito?1:-1)
+  : a.feito ? String(b.feito_em).localeCompare(String(a.feito_em))
+  : (a.prazo||'9999').localeCompare(b.prazo||'9999') || String(a.criado_em).localeCompare(String(b.criado_em))); }
+function renderChecklist(){
+  const T = D.tarefas||[], feitas = T.filter(t=>t.feito).length, hoje = hojeISO();
+  $('#tkConta').textContent = T.length ? `${feitas} de ${T.length} concluídas` : '';
+  $('#tkBar').hidden = !T.length; $('#tkBar').classList.toggle('cheia', T.length && feitas===T.length);
+  $('#tkBar i').style.width = T.length ? (feitas/T.length*100)+'%' : '0';
+  const l = ordemTarefas(T.filter(t=> tkFiltro==='todas' || (tkFiltro==='feitas' ? t.feito : !t.feito)));
+  $('#tkLista').innerHTML = l.map(t=>{
+    const pz = !t.prazo ? '' : t.feito ? `<span class="tag">até ${dataCurta(t.prazo)}</span>`
+      : t.prazo < hoje ? `<span class="tag atraso">⏰ atrasada · era até ${dataCurta(t.prazo)}</span>`
+      : t.prazo === hoje ? `<span class="tag hoje">⏰ até hoje</span>` : `<span class="tag pend">até ${dataCurta(t.prazo)}</span>`;
+    const info = [pz, t.responsavel?`<span>👤 ${esc(t.responsavel)}</span>`:'', t.feito&&t.feito_em?`<span class="tag ok">✓ concluída em ${quandoFeito(t.feito_em)}${t.feito_por?` por ${esc(primeiroNome(t.feito_por))}`:''}</span>`:''].filter(Boolean).join('');
+    return `<div class="tk ${t.feito?'ok':''}"><input type="checkbox" data-tk="${t.id}" ${t.feito?'checked':''} aria-label="Concluída: ${esc(t.titulo)}">
+      <div class="t" data-tked="${t.id}"><b>${esc(t.titulo)}</b>${info?`<div>${info}</div>`:''}${t.obs?`<div>📝 ${esc(t.obs)}</div>`:''}</div></div>`; }).join('')
+    || `<p class="vazio">${!T.length ? 'Nenhuma tarefa ainda. Escreva acima o que precisa ser feito para o acampamento.' : tkFiltro==='pend' ? '🎉 Tudo feito por enquanto!' : 'Nada por aqui.'}</p>`;
+}
+$$('#tkFiltros [data-tf]').forEach(b=>b.onclick=()=>{ tkFiltro = b.dataset.tf; $$('#tkFiltros [data-tf]').forEach(x=>x.classList.toggle('on', x===b)); renderChecklist(); });
+async function addTarefa(){
+  const titulo = limpa($('#tkNovo').value); if(!titulo){ $('#tkNovo').focus(); toast('Escreva o que precisa ser feito','var(--danger)'); return; }
+  const b = $('#tkAdd'); b.disabled = true;
+  try{ await sb('/fc_tarefas', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({titulo, responsavel:limpa($('#tkResp').value)||null, prazo:$('#tkPrazo').value||null, criado_por:eu.nome||eu.email})});
+    $('#tkNovo').value = ''; $('#tkResp').value = ''; $('#tkPrazo').value = '';
+    await carregarTudo(); if(tkFiltro==='feitas'){ tkFiltro='pend'; $$('#tkFiltros [data-tf]').forEach(x=>x.classList.toggle('on', x.dataset.tf==='pend')); }
+    renderChecklist(); toast('Tarefa adicionada'); $('#tkNovo').focus(); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; }
+}
+$('#tkAdd').onclick = addTarefa;
+$('#tkNovo').onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); addTarefa(); } };
+document.addEventListener('change', async e=>{ const c = e.target.closest('[data-tk]'); if(!c) return;
+  const t = (D.tarefas||[]).find(x=>x.id===c.dataset.tk); if(!t) return;
+  const antes = {...t}; t.feito = c.checked; t.feito_em = c.checked ? new Date().toISOString() : null; t.feito_por = c.checked ? (eu.nome||eu.email) : null;
+  renderChecklist();
+  try{ const r = await sb('/fc_tarefas?id=eq.'+t.id, {method:'PATCH', headers:{Prefer:'return=representation'}, body:JSON.stringify({feito:t.feito, feito_por:t.feito_por})});
+    if(r && r[0]) Object.assign(t, r[0]); save(K.cache, D); renderChecklist(); if(t.feito) toast('✓ Concluída'); }
+  catch(err){ Object.assign(t, antes); renderChecklist(); toast('Não salvou. Confira a internet.','var(--danger)'); }
+});
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-tked]'); if(!el) return;
+  const t = (D.tarefas||[]).find(x=>x.id===el.dataset.tked); if(!t) return; tkEdit = t.id;
+  $('#teTit').value = t.titulo; $('#teResp').value = t.responsavel||''; $('#tePrazo').value = t.prazo||''; $('#teObs').value = t.obs||'';
+  $('#teFeito').textContent = t.feito && t.feito_em ? `✓ Concluída em ${quandoFeito(t.feito_em)}${t.feito_por?` por ${t.feito_por}`:''}` : `Criada${t.criado_por?` por ${t.criado_por}`:''}.`;
+  abrir('#tkModal'); });
+$('#teFechar').onclick = ()=>fechar('#tkModal');
+$('#teSalvar').onclick = async ()=>{ const titulo = limpa($('#teTit').value); if(!titulo){ toast('Escreva o que precisa ser feito','var(--danger)'); return; }
+  try{ await sb('/fc_tarefas?id=eq.'+tkEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({titulo, responsavel:limpa($('#teResp').value)||null, prazo:$('#tePrazo').value||null, obs:limpa($('#teObs').value)||null})});
+    await carregarTudo(); fechar('#tkModal'); renderChecklist(); toast('Tarefa salva'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } };
+$('#teExcluir').onclick = async ()=>{ const t = (D.tarefas||[]).find(x=>x.id===tkEdit); if(!t) return;
+  if(!(await perguntar('Excluir tarefa?', t.titulo, {sim:'Excluir', perigo:true}))) return;
+  try{ await sb('/fc_tarefas?id=eq.'+t.id, {method:'DELETE'}); await carregarTudo(); fechar('#tkModal'); renderChecklist(); toast('Tarefa excluída'); }
+  catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
 
 /* ---------- acessos ---------- */
 async function renderAcessos(){
