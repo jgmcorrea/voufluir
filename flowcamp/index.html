@@ -386,9 +386,10 @@ a.btn{text-decoration:none;display:inline-block}
   <div class="sheet">
     <h3 id="rfTit">Refeição</h3>
     <div class="grid2">
-      <div><label class="lb" for="rfHora">Horário</label><input class="field" id="rfHora" type="time"></div>
-      <div><label class="lb" for="rfVagas">Vagas de voluntários</label><input class="field" id="rfVagas" type="number" min="0" inputmode="numeric"></div>
+      <div><label class="lb" for="rfHora">Começa</label><input class="field" id="rfHora" type="time"></div>
+      <div><label class="lb" for="rfFim">Termina <small>(opcional)</small></label><input class="field" id="rfFim" type="time"></div>
     </div>
+    <label class="lb" for="rfVagas">Vagas de voluntários</label><input class="field" id="rfVagas" type="number" min="0" inputmode="numeric" style="max-width:50%">
     <label class="lb" for="rfCard">Cardápio <small>(opcional)</small></label><input class="field" id="rfCard" maxlength="200" placeholder="Ex.: Cachorro-quente e suco" autocomplete="off">
     <div class="lb">Equipe nesta refeição <small>(quem tem acesso ao sistema)</small></div>
     <div class="chips" id="rfEquipe"></div>
@@ -1025,7 +1026,7 @@ function pessoasDisp(){
 }
 function itensDoDia(dia){
   const prog = (D.programacao||[]).filter(x=>x.dia===dia).map(x=>({...x, ini:hhmm(x.inicio), tipo:'prog'}));
-  const refs = D.refeicoes.filter(r=>r.dia===dia).map(r=>({id:r.id, ini:horaRef(r.hora), atividade:TIPOS[r.tipo]||r.tipo, obs:r.cardapio?`Cardápio: ${r.cardapio}`:'', pessoas:[...(r.equipe||[]), ...escDe(r.id).map(v=>limpa(v.nome))], verdes:new Set((r.equipe||[]).map(n=>n.toLowerCase())), tipo:'ref', vagas:r.vagas}));
+  const refs = D.refeicoes.filter(r=>r.dia===dia).map(r=>({id:r.id, ini:horaRef(r.hora), fim:horaRef(r.hora_fim), atividade:TIPOS[r.tipo]||r.tipo, obs:r.cardapio?`Cardápio: ${r.cardapio}`:'', pessoas:[...(r.equipe||[]), ...escDe(r.id).map(v=>limpa(v.nome))], verdes:new Set((r.equipe||[]).map(n=>n.toLowerCase())), tipo:'ref', vagas:r.vagas}));
   return [...prog, ...refs].sort((a,b)=>(a.ini||'99').localeCompare(b.ini||'99') || (a.tipo==='ref')-(b.tipo==='ref'));
 }
 function renderProgramacao(){
@@ -1037,7 +1038,7 @@ function renderProgramacao(){
   $('#pgDica').textContent = eu.admin ? '🍽️ As refeições entram sozinhas. Toque numa refeição para colocar o horário, o cardápio, as vagas e quem vai ajudar (equipe em verde, voluntários em amarelo).'
     : '🍽️ As refeições entram sozinhas, com quem foi escalado na aba Voluntários. O horário delas é definido pelos administradores.';
   $('#pgConta').textContent = `${(D.programacao||[]).length} ${(D.programacao||[]).length===1?'horário':'horários'} nos 3 dias`;
-  const atual = ehHoje ? [...progDia].reverse().find(x=>x.ini<=agoraH && (!x.fim || hhmm(x.fim)>agoraH)) : null;
+  const atual = ehHoje ? l.filter(x=>x.ini).reverse().find(x=>x.ini<=agoraH && (!x.fim || hhmm(x.fim)>agoraH)) : null;
   $('#pgLista').innerHTML = l.map(x=>{
     const verdes = x.verdes || eqLow, ppl = (x.pessoas||[]).map(n=>`<span class="tag ${verdes.has(n.toLowerCase())?'eq':'vol'}">${esc(nomeBonito(n))}</span>`).join('')
       || (x.tipo==='ref' ? (x.vagas ? '<span class="tag vazio">ninguém escalado ainda</span>' : '') : '<span class="tag vazio">ninguém definido</span>');
@@ -1058,12 +1059,15 @@ function desenharRf(){
 }
 document.addEventListener('click', e=>{ const el = e.target.closest('[data-pgrf]'); if(!el || !eu.admin) return;
   const r = refDe(el.dataset.pgrf); if(!r) return; rfEdit = r.id;
-  $('#rfTit').textContent = `🍽️ ${refNome(r)}`; $('#rfHora').value = horaRef(r.hora)||''; $('#rfVagas').value = r.vagas??0; $('#rfCard').value = r.cardapio||'';
+  $('#rfTit').textContent = `🍽️ ${refNome(r)}`; $('#rfHora').value = horaRef(r.hora)||''; $('#rfFim').value = horaRef(r.hora_fim)||''; $('#rfVagas').value = r.vagas??0; $('#rfCard').value = r.cardapio||'';
   rfEq = new Set(r.equipe||[]); rfEsc = new Map(volsDe(r.id).map(v=>[v.id, !!v.escalado])); desenharRf();
   abrir('#rfModal'); setTimeout(()=>$('#rfHora').focus(), 60); });
 $('#rfFechar').onclick = ()=>fechar('#rfModal');
-$('#rfSalvar').onclick = async ()=>{ const b = $('#rfSalvar'); b.disabled = true;
-  try{ await sb('/fc_refeicoes?id=eq.'+rfEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:$('#rfHora').value||null, vagas:Math.max(0, parseInt($('#rfVagas').value,10)||0), cardapio:limpa($('#rfCard').value)||null, equipe:[...rfEq]})});
+$('#rfSalvar').onclick = async ()=>{ const ini = $('#rfHora').value, fim = $('#rfFim').value;
+  if(fim && !ini){ toast('Coloque também o horário de início','var(--danger)'); $('#rfHora').focus(); return; }
+  if(fim && fim <= ini){ toast('O fim precisa ser depois do início','var(--danger)'); $('#rfFim').focus(); return; }
+  const b = $('#rfSalvar'); b.disabled = true;
+  try{ await sb('/fc_refeicoes?id=eq.'+rfEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:ini||null, hora_fim:fim||null, vagas:Math.max(0, parseInt($('#rfVagas').value,10)||0), cardapio:limpa($('#rfCard').value)||null, equipe:[...rfEq]})});
     for(const v of volsDe(rfEdit)){ const novo = !!rfEsc.get(v.id); if(novo !== !!v.escalado) await sb('/fc_voluntarios?id=eq.'+v.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({escalado:novo, ...(novo?{}:{avisado:false})})}); }
     await carregarTudo(); fechar('#rfModal'); renderProgramacao(); toast('Refeição salva'); }
   catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } finally{ b.disabled = false; } };
