@@ -85,6 +85,10 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .item .t b{font-size:15px}
 .item .t div{font-size:13.5px;color:var(--muted);margin-top:2px}
 .item .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.grp{padding:7px 11px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.grp::before{content:'';display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-radius:4px;vertical-align:-3px;margin-right:6px}
+.grp.on{background:#25d366;border-color:#25d366;color:#fff}
+.grp.on::before{display:none}
 .nec{padding:10px 0;border-top:1px solid var(--line)}
 .nec:first-child{border-top:0}
 .nec .rh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
@@ -170,6 +174,7 @@ a.btn{text-decoration:none;display:inline-block}
         <button type="button" class="chipsel on" data-pf="todos">Todos</button>
         <button type="button" class="chipsel" data-pf="alergia">Com alergia / restrição</button>
         <button type="button" class="chipsel" data-pf="atencao">Precisa de atenção</button>
+        <button type="button" class="chipsel" data-pf="semgrupo">Pais fora do grupo</button>
       </div>
       <div id="paLista"></div>
     </div>
@@ -551,13 +556,14 @@ let paFiltro = 'todos';
 function renderParticipantes(){
   const P = D.participantes||[]; $('#paImport').hidden = !eu.admin;
   const idades = P.map(p=>idadeNoEvento(p.nascimento)).filter(x=>x!=null);
-  $('#paKpis').innerHTML = [[P.length,'inscritos'], [P.filter(p=>p.alergias).length,'com alergia / restrição'], [idades.length?`${Math.min(...idades)}–${Math.max(...idades)}`:'–','anos (idade no evento)'], [P.filter(p=>atencaoDe(p).length).length,'precisam de atenção']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#paKpis').innerHTML = [[P.length,'inscritos'], [P.filter(p=>p.alergias).length,'com alergia / restrição'], [idades.length?`${Math.min(...idades)}–${Math.max(...idades)}`:'–','anos (idade no evento)'], [P.filter(p=>atencaoDe(p).length).length,'precisam de atenção'], [`${P.filter(p=>p.no_grupo).length}/${P.length}`,'pais no grupo do WhatsApp']].map(([b,s])=>`<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join('');
   const restr = P.filter(p=>p.alergias);
   $('#paAvisos').innerHTML = restr.length ? `<div class="alerta"><b>⚠️ Alergias e restrições</b>${restr.map(p=>`<div>${esc(nomeBonito(p.nome))} — <b>${esc(p.alergias)}</b></div>`).join('')}</div>` : '';
   const q = semAcento($('#paBusca').value);
   let l = P.filter(p=>!q || semAcento(p.nome+' '+(p.responsavel||'')).includes(q));
   if(paFiltro==='alergia') l = l.filter(p=>p.alergias);
   if(paFiltro==='atencao') l = l.filter(p=>atencaoDe(p).length);
+  if(paFiltro==='semgrupo') l = l.filter(p=>!p.no_grupo);
   $('#paConta').textContent = `${l.length} de ${P.length}`;
   $('#paLista').innerHTML = l.map(p=>{ const i = idadeNoEvento(p.nascimento), at = atencaoDe(p), fs = fonesDe(p.telefones);
     const nasc = p.nascimento ? p.nascimento.split('-').reverse().join('/') : '';
@@ -565,10 +571,20 @@ function renderParticipantes(){
       <div>${nasc?`Nascimento: ${nasc} · `:''}Responsável: ${esc(p.responsavel||'—')}</div>
       <div>${fs.length ? fs.map(f=>{ const w = waFone(f); return w ? `<a href="${w}" target="_blank" rel="noopener">📱 ${esc(f.txt)}</a>` : `<span title="${f.semDDD?'sem DDD':'confira o número'}">${esc(f.txt)} <small>(${f.semDDD?'sem DDD':'confira'})</small></span>`; }).join(' · ') : `<span style="color:var(--danger)">Telefone: “${esc(p.telefones||'—')}”</span>`}</div>
       ${p.obs?`<div>📝 ${esc(p.obs)}</div>`:''}${p.observacao_equipe?`<div>🗒️ ${esc(p.observacao_equipe)}</div>`:''}${at.length?`<div style="color:#8a5a00">⚠️ ${esc(at.join(' · '))}</div>`:''}</div>
-      ${eu.admin?`<div class="a"><button class="btn sm" data-paed="${p.id}" type="button">Corrigir</button></div>`:''}</div>`; }).join('') || `<p class="vazio">${P.length?'Ninguém encontrado.':'Nenhum participante ainda.'}</p>`;
+      <div class="a"><button class="grp ${p.no_grupo?'on':''}" data-grp="${p.id}" type="button" aria-pressed="${!!p.no_grupo}" title="Pais já estão no grupo do WhatsApp?">${p.no_grupo?'✓ No grupo':'Grupo'}</button>${eu.admin?`<button class="btn sm" data-paed="${p.id}" type="button">Corrigir</button>`:''}</div></div>`; }).join('') || `<p class="vazio">${P.length?'Ninguém encontrado.':'Nenhum participante ainda.'}</p>`;
 }
 $('#paBusca').oninput = renderParticipantes;
 let paEdit = null;
+// marca se os pais já estão no grupo do WhatsApp; irmãos com o mesmo telefone de responsável são marcados juntos
+document.addEventListener('click', async e=>{ const b = e.target.closest('[data-grp]'); if(!b || b.disabled) return;
+  const P = D.participantes||[], p = P.find(x=>x.id===b.dataset.grp); if(!p) return;
+  const v = !p.no_grupo, meus = new Set(fonesDe(p.telefones).map(f=>f.n.slice(-8)));
+  const juntos = [p, ...P.filter(x=>x!==p && !!x.no_grupo!==v && fonesDe(x.telefones).some(f=>meus.has(f.n.slice(-8))))];
+  const antes = juntos.map(x=>x.no_grupo); juntos.forEach(x=>x.no_grupo=v); save(K.cache, D); renderParticipantes();
+  try{ for(const x of juntos) await sb('/rpc/fc_marcar_grupo', {method:'POST', body:JSON.stringify({p_id:x.id, p_valor:v})});
+    if(juntos.length>1) toast(`${v?'Marcado':'Desmarcado'} também: ${juntos.slice(1).map(x=>primeiroNome(nomeBonito(x.nome))).join(', ')} (mesmo responsável)`, undefined, 4000); }
+  catch(err){ juntos.forEach((x,i)=>x.no_grupo=antes[i]); save(K.cache, D); renderParticipantes(); toast('Não consegui salvar. Confira a internet.'); }
+});
 document.addEventListener('click', e=>{ const b = e.target.closest('[data-paed]'); if(b) abrirParticipante(b.dataset.paed); });
 function abrirParticipante(id){
   const p = (D.participantes||[]).find(x=>x.id===id); if(!p) return; paEdit = id;
