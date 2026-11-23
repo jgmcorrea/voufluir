@@ -97,7 +97,8 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .pg .t b{font-size:15.5px}
 .pg .t div{font-size:13px;color:var(--muted);margin-top:3px}
 .pg.pgref{cursor:default}
-.pg.pgref .h{color:var(--accent)}
+.pg.pgref{cursor:default}
+.pg.ehref .h{color:var(--accent)}
 .pg.agora{background:#f1f8e8;border-radius:12px;padding-left:8px;padding-right:8px;border-top-color:transparent}
 .pg .pp{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .pp .tag.vol{background:#fff1d6;color:#8a5a00}
@@ -279,7 +280,7 @@ a.btn{text-decoration:none;display:inline-block}
       <div class="filtros" id="pgDias"></div>
       <button class="btn dark" id="pgNovo" type="button" style="margin:6px 0 4px">+ Adicionar horário</button>
       <div id="pgLista"></div>
-      <p class="hint" style="margin:12px 0 0">🍽️ As refeições entram sozinhas, com quem foi escalado na aba Voluntários. Para mudar o horário delas, use “O que precisamos → Refeições”.</p>
+      <p class="hint" style="margin:12px 0 0" id="pgDica"></p>
     </div>
   </section>
 
@@ -373,6 +374,21 @@ a.btn{text-decoration:none;display:inline-block}
 </div>
 
 <!-- Item da lista -->
+<div class="modal" id="rfModal">
+  <div class="sheet">
+    <h3 id="rfTit">Refeição</h3>
+    <div class="grid2">
+      <div><label class="lb" for="rfHora">Horário</label><input class="field" id="rfHora" type="time"></div>
+      <div><label class="lb" for="rfVagas">Vagas de voluntários</label><input class="field" id="rfVagas" type="number" min="0" inputmode="numeric"></div>
+    </div>
+    <label class="lb" for="rfCard">Cardápio <small>(opcional)</small></label><input class="field" id="rfCard" maxlength="200" placeholder="Ex.: Cachorro-quente e suco" autocomplete="off">
+    <p class="hint" style="margin:10px 0 0">Quem vai ajudar nesta refeição é escalado na aba Voluntários.</p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="rfSalvar" type="button">Salvar</button>
+      <button class="btn" id="rfFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
 <div class="modal" id="pgModal">
   <div class="sheet">
     <h3 id="pgTit">Adicionar horário</h3>
@@ -1003,17 +1019,29 @@ function renderProgramacao(){
   $$('#pgDias [data-pgd]').forEach(b=>b.onclick=()=>{ pgDiaSel = b.dataset.pgd; renderProgramacao(); });
   const l = itensDoDia(pgDiaSel), agoraH = new Date().toTimeString().slice(0,5), ehHoje = hojeISO()===pgDiaSel;
   const progDia = l.filter(x=>x.tipo==='prog');
+  $('#pgDica').textContent = eu.admin ? '🍽️ As refeições entram sozinhas. Toque numa refeição para colocar o horário, o cardápio e as vagas. Quem vai ajudar é escalado na aba Voluntários.'
+    : '🍽️ As refeições entram sozinhas, com quem foi escalado na aba Voluntários. O horário delas é definido pelos administradores.';
   $('#pgConta').textContent = `${(D.programacao||[]).length} ${(D.programacao||[]).length===1?'horário':'horários'} nos 3 dias`;
   const atual = ehHoje ? [...progDia].reverse().find(x=>x.ini<=agoraH && (!x.fim || hhmm(x.fim)>agoraH)) : null;
   $('#pgLista').innerHTML = l.map(x=>{
     const ppl = (x.pessoas||[]).map(n=>`<span class="tag ${eqLow.has(n.toLowerCase())?'':'vol'}">${esc(nomeBonito(n))}</span>`).join('')
       || (x.tipo==='ref' ? (x.vagas ? '<span class="tag vazio">ninguém escalado ainda</span>' : '') : '<span class="tag vazio">ninguém definido</span>');
-    return `<div class="pg ${x.tipo==='ref'?'pgref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:''}>
+    return `<div class="pg ${x.tipo==='ref'&&!eu.admin?'pgref':''} ${x.tipo==='ref'?'ehref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:eu.admin?`data-pgrf="${x.id}"`:''}>
       <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
-      <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?`<div>📝 ${esc(x.obs)}</div>`:''}${x.tipo==='ref'&&!x.ini?'<div>Horário ainda não definido</div>':''}
+      <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?`<div>📝 ${esc(x.obs)}</div>`:''}${x.tipo==='ref'&&!x.ini?`<div style="color:var(--accent)">${eu.admin?'⏰ Toque para colocar o horário':'Horário ainda não definido'}</div>`:''}
       ${ppl?`<div class="pp">${ppl}</div>`:''}</div></div>`; }).join('')
     || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
 }
+let rfEdit = null;
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-pgrf]'); if(!el || !eu.admin) return;
+  const r = refDe(el.dataset.pgrf); if(!r) return; rfEdit = r.id;
+  $('#rfTit').textContent = `🍽️ ${refNome(r)}`; $('#rfHora').value = horaRef(r.hora)||''; $('#rfVagas').value = r.vagas??0; $('#rfCard').value = r.cardapio||'';
+  abrir('#rfModal'); setTimeout(()=>$('#rfHora').focus(), 60); });
+$('#rfFechar').onclick = ()=>fechar('#rfModal');
+$('#rfSalvar').onclick = async ()=>{ const b = $('#rfSalvar'); b.disabled = true;
+  try{ await sb('/fc_refeicoes?id=eq.'+rfEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:$('#rfHora').value||null, vagas:Math.max(0, parseInt($('#rfVagas').value,10)||0), cardapio:limpa($('#rfCard').value)||null})});
+    await carregarTudo(); fechar('#rfModal'); renderProgramacao(); toast('Refeição salva'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } finally{ b.disabled = false; } };
 function desenharPgPessoas(){
   const {equipe, vols} = pessoasDisp(), q = semAcento($('#pgBusca').value);
   const f = l => l.filter(n=>!q || semAcento(n).includes(q));
