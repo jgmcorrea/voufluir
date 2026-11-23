@@ -101,6 +101,10 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .pg.ehref .h{color:var(--accent)}
 .pg.agora{background:#f1f8e8;border-radius:12px;padding-left:8px;padding-right:8px;border-top-color:transparent}
 .pg .pp{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+#rfEquipe .chipsel.on{background:#e1f3e7;border-color:#3d8b2a;color:#1f6e43}
+#rfVols .chipsel.on{background:#fff1d6;border-color:#d69a00;color:#8a5a00}
+#rfEquipe,#rfVols{display:flex;gap:6px;flex-wrap:wrap}
+.pp .tag.eq{background:#e1f3e7;color:#1f6e43}
 .pp .tag.vol{background:#fff1d6;color:#8a5a00}
 .pp .tag.vazio{background:#fde8ea;color:var(--danger)}
 #pgPessoas{max-height:260px;overflow:auto;margin-top:8px}
@@ -382,7 +386,10 @@ a.btn{text-decoration:none;display:inline-block}
       <div><label class="lb" for="rfVagas">Vagas de voluntários</label><input class="field" id="rfVagas" type="number" min="0" inputmode="numeric"></div>
     </div>
     <label class="lb" for="rfCard">Cardápio <small>(opcional)</small></label><input class="field" id="rfCard" maxlength="200" placeholder="Ex.: Cachorro-quente e suco" autocomplete="off">
-    <p class="hint" style="margin:10px 0 0">Quem vai ajudar nesta refeição é escalado na aba Voluntários.</p>
+    <div class="lb">Equipe nesta refeição <small>(quem tem acesso ao sistema)</small></div>
+    <div class="chips" id="rfEquipe"></div>
+    <div class="lb">Voluntários escalados <small>(quem se ofereceu para esta refeição)</small></div>
+    <div class="chips" id="rfVols"></div>
     <div class="row" style="margin-top:14px">
       <button class="btn dark" id="rfSalvar" type="button">Salvar</button>
       <button class="btn" id="rfFechar" type="button">Fechar</button>
@@ -1010,7 +1017,7 @@ function pessoasDisp(){
 }
 function itensDoDia(dia){
   const prog = (D.programacao||[]).filter(x=>x.dia===dia).map(x=>({...x, ini:hhmm(x.inicio), tipo:'prog'}));
-  const refs = D.refeicoes.filter(r=>r.dia===dia).map(r=>({id:r.id, ini:horaRef(r.hora), atividade:TIPOS[r.tipo]||r.tipo, obs:r.cardapio?`Cardápio: ${r.cardapio}`:'', pessoas:escDe(r.id).map(v=>limpa(v.nome)), tipo:'ref', vagas:r.vagas}));
+  const refs = D.refeicoes.filter(r=>r.dia===dia).map(r=>({id:r.id, ini:horaRef(r.hora), atividade:TIPOS[r.tipo]||r.tipo, obs:r.cardapio?`Cardápio: ${r.cardapio}`:'', pessoas:[...(r.equipe||[]), ...escDe(r.id).map(v=>limpa(v.nome))], verdes:new Set((r.equipe||[]).map(n=>n.toLowerCase())), tipo:'ref', vagas:r.vagas}));
   return [...prog, ...refs].sort((a,b)=>(a.ini||'99').localeCompare(b.ini||'99') || (a.tipo==='ref')-(b.tipo==='ref'));
 }
 function renderProgramacao(){
@@ -1019,12 +1026,12 @@ function renderProgramacao(){
   $$('#pgDias [data-pgd]').forEach(b=>b.onclick=()=>{ pgDiaSel = b.dataset.pgd; renderProgramacao(); });
   const l = itensDoDia(pgDiaSel), agoraH = new Date().toTimeString().slice(0,5), ehHoje = hojeISO()===pgDiaSel;
   const progDia = l.filter(x=>x.tipo==='prog');
-  $('#pgDica').textContent = eu.admin ? '🍽️ As refeições entram sozinhas. Toque numa refeição para colocar o horário, o cardápio e as vagas. Quem vai ajudar é escalado na aba Voluntários.'
+  $('#pgDica').textContent = eu.admin ? '🍽️ As refeições entram sozinhas. Toque numa refeição para colocar o horário, o cardápio, as vagas e quem vai ajudar (equipe em verde, voluntários em amarelo).'
     : '🍽️ As refeições entram sozinhas, com quem foi escalado na aba Voluntários. O horário delas é definido pelos administradores.';
   $('#pgConta').textContent = `${(D.programacao||[]).length} ${(D.programacao||[]).length===1?'horário':'horários'} nos 3 dias`;
   const atual = ehHoje ? [...progDia].reverse().find(x=>x.ini<=agoraH && (!x.fim || hhmm(x.fim)>agoraH)) : null;
   $('#pgLista').innerHTML = l.map(x=>{
-    const ppl = (x.pessoas||[]).map(n=>`<span class="tag ${eqLow.has(n.toLowerCase())?'':'vol'}">${esc(nomeBonito(n))}</span>`).join('')
+    const verdes = x.verdes || eqLow, ppl = (x.pessoas||[]).map(n=>`<span class="tag ${verdes.has(n.toLowerCase())?'eq':'vol'}">${esc(nomeBonito(n))}</span>`).join('')
       || (x.tipo==='ref' ? (x.vagas ? '<span class="tag vazio">ninguém escalado ainda</span>' : '') : '<span class="tag vazio">ninguém definido</span>');
     return `<div class="pg ${x.tipo==='ref'&&!eu.admin?'pgref':''} ${x.tipo==='ref'?'ehref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:eu.admin?`data-pgrf="${x.id}"`:''}>
       <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
@@ -1032,14 +1039,24 @@ function renderProgramacao(){
       ${ppl?`<div class="pp">${ppl}</div>`:''}</div></div>`; }).join('')
     || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
 }
-let rfEdit = null;
+let rfEdit = null, rfEq = new Set(), rfEsc = new Map();
+function desenharRf(){
+  const r = refDe(rfEdit), eq = pessoasDisp().equipe, extras = [...rfEq].filter(n=>!eq.includes(n));
+  $('#rfEquipe').innerHTML = [...eq, ...extras].map(n=>`<button type="button" class="chipsel ${rfEq.has(n)?'on':''}" data-rfe="${esc(n)}">${esc(nomeBonito(n))}${eq.includes(n)?'':' (sem acesso)'}</button>`).join('') || '<p class="hint">Ninguém com acesso ainda.</p>';
+  const vs = volsDe(rfEdit);
+  $('#rfVols').innerHTML = vs.map(v=>`<button type="button" class="chipsel vsel ${rfEsc.get(v.id)?'on':''}" data-rfv="${v.id}">${esc(nomeBonito(v.nome))}</button>`).join('') || '<p class="hint">Ninguém se ofereceu para esta refeição ainda.</p>';
+  $$('#rfEquipe [data-rfe]').forEach(b=>b.onclick=()=>{ const n = b.dataset.rfe; rfEq.has(n) ? rfEq.delete(n) : rfEq.add(n); desenharRf(); });
+  $$('#rfVols [data-rfv]').forEach(b=>b.onclick=()=>{ rfEsc.set(b.dataset.rfv, !rfEsc.get(b.dataset.rfv)); desenharRf(); });
+}
 document.addEventListener('click', e=>{ const el = e.target.closest('[data-pgrf]'); if(!el || !eu.admin) return;
   const r = refDe(el.dataset.pgrf); if(!r) return; rfEdit = r.id;
   $('#rfTit').textContent = `🍽️ ${refNome(r)}`; $('#rfHora').value = horaRef(r.hora)||''; $('#rfVagas').value = r.vagas??0; $('#rfCard').value = r.cardapio||'';
+  rfEq = new Set(r.equipe||[]); rfEsc = new Map(volsDe(r.id).map(v=>[v.id, !!v.escalado])); desenharRf();
   abrir('#rfModal'); setTimeout(()=>$('#rfHora').focus(), 60); });
 $('#rfFechar').onclick = ()=>fechar('#rfModal');
 $('#rfSalvar').onclick = async ()=>{ const b = $('#rfSalvar'); b.disabled = true;
-  try{ await sb('/fc_refeicoes?id=eq.'+rfEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:$('#rfHora').value||null, vagas:Math.max(0, parseInt($('#rfVagas').value,10)||0), cardapio:limpa($('#rfCard').value)||null})});
+  try{ await sb('/fc_refeicoes?id=eq.'+rfEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({hora:$('#rfHora').value||null, vagas:Math.max(0, parseInt($('#rfVagas').value,10)||0), cardapio:limpa($('#rfCard').value)||null, equipe:[...rfEq]})});
+    for(const v of volsDe(rfEdit)){ const novo = !!rfEsc.get(v.id); if(novo !== !!v.escalado) await sb('/fc_voluntarios?id=eq.'+v.id, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify({escalado:novo, ...(novo?{}:{avisado:false})})}); }
     await carregarTudo(); fechar('#rfModal'); renderProgramacao(); toast('Refeição salva'); }
   catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } finally{ b.disabled = false; } };
 function desenharPgPessoas(){
