@@ -108,6 +108,9 @@ textarea.field{resize:vertical;font:inherit;line-height:1.4}
 .pg .tops{margin:5px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink)}
 .pg .tops li{margin:2px 0}
 .pg .tops li::marker{color:var(--accent)}
+.pres{margin-top:8px;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:700;color:var(--muted)}
+.pres.on{background:#e1f3e7;border-color:#3d8b2a;color:#1f6e43}
+.chipsel.trava{opacity:.55;cursor:not-allowed}
 .pp .tag.eq{background:#e1f3e7;color:#1f6e43}
 .pp .tag.vol{background:#fff1d6;color:#8a5a00}
 .pp .tag.vazio{background:#fde8ea;color:var(--danger)}
@@ -391,7 +394,7 @@ a.btn{text-decoration:none;display:inline-block}
     </div>
     <label class="lb" for="rfVagas">Vagas de voluntários</label><input class="field" id="rfVagas" type="number" min="0" inputmode="numeric" style="max-width:50%">
     <label class="lb" for="rfCard">Cardápio <small>(opcional)</small></label><input class="field" id="rfCard" maxlength="200" placeholder="Ex.: Cachorro-quente e suco" autocomplete="off">
-    <div class="lb">Equipe nesta refeição <small>(quem tem acesso ao sistema)</small></div>
+    <div class="lb">Equipe nesta refeição <small>(cada um marca só a própria presença)</small></div>
     <div class="chips" id="rfEquipe"></div>
     <div class="lb">Voluntários escalados <small>(quem se ofereceu para esta refeição)</small></div>
     <div class="chips" id="rfVols"></div>
@@ -1045,16 +1048,25 @@ function renderProgramacao(){
     return `<div class="pg ${x.tipo==='ref'&&!eu.admin?'pgref':''} ${x.tipo==='ref'?'ehref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:eu.admin?`data-pgrf="${x.id}"`:''}>
       <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
       <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?(x.tipo==='prog'?`<ul class="tops">${topicos(x.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:`<div>📝 ${esc(x.obs)}</div>`):''}${x.tipo==='ref'&&!x.ini?`<div style="color:var(--accent)">${eu.admin?'⏰ Toque para colocar o horário':'Horário ainda não definido'}</div>`:''}
-      ${ppl?`<div class="pp">${ppl}</div>`:''}</div></div>`; }).join('')
+      ${ppl?`<div class="pp">${ppl}</div>`:''}${eu.nome?(()=>{ const vou = (x.pessoas||[]).some(n=>n.toLowerCase()===eu.nome.toLowerCase()) && verdes.has(eu.nome.toLowerCase());
+        return `<button type="button" class="pres ${vou?'on':''}" data-pres="${x.tipo}|${x.id}" aria-pressed="${vou}">${vou?'✓ Vou estar':'✋ Vou estar'}</button>`; })():''}</div></div>`; }).join('')
     || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
 }
+const ehEu = n => !!eu?.nome && String(n).toLowerCase() === eu.nome.toLowerCase();
+document.addEventListener('click', async e=>{ const b = e.target.closest('[data-pres]'); if(!b) return; e.stopPropagation();
+  const [tipo, id] = b.dataset.pres.split('|'), vou = b.getAttribute('aria-pressed')!=='true';
+  const alvo = tipo==='prog' ? (D.programacao||[]).find(x=>x.id===id) : refDe(id), campo = tipo==='prog' ? 'pessoas' : 'equipe'; if(!alvo) return;
+  const antes = [...(alvo[campo]||[])]; alvo[campo] = vou ? [...antes.filter(n=>!ehEu(n)), eu.nome] : antes.filter(n=>!ehEu(n)); renderProgramacao();
+  try{ await sb('/rpc/fc_presenca', {method:'POST', body:JSON.stringify({p_tipo:tipo, p_id:id, p_vou:vou})}); save(K.cache, D); toast(vou?'✓ Presença marcada':'Presença retirada'); }
+  catch(err){ alvo[campo] = antes; renderProgramacao(); toast('Não salvou: '+err.message,'var(--danger)'); }
+}, true);
 let rfEdit = null, rfEq = new Set(), rfEsc = new Map();
 function desenharRf(){
   const r = refDe(rfEdit), eq = pessoasDisp().equipe, extras = [...rfEq].filter(n=>!eq.includes(n));
-  $('#rfEquipe').innerHTML = [...eq, ...extras].map(n=>`<button type="button" class="chipsel ${rfEq.has(n)?'on':''}" data-rfe="${esc(n)}">${esc(nomeBonito(n))}${eq.includes(n)?'':' (sem acesso)'}</button>`).join('') || '<p class="hint">Ninguém com acesso ainda.</p>';
+  $('#rfEquipe').innerHTML = [...eq, ...extras].map(n=>`<button type="button" class="chipsel ${rfEq.has(n)?'on':''} ${eq.includes(n)&&!ehEu(n)?'trava':''}" data-rfe="${esc(n)}">${esc(nomeBonito(n))}${eq.includes(n)?'':' (sem acesso)'}</button>`).join('') || '<p class="hint">Ninguém com acesso ainda.</p>';
   const vs = volsDe(rfEdit);
   $('#rfVols').innerHTML = vs.map(v=>`<button type="button" class="chipsel vsel ${rfEsc.get(v.id)?'on':''}" data-rfv="${v.id}">${esc(nomeBonito(v.nome))}</button>`).join('') || '<p class="hint">Ninguém se ofereceu para esta refeição ainda.</p>';
-  $$('#rfEquipe [data-rfe]').forEach(b=>b.onclick=()=>{ const n = b.dataset.rfe; rfEq.has(n) ? rfEq.delete(n) : rfEq.add(n); desenharRf(); });
+  $$('#rfEquipe [data-rfe]').forEach(b=>b.onclick=()=>{ const n = b.dataset.rfe; if(eq.includes(n) && !ehEu(n)){ toast(`${primeiroNome(n)} precisa marcar a própria presença`); return; } rfEq.has(n) ? rfEq.delete(n) : rfEq.add(n); desenharRf(); });
   $$('#rfVols [data-rfv]').forEach(b=>b.onclick=()=>{ rfEsc.set(b.dataset.rfv, !rfEsc.get(b.dataset.rfv)); desenharRf(); });
 }
 document.addEventListener('click', e=>{ const el = e.target.closest('[data-pgrf]'); if(!el || !eu.admin) return;
@@ -1075,11 +1087,12 @@ function desenharPgPessoas(){
   const {equipe, vols} = pessoasDisp(), q = semAcento($('#pgBusca').value);
   const f = l => l.filter(n=>!q || semAcento(n).includes(q));
   const extras = [...pgSel].filter(n=>!equipe.includes(n) && !vols.includes(n));   // nome antigo que não está mais nas listas
-  const grupo = (tit, l, cls='') => l.length ? `<div class="gt">${tit}</div><div class="chips">${l.map(n=>`<button type="button" class="chipsel ${pgSel.has(n)?'on':''} ${cls}" data-pgp="${esc(n)}">${esc(nomeBonito(n))}</button>`).join('')}</div>` : '';
-  $('#pgPessoas').innerHTML = grupo('Equipe (acesso ao sistema)', f(equipe)) + grupo('Voluntários', f(vols)) + grupo('Marcados antes', f(extras))
+  const trava = n => equipe.includes(n) && !ehEu(n);
+  const grupo = (tit, l, cls='') => l.length ? `<div class="gt">${tit}</div><div class="chips">${l.map(n=>`<button type="button" class="chipsel ${pgSel.has(n)?'on':''} ${trava(n)?'trava':''} ${cls}" data-pgp="${esc(n)}" ${trava(n)?'aria-disabled="true" title="Cada pessoa da equipe marca a própria presença"':''}>${esc(nomeBonito(n))}</button>`).join('')}</div>` : '';
+  $('#pgPessoas').innerHTML = grupo('Equipe <small style="text-transform:none;font-weight:600">— cada um marca só a própria presença</small>', f(equipe)) + grupo('Voluntários', f(vols)) + grupo('Marcados antes', f(extras))
     || '<p class="hint">Ninguém encontrado.</p>';
   $('#pgQtd').textContent = pgSel.size ? `(${pgSel.size} marcado${pgSel.size>1?'s':''})` : '';
-  $$('#pgPessoas [data-pgp]').forEach(b=>b.onclick=()=>{ const n = b.dataset.pgp; pgSel.has(n) ? pgSel.delete(n) : pgSel.add(n); desenharPgPessoas(); });
+  $$('#pgPessoas [data-pgp]').forEach(b=>b.onclick=()=>{ const n = b.dataset.pgp; if(trava(n)){ toast(`${primeiroNome(n)} precisa marcar a própria presença`); return; } pgSel.has(n) ? pgSel.delete(n) : pgSel.add(n); desenharPgPessoas(); });
 }
 $('#pgBusca').oninput = desenharPgPessoas;
 function abrirProg(id){
