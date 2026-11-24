@@ -105,6 +105,8 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .mv .t{flex:1;min-width:0}.mv .t div{font-size:12.5px;color:var(--muted)}
 .mv .v{text-align:right;white-space:nowrap}.mv .v small{display:block;font-size:11.5px;color:var(--muted)}
 .mv.entrada .v b{color:var(--ok)}.mv.saida .v b{color:var(--danger)}
+.tag.lider{background:var(--brand2);color:#fff}
+.tag.colider{background:#e0e7ff;color:#3730a3}
 .tag.tio{background:#dcfce7;color:#166534}
 #enTios{display:flex;gap:6px;flex-wrap:wrap}
 .tag.pal{background:#e0e7ff;color:#3730a3}
@@ -372,6 +374,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <p class="hint" id="eqEmail" style="margin:0 0 6px"></p>
     <label class="lb" for="eqNasc">Data de nascimento</label><input class="field" id="eqNasc" type="date" style="max-width:60%">
     <label class="lb" for="eqTel">Telefone <small>(opcional)</small></label><input class="field" id="eqTel" type="tel" maxlength="30" autocomplete="off">
+    <div id="eqPapelBox"><label class="lb" for="eqPapel">Função no Teens</label><select class="field" id="eqPapel" style="max-width:60%"><option value="">Equipe</option><option value="lider">Líder</option><option value="colider">Co-líder</option></select></div>
     <div class="row" style="margin-top:14px">
       <button class="btn dark" id="eqSalvar" type="button">Salvar</button>
       <button class="btn" id="eqFechar" type="button">Fechar</button>
@@ -735,23 +738,23 @@ $('#tnExcluir').onclick = async ()=>{ const t = (D.teens||[]).find(x=>x.id===tnE
 const infoDe = email => (D.info||[]).find(i=>i.email===String(email).toLowerCase()) || {};
 const tiosComInfo = () => (D.equipe||[]).map(m=>({...infoDe(m.email), nome:m.nome, email:m.email}));
 function renderEquipe(){
-  const E = tiosComInfo().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt')), semNasc = E.filter(m=>!m.nascimento).length;
+  const ordP = {lider:0, colider:1}; const E = tiosComInfo().sort((a,b)=>(ordP[a.papel]??2)-(ordP[b.papel]??2) || String(a.nome).localeCompare(String(b.nome),'pt')), semNasc = E.filter(m=>!m.nascimento).length;
   $('#eqConta').textContent = `${E.length} pessoa${E.length===1?'':'s'}${semNasc?` · ${semNasc} sem nascimento`:''}`;
   $('#eqLista').innerHTML = E.map(m=>{ const i = idadeEm(m.nascimento), meu = m.email===eu.email, pode = true;
     const prox = (D.encontros||[]).filter(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hojeISO() && (e.tios||[]).includes(m.nome)).length;
-    return `<div class="item eqi ${pode?'pode':''}" ${pode?`data-eq="${esc(m.email)}"`:''}><div class="t"><b>${esc(m.nome)}</b>${meu?' <span class="tag pal">você</span>':''}${ehPastor(m.nome)?' <span class="tag evt">pastora</span>':''}
+    return `<div class="item eqi ${pode?'pode':''}" ${pode?`data-eq="${esc(m.email)}"`:''}><div class="t"><b>${esc(m.nome)}</b>${m.papel==='lider'?' <span class="tag lider">Líder</span>':m.papel==='colider'?' <span class="tag colider">Co-líder</span>':''}${meu?' <span class="tag pal">você</span>':''}${ehPastor(m.nome)?' <span class="tag evt">pastora</span>':''}
       <div>${m.nascimento?`🎂 ${dataBR(m.nascimento)} · ${i} anos`:`<span class="faltatxt">${pode?'toque para colocar a data de nascimento':'sem data de nascimento'}</span>`}</div>${m.telefone?`<div>📞 ${contatosHtml(m.telefone)}</div>`:''}${!ehPastor(m.nome)?`<div>📅 ${prox?`escalado(a) em ${prox} encontro${prox===1?'':'s'} pela frente`:'sem escala pela frente'}</div>`:''}</div></div>`; }).join('')
     || '<p class="vazio">Ninguém com acesso ainda.</p>';
 }
 let eqEdit = null;
 document.addEventListener('click', e=>{ const el = e.target.closest('[data-eq]'); if(!el || e.target.closest('a')) return;
   const m = tiosComInfo().find(x=>x.email===el.dataset.eq); if(!m) return; eqEdit = m.email;
-  $('#eqTit').textContent = m.nome; $('#eqEmail').textContent = m.email; $('#eqNasc').value = m.nascimento||''; $('#eqTel').value = m.telefone||''; abrir('#eqModal'); });
+  $('#eqTit').textContent = m.nome; $('#eqEmail').textContent = m.email; $('#eqNasc').value = m.nascimento||''; $('#eqTel').value = m.telefone||''; $('#eqPapel').value = m.papel||''; $('#eqPapelBox').hidden = !eu.admin; abrir('#eqModal'); });
 $('#eqFechar').onclick = ()=>fechar('#eqModal');
 $('#eqSalvar').onclick = async ()=>{ const nasc = $('#eqNasc').value;
   if(nasc && (nasc > hojeISO() || nasc < '1920-01-01')){ toast('Confira a data de nascimento','var(--danger)'); return; }
   const b = $('#eqSalvar'); b.disabled = true;
-  try{ await sb('/tn_equipe_info?on_conflict=email', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({email:eqEdit, nascimento:nasc||null, telefone:limpa($('#eqTel').value)||null, atualizado_em:new Date().toISOString()})});
+  try{ await sb('/tn_equipe_info?on_conflict=email', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({email:eqEdit, nascimento:nasc||null, telefone:limpa($('#eqTel').value)||null, ...(eu.admin ? {papel:$('#eqPapel').value||null} : {}), atualizado_em:new Date().toISOString()})});
     await carregarTudo(); fechar('#eqModal'); render(); toast('Salvo'); }
   catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
   finally{ b.disabled = false; } };
