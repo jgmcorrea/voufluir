@@ -86,6 +86,8 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .tag.ok{background:#dcfce7;color:#166534}
 .tag.falta{background:#fde8ea;color:var(--danger)}
 .tag.evt{background:#fce7f3;color:#9d174d}
+.tag.tio{background:#dcfce7;color:#166534}
+#enTios{display:flex;gap:6px;flex-wrap:wrap}
 .tag.pal{background:#e0e7ff;color:#3730a3}
 .tag small{font-weight:500;opacity:.75}
 .secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--brand);margin:18px 0 4px;font-weight:700}
@@ -117,7 +119,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .lvrow{display:grid;grid-template-columns:1fr 1.4fr 34px;gap:6px;margin-bottom:6px}
 .lvrow .field{padding:10px}
 .lvrow .x{background:#fde8ea;color:var(--danger);border-radius:10px;font-size:20px;font-weight:700}
-.item.tn,.item.aniv{cursor:pointer}
+.item.tn,.item.aniv,.item.eqi.pode{cursor:pointer}
 .item.inat b{color:var(--muted)}
 .item .t a{color:var(--brand);font-weight:600}
 .faltatxt{color:var(--danger)!important}
@@ -146,6 +148,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   <nav id="nav">
     <button data-v="prog" class="on" type="button">Programação</button>
     <button data-v="teens" type="button">Teens</button>
+    <button data-v="equipe" type="button">Equipe</button>
     <button data-v="aniv" type="button">Aniversariantes</button>
     <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
   </nav>
@@ -161,7 +164,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
         <button type="button" class="chipsel on" data-pf="tudo">Tudo</button>
         <button type="button" class="chipsel" data-pf="encontro">Encontros</button>
         <button type="button" class="chipsel" data-pf="evento">Eventos</button>
-        <button type="button" class="chipsel" data-pf="falta">Falta louvor ou palavra</button>
+        <button type="button" class="chipsel" data-pf="falta">Falta algo</button>
       </div>
       <div class="row" id="pgAcoes" style="margin:8px 0 2px" hidden>
         <button class="btn dark" id="novoEnc" type="button">+ Encontro</button>
@@ -186,12 +189,21 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     </div>
   </section>
 
+  <!-- EQUIPE (TIOS) -->
+  <section class="view" id="v-equipe">
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Equipe (tios)</h3><span class="hint" id="eqConta"></span></div>
+      <p class="hint" style="margin:4px 0 8px">Quem tem acesso ao Teens. Coloque a data de nascimento para entrar nos aniversariantes. Cada um edita o seu; os administradores editam todos.</p>
+      <div id="eqLista"></div>
+    </div>
+  </section>
+
   <!-- ANIVERSARIANTES -->
   <section class="view" id="v-aniv">
     <div class="alerta" id="anivHoje" hidden></div>
     <div class="card">
       <h3>Aniversariantes</h3>
-      <p class="hint" style="margin:0 0 6px">Vem do cadastro dos teens (só quem tem data de nascimento).</p>
+      <p class="hint" style="margin:0 0 6px">Teens e equipe (tios) com data de nascimento.</p>
       <div class="filtros" id="anivMeses"></div>
       <div id="anivLista"></div>
     </div>
@@ -248,6 +260,8 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <div class="secao">🎸 Louvor</div>
       <div id="enLouvor"></div>
       <button class="link" id="enAddFun" type="button">+ Adicionar função</button>
+      <div class="secao">🙋 Tios escalados</div>
+      <div class="chips" id="enTios"></div>
       <div class="secao">📖 Palavra</div>
       <div class="grid2">
         <div><label class="lb" for="enPal">Quem vai dar a palavra</label><select class="field" id="enPal"></select></div>
@@ -303,6 +317,20 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <button class="btn dark" id="tnSalvar" type="button">Salvar</button>
       <button class="btn" id="tnFechar" type="button">Fechar</button>
       <button class="link red" id="tnExcluir" type="button" style="margin-left:auto" hidden>Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tio / tia -->
+<div class="modal" id="eqModal">
+  <div class="sheet">
+    <h3 id="eqTit">Equipe</h3>
+    <p class="hint" id="eqEmail" style="margin:0 0 6px"></p>
+    <label class="lb" for="eqNasc">Data de nascimento</label><input class="field" id="eqNasc" type="date" style="max-width:60%">
+    <label class="lb" for="eqTel">Telefone <small>(opcional)</small></label><input class="field" id="eqTel" type="tel" maxlength="30" autocomplete="off">
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="eqSalvar" type="button">Salvar</button>
+      <button class="btn" id="eqFechar" type="button">Fechar</button>
     </div>
   </div>
 </div>
@@ -421,12 +449,12 @@ $('#loginForm').onsubmit = async e=>{
 };
 
 /* ---------- dados ---------- */
-let D = load(K.cache, {encontros:[], teens:[], equipe:[]});
+let D = load(K.cache, {encontros:[], teens:[], equipe:[], info:[]});
 async function carregarTudo(){
-  const [encontros, teens, equipe] = await Promise.all([
+  const [encontros, teens, equipe, info] = await Promise.all([
     sb('/tn_encontros?select=*&order=data,hora'), sb('/tn_teens?select=*&order=nome'),
-    sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[])]);
-  D = {encontros, teens, equipe}; save(K.cache, D);
+    sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[]), sb('/tn_equipe_info?select=*').catch(()=>D.info||[])]);
+  D = {encontros, teens, equipe, info}; save(K.cache, D);
 }
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const FUNCOES_PADRAO = ['Ministro(a)','Voz','Violão','Teclado'];
@@ -440,7 +468,7 @@ const horaTxt = t => { const h = hhmm(t); return h ? h.replace(':00','h').replac
 const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*·–]\s*/,'')).filter(Boolean);
 const primeiroNome = n => String(n||'').split(' ')[0];
 const louvorOk = e => (e.louvor||[]).some(l=>limpa(l.nome));
-const faltaDe = e => e.tipo!=='encontro' || e.cancelado ? [] : [!louvorOk(e) && 'louvor', !limpa(e.palavra) && 'palavra'].filter(Boolean);
+const faltaDe = e => e.tipo!=='encontro' || e.cancelado ? [] : [!louvorOk(e) && 'louvor', !(e.tios||[]).length && 'tios', !limpa(e.palavra) && 'palavra'].filter(Boolean);
 const fonesDe = t => String(t||'').split(/\s*(?:\/|\||(?<!\p{L})(?:ou|e)(?!\p{L})|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/iu).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
   .map(x=>{ const n = x.replace(/\D/g,''); return {txt:x, ok: n.length===10 || n.length===11 || (n.length===13 && n.startsWith('55')), n}; });
 const contatosHtml = t => { const fs = fonesDe(t); const linhas = String(t||'').split(/\n/).map(limpa).filter(Boolean);
@@ -461,7 +489,7 @@ function irPara(v){
 }
 $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 function render(){
-  ({prog:renderProg, teens:renderTeens, aniv:renderAniv, acessos:renderAcessos}[vista]||renderProg)();
+  ({prog:renderProg, teens:renderTeens, equipe:renderEquipe, aniv:renderAniv, acessos:renderAcessos}[vista]||renderProg)();
   const nomes = [...new Set([...(D.equipe||[]).map(m=>m.nome), ...(D.teens||[]).filter(t=>t.ativo).map(t=>t.nome)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
   $('#dlPessoas').innerHTML = nomes.map(n=>`<option value="${esc(n)}">`).join('');
   $('#dlFuncoes').innerHTML = FUNCOES.map(n=>`<option value="${esc(n)}">`).join('');
@@ -475,13 +503,14 @@ function cardEncontro(e){
   const lv = (e.louvor||[]).filter(l=>limpa(l.nome));
   const det = e.tipo==='evento' ? '' : e.cancelado ? '<div class="sem">Não vai ter encontro</div>' : `
     <div class="ln"><span>🎸 Louvor</span>${lv.length ? lv.map(l=>`<span class="tag"><small>${esc(l.funcao||'')}</small> ${esc(l.nome)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
+    <div class="ln"><span>🙋 Tios</span>${(e.tios||[]).length ? e.tios.map(n=>`<span class="tag tio">${esc(n)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
     <div class="ln"><span>📖 Palavra</span>${limpa(e.palavra) ? `<span class="tag pal">${esc(e.palavra)}</span>${e.palavra_tema?`<i>${esc(e.palavra_tema)}</i>`:''}` : '<span class="tag falta">a definir</span>'}</div>`;
   return `<div class="enc ${e.tipo} ${e.cancelado?'canc':''} ${e.data===hoje?'hoje':''}" data-en="${e.id}">
     <div class="d"><b>${deISO(e.data).getDate()}</b><small>${DIAS[deISO(e.data).getDay()].slice(0,3)}</small></div>
     <div class="t"><div class="tt">${e.tipo==='evento'?'<span class="tag evt">Evento</span> ':''}<b>${esc(e.tipo==='evento' ? (e.tema||'Evento') : (e.tema || 'Encontro dos Teens'))}</b></div>
       <div class="meta">${[quando, faixaHora(e), e.local?'📍 '+esc(e.local):''].filter(Boolean).join(' · ')}</div>
       ${det}${topicos(e.obs).length?`<ul class="tops">${topicos(e.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
-      ${falta.length && e.data>=hoje ? `<div class="aviso">Falta definir: ${falta.join(' e ')}</div>`:''}</div></div>`;
+      ${falta.length && e.data>=hoje ? `<div class="aviso">Falta definir: ${falta.length>1 ? falta.slice(0,-1).join(', ')+' e '+falta[falta.length-1] : falta[0]}</div>`:''}</div></div>`;
 }
 function renderProg(){
   const E = D.encontros||[], hoje = hojeISO();
@@ -500,13 +529,16 @@ function renderProg(){
   // próximo encontro em destaque
   const prox = E.find(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hoje);
   $('#proxBox').innerHTML = prox ? `<div class="prox" data-en="${prox.id}"><small>${prox.data===hoje?'HOJE':'PRÓXIMO ENCONTRO'}</small><b>${diaTxt(prox.data)}${prox.hora?' · '+faixaHora(prox):''}</b>
-    <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div></div>` : '';
+    <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div><div style="margin-top:3px">🙋 ${(prox.tios||[]).length ? esc(prox.tios.join(', ')) : '<u>tios a definir</u>'}</div></div>` : '';
 }
 $$('#pgFiltros [data-pf]').forEach(b=>b.onclick=()=>{ pgFiltro = b.dataset.pf; $$('#pgFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderProg(); });
 $('#verPassados').onclick = ()=>{ verPassados = !verPassados; renderProg(); };
 
 // editar encontro / evento
-let enEdit = null, enTipo = 'encontro';
+let enEdit = null, enTipo = 'encontro', enTios = new Set();
+function desenharTios(){ const l = tios(), extras = [...enTios].filter(n=>!l.includes(n));
+  $('#enTios').innerHTML = [...l, ...extras].map(n=>`<button type="button" class="chipsel ${enTios.has(n)?'on':''}" data-tio="${esc(n)}">${esc(n)}${l.includes(n)?'':' (sem acesso)'}</button>`).join('') || '<p class="hint">Ninguém na equipe ainda.</p>';
+  $$('#enTios [data-tio]').forEach(b=>b.onclick=()=>{ const n = b.dataset.tio; enTios.has(n) ? enTios.delete(n) : enTios.add(n); desenharTios(); }); }
 // louvor: só os teens (cadastro ativo); palavra: só os tios (quem tem acesso, menos pastor/pastora)
 const teensAtivos = () => (D.teens||[]).filter(t=>t.ativo).map(t=>t.nome).sort((a,b)=>a.localeCompare(b,'pt'));
 const ehPastor = n => /^(pra?\.|pastor|pastora)\s/i.test(String(n||'').trim());
@@ -527,7 +559,7 @@ function abrirEncontro(id, tipo){
   $('#enData').value = e?.data||''; $('#enFim').value = e?.data_fim||''; $('#enHora').value = hhmm(e?.hora); $('#enHoraFim').value = hhmm(e?.hora_fim); $('#enLocal').value = e?.local||'';
   $('#enCanc').checked = !!e?.cancelado; $('#enObs').value = e?.obs||'';
   const lv = e ? (e.louvor||[]) : []; $('#enLouvor').innerHTML = (lv.length ? lv : FUNCOES_PADRAO.map(f=>({funcao:f, nome:''}))).map(l=>linhaLouvor(l.funcao, l.nome)).join(''); ligarLouvor();
-  $('#enPal').innerHTML = opcoes(tios(), e?.palavra||'', '— A definir —'); $('#enPalTema').value = e?.palavra_tema||'';
+  $('#enPal').innerHTML = opcoes(tios(), e?.palavra||'', '— A definir —'); enTios = new Set(e?.tios||[]); desenharTios(); $('#enPalTema').value = e?.palavra_tema||'';
   $('#enCampos').hidden = evt; mostrarCanc();
   $('#enAddFun').textContent = teensAtivos().length ? '+ Adicionar função' : '+ Adicionar função (cadastre os teens na aba Teens)';
   // data/hora e exclusão só para administradores
@@ -551,7 +583,7 @@ $('#enSalvar').onclick = async ()=>{
   const louvor = $$('#enLouvor .lvrow').map(r=>({funcao:limpa(r.querySelector('[data-lf]').value), nome:limpa(r.querySelector('[data-ln]').value)})).filter(l=>l.funcao||l.nome);
   const row = {data, hora:hi||null, hora_fim:hf||null, local:limpa($('#enLocal').value)||null, obs:topicos($('#enObs').value).join('\n')||null,
     ...(evt ? {tema:limpa($('#enTitulo').value), data_fim:fim && fim!==data ? fim : null}
-            : {tema:limpa($('#enTema').value)||null, cancelado:$('#enCanc').checked, louvor, palavra:$('#enPal').value||null, palavra_tema:limpa($('#enPalTema').value)||null})};
+            : {tema:limpa($('#enTema').value)||null, cancelado:$('#enCanc').checked, louvor, palavra:$('#enPal').value||null, tios:[...enTios], palavra_tema:limpa($('#enPalTema').value)||null})};
   if(enEdit && !eu.admin){ delete row.data; delete row.data_fim; if(evt) delete row.tema; }
   const b = $('#enSalvar'); b.disabled = true;
   try{ if(enEdit) await sb('/tn_encontros?id=eq.'+enEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
@@ -632,10 +664,35 @@ $('#tnExcluir').onclick = async ()=>{ const t = (D.teens||[]).find(x=>x.id===tnE
   try{ await sb('/tn_teens?id=eq.'+t.id, {method:'DELETE'}); await carregarTudo(); fechar('#tnModal'); render(); toast('Cadastro excluído'); }
   catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
 
+/* ---------- equipe (tios) ---------- */
+const infoDe = email => (D.info||[]).find(i=>i.email===String(email).toLowerCase()) || {};
+const tiosComInfo = () => (D.equipe||[]).map(m=>({...infoDe(m.email), nome:m.nome, email:m.email}));
+function renderEquipe(){
+  const E = tiosComInfo().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt')), semNasc = E.filter(m=>!m.nascimento).length;
+  $('#eqConta').textContent = `${E.length} pessoa${E.length===1?'':'s'}${semNasc?` · ${semNasc} sem nascimento`:''}`;
+  $('#eqLista').innerHTML = E.map(m=>{ const i = idadeEm(m.nascimento), meu = m.email===eu.email, pode = meu || eu.admin;
+    const prox = (D.encontros||[]).filter(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hojeISO() && (e.tios||[]).includes(m.nome)).length;
+    return `<div class="item eqi ${pode?'pode':''}" ${pode?`data-eq="${esc(m.email)}"`:''}><div class="t"><b>${esc(m.nome)}</b>${meu?' <span class="tag pal">você</span>':''}${ehPastor(m.nome)?' <span class="tag evt">pastora</span>':''}
+      <div>${m.nascimento?`🎂 ${dataBR(m.nascimento)} · ${i} anos`:`<span class="faltatxt">${pode?'toque para colocar a data de nascimento':'sem data de nascimento'}</span>`}</div>${m.telefone?`<div>📞 ${contatosHtml(m.telefone)}</div>`:''}${!ehPastor(m.nome)?`<div>📅 ${prox?`escalado(a) em ${prox} encontro${prox===1?'':'s'} pela frente`:'sem escala pela frente'}</div>`:''}</div></div>`; }).join('')
+    || '<p class="vazio">Ninguém com acesso ainda.</p>';
+}
+let eqEdit = null;
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-eq]'); if(!el || e.target.closest('a')) return;
+  const m = tiosComInfo().find(x=>x.email===el.dataset.eq); if(!m) return; eqEdit = m.email;
+  $('#eqTit').textContent = m.nome; $('#eqEmail').textContent = m.email; $('#eqNasc').value = m.nascimento||''; $('#eqTel').value = m.telefone||''; abrir('#eqModal'); });
+$('#eqFechar').onclick = ()=>fechar('#eqModal');
+$('#eqSalvar').onclick = async ()=>{ const nasc = $('#eqNasc').value;
+  if(nasc && (nasc > hojeISO() || nasc < '1920-01-01')){ toast('Confira a data de nascimento','var(--danger)'); return; }
+  const b = $('#eqSalvar'); b.disabled = true;
+  try{ await sb('/tn_equipe_info?on_conflict=email', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify({email:eqEdit, nascimento:nasc||null, telefone:limpa($('#eqTel').value)||null, atualizado_em:new Date().toISOString()})});
+    await carregarTudo(); fechar('#eqModal'); render(); toast('Salvo'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; } };
+
 /* ---------- aniversariantes ---------- */
 let anivMes = new Date().getMonth();
 function renderAniv(){
-  const T = (D.teens||[]).filter(t=>t.ativo && t.nascimento), hoje = new Date(), ano = hoje.getFullYear();
+  const T = [...(D.teens||[]).filter(t=>t.ativo && t.nascimento).map(t=>({...t, quem:'teen'})), ...tiosComInfo().filter(m=>m.nascimento).map(m=>({id:null, email:m.email, nome:m.nome, nascimento:m.nascimento, contatos:m.telefone, quem:'tio'}))], hoje = new Date(), ano = hoje.getFullYear();
   const dm = t => ({m:+t.nascimento.slice(5,7)-1, d:+t.nascimento.slice(8,10)});
   const cont = Array(12).fill(0); T.forEach(t=>cont[dm(t).m]++);
   $('#anivMeses').innerHTML = MESES.map((m,i)=>`<button type="button" class="chipsel ${i===anivMes?'on':''} ${cont[i]?'':'vaziom'}" data-am="${i}">${m.slice(0,3)}${cont[i]?` <small>${cont[i]}</small>`:''}</button>`).join('');
@@ -644,7 +701,7 @@ function renderAniv(){
   $('#anivLista').innerHTML = l.map(t=>{ const {m,d} = dm(t), ehHoje = m===hoje.getMonth() && d===hoje.getDate();
     const aRef = (m<hoje.getMonth() || (m===hoje.getMonth() && d<hoje.getDate())) ? ano+1 : ano;   // próximo aniversário
     const faz = aRef - +t.nascimento.slice(0,4), passou = aRef > ano && m===hoje.getMonth();
-    return `<div class="item aniv ${ehHoje?'hj':''}" data-tn="${t.id}"><div class="dd"><b>${d}</b><small>${MESES[m].slice(0,3)}</small></div><div class="t"><b>${esc(t.nome)}</b>${ehHoje?' <span class="tag ok">🎉 hoje!</span>':''}
+    return `<div class="item aniv ${ehHoje?'hj':''}" ${t.quem==='teen'?`data-tn="${t.id}"`:(t.email===eu.email||eu.admin)?`data-eq="${esc(t.email)}"`:''}><div class="dd"><b>${d}</b><small>${MESES[m].slice(0,3)}</small></div><div class="t"><b>${esc(t.nome)}</b>${t.quem==='tio'?' <span class="tag pal">equipe</span>':''}${ehHoje?' <span class="tag ok">🎉 hoje!</span>':''}
       <div>${passou?`fez ${faz-1} anos`:`faz ${faz} anos`} · ${DIAS[new Date(aRef, m, d).getDay()]}</div>${t.contatos?`<div>📞 ${contatosHtml(t.contatos)}</div>`:''}</div></div>`; }).join('')
     || `<p class="vazio">Nenhum aniversariante em ${MESES[anivMes].toLowerCase()}.</p>`;
   // aviso de quem faz aniversário nos próximos 7 dias
