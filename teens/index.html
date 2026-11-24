@@ -86,6 +86,25 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 .tag.ok{background:#dcfce7;color:#166534}
 .tag.falta{background:#fde8ea;color:var(--danger)}
 .tag.evt{background:#fce7f3;color:#9d174d}
+.saldo{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#fff;border-radius:16px;padding:16px;margin-bottom:14px}
+.saldo small{font-size:11.5px;letter-spacing:.12em;font-weight:700;color:var(--lime)}
+.saldo>b{display:block;font-size:32px;margin:2px 0 6px}
+.saldo>b.neg{color:#fecaca}
+.saldo .sub{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;opacity:.95}
+.link-ini{background:none;color:#fff;text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+.tipo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 6px}
+.tipo button{padding:12px;border-radius:12px;border:2px solid var(--line);background:#fff;font-weight:700;font-size:15px;color:var(--muted)}
+.tipo button.ent.on{border-color:var(--ok);background:#dcfce7;color:#166534}
+.tipo button.sai.on{border-color:var(--danger);background:#fde8ea;color:#9f1239}
+.go.sai{background:var(--danger)}
+.mv{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.mv:first-of-type{border-top:0}
+.mv.pode{cursor:pointer}
+.mv .ic{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+.mv.entrada .ic{background:#dcfce7;color:#166534}.mv.saida .ic{background:#fde8ea;color:#9f1239}
+.mv .t{flex:1;min-width:0}.mv .t div{font-size:12.5px;color:var(--muted)}
+.mv .v{text-align:right;white-space:nowrap}.mv .v small{display:block;font-size:11.5px;color:var(--muted)}
+.mv.entrada .v b{color:var(--ok)}.mv.saida .v b{color:var(--danger)}
 .tag.tio{background:#dcfce7;color:#166534}
 #enTios{display:flex;gap:6px;flex-wrap:wrap}
 .tag.pal{background:#e0e7ff;color:#3730a3}
@@ -150,6 +169,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <button data-v="teens" type="button">Teens</button>
     <button data-v="equipe" type="button">Equipe</button>
     <button data-v="aniv" type="button">Aniversariantes</button>
+    <button data-v="caixa" type="button">Caixa</button>
     <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
   </nav>
 </header>
@@ -193,7 +213,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   <section class="view" id="v-equipe">
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="margin:0">Equipe</h3><span class="hint" id="eqConta"></span></div>
-      <p class="hint" style="margin:4px 0 8px">Quem tem acesso ao Teens. Coloque a data de nascimento para entrar nos aniversariantes. Cada um edita o seu; os administradores editam todos.</p>
+      <p class="hint" style="margin:4px 0 8px">Quem tem acesso ao Teens. Toque na pessoa para colocar a data de nascimento e entrar nos aniversariantes.</p>
       <div id="eqLista"></div>
     </div>
   </section>
@@ -206,6 +226,30 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <p class="hint" style="margin:0 0 6px">Teens e equipe com data de nascimento.</p>
       <div class="filtros" id="anivMeses"></div>
       <div id="anivLista"></div>
+    </div>
+  </section>
+
+  <!-- CAIXA -->
+  <section class="view" id="v-caixa">
+    <div class="saldo"><small>SALDO ATUAL</small><b id="cxSaldo">R$ 0,00</b>
+      <div class="sub"><span id="cxIni"></span><span>⬆ <b id="cxEnt"></b> entradas</span><span>⬇ <b id="cxSai"></b> saídas</span></div></div>
+    <div class="card">
+      <h3>Lançar no caixa</h3>
+      <div class="tipo" id="cxTipo">
+        <button type="button" class="on ent" data-ct="entrada">⬆ Entrada</button>
+        <button type="button" class="sai" data-ct="saida">⬇ Saída</button>
+      </div>
+      <div class="grid2">
+        <div><label class="lb" for="cxValor">Valor (R$)</label><input class="field" id="cxValor" inputmode="decimal" placeholder="0,00" autocomplete="off"></div>
+        <div><label class="lb" for="cxData">Data</label><input class="field" id="cxData" type="date"></div>
+      </div>
+      <label class="lb" for="cxDesc">Descrição</label><input class="field" id="cxDesc" maxlength="150" placeholder="Ex.: Oferta do encontro / Lanche" autocomplete="off" list="dlCaixa">
+      <button class="go" id="cxLancar" type="button">Lançar entrada</button>
+    </div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Movimentações</h3>
+        <select class="field" id="cxMes" style="width:auto;padding:8px 10px"></select></div>
+      <div id="cxLista"></div>
     </div>
   </section>
 
@@ -335,6 +379,28 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   </div>
 </div>
 
+<!-- Movimento do caixa -->
+<div class="modal" id="cxModal">
+  <div class="sheet">
+    <h3 id="cmTit">Editar lançamento</h3>
+    <div class="tipo" id="cmTipo">
+      <button type="button" class="ent" data-cm="entrada">⬆ Entrada</button>
+      <button type="button" class="sai" data-cm="saida">⬇ Saída</button>
+    </div>
+    <div class="grid2">
+      <div><label class="lb" for="cmValor">Valor (R$)</label><input class="field" id="cmValor" inputmode="decimal" autocomplete="off"></div>
+      <div><label class="lb" for="cmData">Data</label><input class="field" id="cmData" type="date"></div>
+    </div>
+    <div id="cmDescBox"><label class="lb" for="cmDesc">Descrição</label><input class="field" id="cmDesc" maxlength="150" autocomplete="off" list="dlCaixa"></div>
+    <p class="hint" id="cmQuem" style="margin:8px 0 0"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="cmSalvar" type="button">Salvar</button>
+      <button class="btn" id="cmFechar" type="button">Fechar</button>
+      <button class="link red" id="cmExcluir" type="button" style="margin-left:auto">Excluir</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirmação -->
 <div class="modal" id="confModal">
   <div class="sheet">
@@ -365,6 +431,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
 
 <datalist id="dlPessoas"></datalist>
 <datalist id="dlFuncoes"></datalist>
+<datalist id="dlCaixa"></datalist>
 <div class="toast" id="toast"></div>
 <script>/* =========================================================
    Teens — programação anual (encontros e eventos), cadastro dos teens e aniversariantes
@@ -449,12 +516,12 @@ $('#loginForm').onsubmit = async e=>{
 };
 
 /* ---------- dados ---------- */
-let D = load(K.cache, {encontros:[], teens:[], equipe:[], info:[]});
+let D = load(K.cache, {encontros:[], teens:[], equipe:[], info:[], caixa:[]});
 async function carregarTudo(){
-  const [encontros, teens, equipe, info] = await Promise.all([
+  const [encontros, teens, equipe, info, caixa] = await Promise.all([
     sb('/tn_encontros?select=*&order=data,hora'), sb('/tn_teens?select=*&order=nome'),
-    sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[]), sb('/tn_equipe_info?select=*').catch(()=>D.info||[])]);
-  D = {encontros, teens, equipe, info}; save(K.cache, D);
+    sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[]), sb('/tn_equipe_info?select=*').catch(()=>D.info||[]), sb('/tn_caixa?select=*&order=data,criado_em').catch(()=>D.caixa||[])]);
+  D = {encontros, teens, equipe, info, caixa}; save(K.cache, D);
 }
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const FUNCOES_PADRAO = ['Ministro(a)','Voz','Violão','Teclado'];
@@ -489,7 +556,7 @@ function irPara(v){
 }
 $$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
 function render(){
-  ({prog:renderProg, teens:renderTeens, equipe:renderEquipe, aniv:renderAniv, acessos:renderAcessos}[vista]||renderProg)();
+  ({prog:renderProg, teens:renderTeens, equipe:renderEquipe, aniv:renderAniv, caixa:renderCaixa, acessos:renderAcessos}[vista]||renderProg)();
   const nomes = [...new Set([...(D.equipe||[]).map(m=>m.nome), ...(D.teens||[]).filter(t=>t.ativo).map(t=>t.nome)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
   $('#dlPessoas').innerHTML = nomes.map(n=>`<option value="${esc(n)}">`).join('');
   $('#dlFuncoes').innerHTML = FUNCOES.map(n=>`<option value="${esc(n)}">`).join('');
@@ -670,7 +737,7 @@ const tiosComInfo = () => (D.equipe||[]).map(m=>({...infoDe(m.email), nome:m.nom
 function renderEquipe(){
   const E = tiosComInfo().sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt')), semNasc = E.filter(m=>!m.nascimento).length;
   $('#eqConta').textContent = `${E.length} pessoa${E.length===1?'':'s'}${semNasc?` · ${semNasc} sem nascimento`:''}`;
-  $('#eqLista').innerHTML = E.map(m=>{ const i = idadeEm(m.nascimento), meu = m.email===eu.email, pode = meu || eu.admin;
+  $('#eqLista').innerHTML = E.map(m=>{ const i = idadeEm(m.nascimento), meu = m.email===eu.email, pode = true;
     const prox = (D.encontros||[]).filter(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hojeISO() && (e.tios||[]).includes(m.nome)).length;
     return `<div class="item eqi ${pode?'pode':''}" ${pode?`data-eq="${esc(m.email)}"`:''}><div class="t"><b>${esc(m.nome)}</b>${meu?' <span class="tag pal">você</span>':''}${ehPastor(m.nome)?' <span class="tag evt">pastora</span>':''}
       <div>${m.nascimento?`🎂 ${dataBR(m.nascimento)} · ${i} anos`:`<span class="faltatxt">${pode?'toque para colocar a data de nascimento':'sem data de nascimento'}</span>`}</div>${m.telefone?`<div>📞 ${contatosHtml(m.telefone)}</div>`:''}${!ehPastor(m.nome)?`<div>📅 ${prox?`escalado(a) em ${prox} encontro${prox===1?'':'s'} pela frente`:'sem escala pela frente'}</div>`:''}</div></div>`; }).join('')
@@ -689,6 +756,72 @@ $('#eqSalvar').onclick = async ()=>{ const nasc = $('#eqNasc').value;
   catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
   finally{ b.disabled = false; } };
 
+/* ---------- caixa (entradas, saídas e saldo inicial) ---------- */
+const valorDe = v => { const t = String(v||'').replace(/[R$\s]/g,''); const n = parseFloat(/,\d{1,2}$/.test(t) ? t.replace(/\./g,'').replace(',','.') : t.replace(/,/g,'')); return Number.isFinite(n) ? Math.round(n*100)/100 : NaN; };
+const valorTxt = n => (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+let cxTipo = 'entrada', cxMes = 'tudo', cmEdit = null, cmTipoSel = 'entrada';
+const podeMexer = c => eu.admin || (c.tipo!=='inicial' && c.criado_email===eu.email);
+function renderCaixa(){
+  const C = D.caixa||[], ini = C.find(c=>c.tipo==='inicial'), mov = C.filter(c=>c.tipo!=='inicial');
+  const ent = mov.filter(c=>c.tipo==='entrada').reduce((s,c)=>s+Number(c.valor),0), sai = mov.filter(c=>c.tipo==='saida').reduce((s,c)=>s+Number(c.valor),0);
+  const saldo = Number(ini?.valor||0) + ent - sai;
+  $('#cxSaldo').textContent = brl(saldo); $('#cxSaldo').classList.toggle('neg', saldo<0);
+  $('#cxEnt').textContent = brl(ent); $('#cxSai').textContent = brl(sai);
+  $('#cxIni').innerHTML = ini ? `<span ${eu.admin?`data-cx="${ini.id}" class="link-ini"`:''}>Saldo inicial <b>${brl(ini.valor)}</b> em ${dataBR(ini.data)}</span>` : (eu.admin ? '<button class="link-ini" id="cxDefIni" type="button">+ Definir saldo inicial</button>' : 'Saldo inicial não definido');
+  if($('#cxDefIni')) $('#cxDefIni').onclick = definirInicial;
+  if(!$('#cxData').value) $('#cxData').value = hojeISO();
+  const meses = [...new Set(mov.map(c=>c.data.slice(0,7)))].sort().reverse();
+  if(cxMes!=='tudo' && !meses.includes(cxMes)) cxMes = 'tudo';
+  $('#cxMes').innerHTML = `<option value="tudo">Todos os meses</option>` + meses.map(m=>`<option value="${m}" ${m===cxMes?'selected':''}>${MESES[+m.slice(5)-1]} ${m.slice(0,4)}</option>`).join('');
+  // saldo corrido (do mais antigo para o mais novo), mostrado do mais novo para o mais antigo
+  let corr = Number(ini?.valor||0); const comSaldo = mov.map(c=>{ corr += (c.tipo==='entrada'?1:-1)*Number(c.valor); return {...c, saldo:corr}; });
+  const l = comSaldo.filter(c=>cxMes==='tudo' || c.data.startsWith(cxMes)).reverse();
+  const resumoMes = cxMes==='tudo' ? '' : (()=>{ const e = l.filter(c=>c.tipo==='entrada').reduce((s,c)=>s+Number(c.valor),0), s2 = l.filter(c=>c.tipo==='saida').reduce((s,c)=>s+Number(c.valor),0);
+    return `<p class="hint" style="margin:8px 0 2px">No mês: entradas <b style="color:var(--ok)">${brl(e)}</b> · saídas <b style="color:var(--danger)">${brl(s2)}</b> · resultado <b>${brl(e-s2)}</b></p>`; })();
+  $('#cxLista').innerHTML = resumoMes + (l.map(c=>`<div class="mv ${c.tipo} ${podeMexer(c)?'pode':''}" ${podeMexer(c)?`data-cx="${c.id}"`:''}>
+      <div class="ic">${c.tipo==='entrada'?'⬆':'⬇'}</div>
+      <div class="t"><b>${esc(c.descricao||(c.tipo==='entrada'?'Entrada':'Saída'))}</b><div>${diaCurto(c.data)}${c.criado_por?` · ${esc(primeiroNome(c.criado_por))}`:''}</div></div>
+      <div class="v"><b>${c.tipo==='entrada'?'+':'−'} ${brl(c.valor)}</b><small>saldo ${brl(c.saldo)}</small></div></div>`).join('')
+    || `<p class="vazio">${mov.length ? 'Nada neste mês.' : 'Nenhuma movimentação ainda.'}</p>`);
+  $('#dlCaixa').innerHTML = [...new Set(mov.map(c=>c.descricao).filter(Boolean))].slice(-40).map(d=>`<option value="${esc(d)}">`).join('');
+}
+$('#cxMes').onchange = ()=>{ cxMes = $('#cxMes').value; renderCaixa(); };
+$$('#cxTipo [data-ct]').forEach(b=>b.onclick=()=>{ cxTipo = b.dataset.ct; $$('#cxTipo [data-ct]').forEach(x=>x.classList.toggle('on', x===b)); $('#cxLancar').textContent = cxTipo==='entrada' ? 'Lançar entrada' : 'Lançar saída'; $('#cxLancar').classList.toggle('sai', cxTipo==='saida'); });
+$('#cxLancar').onclick = async ()=>{
+  const v = valorDe($('#cxValor').value), desc = limpa($('#cxDesc').value), data = $('#cxData').value || hojeISO();
+  if(!(v>0)){ toast('Digite o valor','var(--danger)'); $('#cxValor').focus(); return; }
+  if(!desc){ toast('Escreva uma descrição','var(--danger)'); $('#cxDesc').focus(); return; }
+  const b = $('#cxLancar'); b.disabled = true;
+  try{ await sb('/tn_caixa', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({tipo:cxTipo, valor:v, data, descricao:desc, criado_por:eu.nome||eu.email, criado_email:eu.email})});
+    $('#cxValor').value = ''; $('#cxDesc').value = ''; await carregarTudo(); renderCaixa(); toast(`${cxTipo==='entrada'?'Entrada':'Saída'} de ${brl(v)} lançada`); }
+  catch(e){ toast('Não lançou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; } };
+async function definirInicial(){ abrirMov(null, 'inicial'); }
+function abrirMov(id, novoTipo){
+  const c = id ? (D.caixa||[]).find(x=>x.id===id) : null; cmEdit = c ? c.id : null; cmTipoSel = c ? c.tipo : novoTipo;
+  const ini = cmTipoSel==='inicial';
+  $('#cmTit').textContent = ini ? 'Saldo inicial' : 'Editar lançamento';
+  $('#cmTipo').hidden = ini; $('#cmDescBox').hidden = ini;
+  $$('#cmTipo [data-cm]').forEach(x=>x.classList.toggle('on', x.dataset.cm===cmTipoSel));
+  $('#cmValor').value = c ? valorTxt(c.valor) : ''; $('#cmData').value = c?.data || hojeISO(); $('#cmDesc').value = c?.descricao||'';
+  $('#cmQuem').textContent = ini ? 'Quanto havia no caixa quando começou a ser controlado aqui.' : c ? `Lançado por ${c.criado_por||'—'}.` : '';
+  $('#cmExcluir').hidden = !c; abrir('#cxModal'); setTimeout(()=>$('#cmValor').focus(), 60);
+}
+$$('#cmTipo [data-cm]').forEach(b=>b.onclick=()=>{ cmTipoSel = b.dataset.cm; $$('#cmTipo [data-cm]').forEach(x=>x.classList.toggle('on', x===b)); });
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-cx]'); if(el) abrirMov(el.dataset.cx); });
+$('#cmFechar').onclick = ()=>fechar('#cxModal');
+$('#cmSalvar').onclick = async ()=>{ const v = valorDe($('#cmValor').value);
+  if(!(v>=0) || (cmTipoSel!=='inicial' && !(v>0))){ toast('Digite o valor','var(--danger)'); return; }
+  const row = {tipo:cmTipoSel, valor:v, data:$('#cmData').value||hojeISO(), ...(cmTipoSel==='inicial' ? {descricao:'Saldo inicial'} : {descricao:limpa($('#cmDesc').value)||null})};
+  try{ if(cmEdit) await sb('/tn_caixa?id=eq.'+cmEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    else await sb('/tn_caixa', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, criado_por:eu.nome||eu.email, criado_email:eu.email})});
+    await carregarTudo(); fechar('#cxModal'); renderCaixa(); toast('Salvo'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); } };
+$('#cmExcluir').onclick = async ()=>{ const c = (D.caixa||[]).find(x=>x.id===cmEdit); if(!c) return;
+  if(!(await perguntar(c.tipo==='inicial'?'Apagar saldo inicial?':'Excluir lançamento?', `${c.descricao||''} · ${brl(c.valor)} · ${dataBR(c.data)}`, {sim:'Excluir', perigo:true}))) return;
+  try{ await sb('/tn_caixa?id=eq.'+c.id, {method:'DELETE'}); await carregarTudo(); fechar('#cxModal'); renderCaixa(); toast('Excluído'); }
+  catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
+
 /* ---------- aniversariantes ---------- */
 let anivMes = new Date().getMonth();
 function renderAniv(){
@@ -701,7 +834,7 @@ function renderAniv(){
   $('#anivLista').innerHTML = l.map(t=>{ const {m,d} = dm(t), ehHoje = m===hoje.getMonth() && d===hoje.getDate();
     const aRef = (m<hoje.getMonth() || (m===hoje.getMonth() && d<hoje.getDate())) ? ano+1 : ano;   // próximo aniversário
     const faz = aRef - +t.nascimento.slice(0,4), passou = aRef > ano && m===hoje.getMonth();
-    return `<div class="item aniv ${ehHoje?'hj':''}" ${t.quem==='teen'?`data-tn="${t.id}"`:(t.email===eu.email||eu.admin)?`data-eq="${esc(t.email)}"`:''}><div class="dd"><b>${d}</b><small>${MESES[m].slice(0,3)}</small></div><div class="t"><b>${esc(t.nome)}</b>${t.quem==='tio'?' <span class="tag pal">equipe</span>':''}${ehHoje?' <span class="tag ok">🎉 hoje!</span>':''}
+    return `<div class="item aniv ${ehHoje?'hj':''}" ${t.quem==='teen'?`data-tn="${t.id}"`:true?`data-eq="${esc(t.email)}"`:''}><div class="dd"><b>${d}</b><small>${MESES[m].slice(0,3)}</small></div><div class="t"><b>${esc(t.nome)}</b>${t.quem==='tio'?' <span class="tag pal">equipe</span>':''}${ehHoje?' <span class="tag ok">🎉 hoje!</span>':''}
       <div>${passou?`fez ${faz-1} anos`:`faz ${faz} anos`} · ${DIAS[new Date(aRef, m, d).getDay()]}</div>${t.contatos?`<div>📞 ${contatosHtml(t.contatos)}</div>`:''}</div></div>`; }).join('')
     || `<p class="vazio">Nenhum aniversariante em ${MESES[anivMes].toLowerCase()}.</p>`;
   // aviso de quem faz aniversário nos próximos 7 dias
