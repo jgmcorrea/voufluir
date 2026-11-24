@@ -192,7 +192,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   <!-- EQUIPE (TIOS) -->
   <section class="view" id="v-equipe">
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Equipe (tios)</h3><span class="hint" id="eqConta"></span></div>
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Equipe</h3><span class="hint" id="eqConta"></span></div>
       <p class="hint" style="margin:4px 0 8px">Quem tem acesso ao Teens. Coloque a data de nascimento para entrar nos aniversariantes. Cada um edita o seu; os administradores editam todos.</p>
       <div id="eqLista"></div>
     </div>
@@ -203,7 +203,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <div class="alerta" id="anivHoje" hidden></div>
     <div class="card">
       <h3>Aniversariantes</h3>
-      <p class="hint" style="margin:0 0 6px">Teens e equipe (tios) com data de nascimento.</p>
+      <p class="hint" style="margin:0 0 6px">Teens e equipe com data de nascimento.</p>
       <div class="filtros" id="anivMeses"></div>
       <div id="anivLista"></div>
     </div>
@@ -260,7 +260,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <div class="secao">🎸 Louvor</div>
       <div id="enLouvor"></div>
       <button class="link" id="enAddFun" type="button">+ Adicionar função</button>
-      <div class="secao">🙋 Tios escalados</div>
+      <div class="secao">🙋 Equipe escalada</div>
       <div class="chips" id="enTios"></div>
       <div class="secao">📖 Palavra</div>
       <div class="grid2">
@@ -321,7 +321,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
   </div>
 </div>
 
-<!-- Tio / tia -->
+<!-- Pessoa da equipe -->
 <div class="modal" id="eqModal">
   <div class="sheet">
     <h3 id="eqTit">Equipe</h3>
@@ -468,7 +468,7 @@ const horaTxt = t => { const h = hhmm(t); return h ? h.replace(':00','h').replac
 const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*·–]\s*/,'')).filter(Boolean);
 const primeiroNome = n => String(n||'').split(' ')[0];
 const louvorOk = e => (e.louvor||[]).some(l=>limpa(l.nome));
-const faltaDe = e => e.tipo!=='encontro' || e.cancelado ? [] : [!louvorOk(e) && 'louvor', !(e.tios||[]).length && 'tios', !limpa(e.palavra) && 'palavra'].filter(Boolean);
+const faltaDe = e => e.tipo!=='encontro' || e.cancelado ? [] : [!louvorOk(e) && 'louvor', !(e.tios||[]).length && 'equipe', !limpa(e.palavra) && 'palavra'].filter(Boolean);
 const fonesDe = t => String(t||'').split(/\s*(?:\/|\||(?<!\p{L})(?:ou|e)(?!\p{L})|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/iu).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
   .map(x=>{ const n = x.replace(/\D/g,''); return {txt:x, ok: n.length===10 || n.length===11 || (n.length===13 && n.startsWith('55')), n}; });
 const contatosHtml = t => { const fs = fonesDe(t); const linhas = String(t||'').split(/\n/).map(limpa).filter(Boolean);
@@ -503,7 +503,7 @@ function cardEncontro(e){
   const lv = (e.louvor||[]).filter(l=>limpa(l.nome));
   const det = e.tipo==='evento' ? '' : e.cancelado ? '<div class="sem">Não vai ter encontro</div>' : `
     <div class="ln"><span>🎸 Louvor</span>${lv.length ? lv.map(l=>`<span class="tag"><small>${esc(l.funcao||'')}</small> ${esc(l.nome)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
-    <div class="ln"><span>🙋 Tios</span>${(e.tios||[]).length ? e.tios.map(n=>`<span class="tag tio">${esc(n)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
+    <div class="ln"><span>🙋 Equipe</span>${(e.tios||[]).length ? e.tios.map(n=>`<span class="tag tio">${esc(n)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
     <div class="ln"><span>📖 Palavra</span>${limpa(e.palavra) ? `<span class="tag pal">${esc(e.palavra)}</span>${e.palavra_tema?`<i>${esc(e.palavra_tema)}</i>`:''}` : '<span class="tag falta">a definir</span>'}</div>`;
   return `<div class="enc ${e.tipo} ${e.cancelado?'canc':''} ${e.data===hoje?'hoje':''}" data-en="${e.id}">
     <div class="d"><b>${deISO(e.data).getDate()}</b><small>${DIAS[deISO(e.data).getDay()].slice(0,3)}</small></div>
@@ -529,7 +529,7 @@ function renderProg(){
   // próximo encontro em destaque
   const prox = E.find(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hoje);
   $('#proxBox').innerHTML = prox ? `<div class="prox" data-en="${prox.id}"><small>${prox.data===hoje?'HOJE':'PRÓXIMO ENCONTRO'}</small><b>${diaTxt(prox.data)}${prox.hora?' · '+faixaHora(prox):''}</b>
-    <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div><div style="margin-top:3px">🙋 ${(prox.tios||[]).length ? esc(prox.tios.join(', ')) : '<u>tios a definir</u>'}</div></div>` : '';
+    <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div><div style="margin-top:3px">🙋 ${(prox.tios||[]).length ? esc(prox.tios.join(', ')) : '<u>equipe a definir</u>'}</div></div>` : '';
 }
 $$('#pgFiltros [data-pf]').forEach(b=>b.onclick=()=>{ pgFiltro = b.dataset.pf; $$('#pgFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderProg(); });
 $('#verPassados').onclick = ()=>{ verPassados = !verPassados; renderProg(); };
@@ -664,7 +664,7 @@ $('#tnExcluir').onclick = async ()=>{ const t = (D.teens||[]).find(x=>x.id===tnE
   try{ await sb('/tn_teens?id=eq.'+t.id, {method:'DELETE'}); await carregarTudo(); fechar('#tnModal'); render(); toast('Cadastro excluído'); }
   catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
 
-/* ---------- equipe (tios) ---------- */
+/* ---------- equipe ---------- */
 const infoDe = email => (D.info||[]).find(i=>i.email===String(email).toLowerCase()) || {};
 const tiosComInfo = () => (D.equipe||[]).map(m=>({...infoDe(m.email), nome:m.nome, email:m.email}));
 function renderEquipe(){
