@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#1e1b4b">
+<title>Teens · Movimento Vou Fluir</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#eef0f6; --card:#ffffff; --ink:#1b2033; --muted:#5f6680; --line:#dde1ec;
+  --brand:#4338ca; --brand2:#1e1b4b; --lime:#22d3ee; --accent:#db2777; --accent2:#f59e0b; --danger:#d23a2e; --ok:#16a34a; --warn:#d69a00;
+  --chip:#eceefe; --soft:#eef0ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer;border:0}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+[hidden]{display:none!important}
+header{background:var(--brand2);border-bottom:4px solid var(--lime);color:#fff;padding:14px 16px 0;position:sticky;top:0;z-index:20}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:960px;margin:0 auto}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-img{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.logo h1{font-family:'Black Ops One','Outfit',sans-serif;font-weight:400;font-size:21px;letter-spacing:.02em;margin:0;line-height:1.05}
+.logo small{display:block;font-size:12px;opacity:.85}
+.userbtn{background:rgba(255,255,255,.16);color:#fff;border-radius:999px;width:34px;height:34px;font-weight:700;font-size:14px;flex:none}
+nav{display:flex;gap:4px;max-width:960px;margin:12px auto 0;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;background:transparent;color:#dfe3ff;padding:11px 12px;font-size:15px;font-weight:600;border-radius:12px 12px 0 0}
+nav button.on{background:var(--bg);color:var(--brand2)}
+main{max-width:960px;margin:0 auto;padding:16px}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h3{margin:0 0 6px;font-size:17px}
+.hint{font-size:13px;color:var(--muted)}
+.secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 8px;font-weight:600}
+.btn{padding:11px 14px;border-radius:12px;background:var(--chip);color:var(--ink);font-weight:600;font-size:15px}
+.btn.dark{background:var(--brand);color:#fff}
+.btn.red{background:#fde8ea;color:var(--danger)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.sm{padding:7px 10px;font-size:13.5px;border-radius:10px}
+.btn:disabled{opacity:.5}
+.btn:focus-visible,.chipsel:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.link{background:none;color:var(--accent);font-size:14px;font-weight:600;padding:4px}
+.link.red{color:var(--danger)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.field{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+textarea.field{min-height:60px;resize:vertical;line-height:1.4}
+label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.go{width:100%;margin-top:14px;padding:15px;border-radius:14px;background:var(--brand);box-shadow:inset 0 -4px 0 var(--brand2);color:#fff;font-size:17px;font-weight:700}
+.tag{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--chip);font-weight:600;white-space:nowrap}
+.tag.ok{background:#e1f3e7;color:#1f6e43}
+.tag.pend{background:#fff1d6;color:#8a5a00}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.grid2{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipsel{padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-size:14px;font-weight:600;color:var(--ink)}
+.chipsel.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* listas */
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .t{min-width:0;flex:1}
+.item .t b{font-size:15px}
+.item .t div{font-size:13.5px;color:var(--muted);margin-top:2px}
+.item .a{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.filtros{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+
+/* modal / toast / login */
+.modal{position:fixed;inset:0;background:rgba(18,30,22,.5);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:0}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 18px 24px;max-height:92vh;overflow:auto}
+@media(min-width:620px){.modal{align-items:center}.sheet{border-radius:20px}}
+.sheet h3{margin:0 0 8px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ok);color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;transition:.25s;z-index:80;max-width:92vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0)}
+#login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#login.on{display:flex}
+#login .box{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;width:100%;max-width:380px}
+#login h2{margin:16px 0 4px}
+.erro{color:var(--danger);font-size:14px;min-height:18px;margin-top:8px}
+.vazio{padding:18px;text-align:center;color:var(--muted);font-size:14px}
+.zap{background:#25d366;color:#fff}
+.tag.ok{background:#dcfce7;color:#166534}
+.tag.falta{background:#fde8ea;color:var(--danger)}
+.tag.evt{background:#fce7f3;color:#9d174d}
+.tag.pal{background:#e0e7ff;color:#3730a3}
+.tag small{font-weight:500;opacity:.75}
+.secao{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--brand);margin:18px 0 4px;font-weight:700}
+.alerta{background:#fdf2f8;border:1.5px solid #f9a8d4;color:#831843;border-radius:14px;padding:10px 14px;margin-bottom:12px;font-size:14.5px;line-height:1.5}
+.mes h4{font-family:'Black Ops One','Outfit',sans-serif;font-weight:400;font-size:18px;color:var(--brand);margin:16px 0 6px;letter-spacing:.02em}
+.mes h4 small{font-family:'Outfit',sans-serif;font-size:13px;color:var(--muted)}
+.enc{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;background:#fff}
+.enc:hover{border-color:#c7cdf5}
+.enc .d{flex:none;width:46px;text-align:center;background:var(--soft);border-radius:10px;padding:6px 0;line-height:1.05;height:max-content}
+.enc .d b{display:block;font-size:22px;color:var(--brand2)}
+.enc .d small{font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:700}
+.enc.evento .d{background:#fce7f3}.enc.evento .d b{color:#9d174d}
+.enc.hoje{border:2px solid var(--brand)}
+.enc.canc{opacity:.65}.enc.canc .tt b{text-decoration:line-through}
+.enc .t{flex:1;min-width:0}
+.enc .tt b{font-size:15.5px}
+.enc .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.enc .ln{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:7px;font-size:13px}
+.enc .ln>span:first-child{font-weight:700;color:var(--muted);margin-right:2px}
+.enc .ln i{font-size:13px;color:var(--muted)}
+.enc .sem{margin-top:6px;font-size:13.5px;color:var(--danger);font-weight:600}
+.enc .aviso{margin-top:7px;font-size:12.5px;color:var(--danger);font-weight:700}
+.tops{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+.tops li::marker{color:var(--accent)}
+.prox{background:linear-gradient(135deg,var(--brand2),var(--brand));color:#fff;border-radius:16px;padding:14px 16px;margin-bottom:14px;cursor:pointer}
+.prox small{font-size:11.5px;letter-spacing:.12em;font-weight:700;color:var(--lime)}
+.prox b{display:block;font-size:19px;margin:2px 0 4px}
+.prox div{font-size:14px;opacity:.95}
+.lvrow{display:grid;grid-template-columns:1fr 1.4fr 34px;gap:6px;margin-bottom:6px}
+.lvrow .field{padding:10px}
+.lvrow .x{background:#fde8ea;color:var(--danger);border-radius:10px;font-size:20px;font-weight:700}
+.item.tn,.item.aniv{cursor:pointer}
+.item.inat b{color:var(--muted)}
+.item .t a{color:var(--brand);font-weight:600}
+.faltatxt{color:var(--danger)!important}
+.aniv .dd{flex:none;width:46px;text-align:center;background:#fce7f3;border-radius:10px;padding:6px 0;line-height:1.05;height:max-content}
+.aniv .dd b{display:block;font-size:20px;color:#9d174d}.aniv .dd small{font-size:11.5px;text-transform:uppercase;font-weight:700;color:#9d174d}
+.aniv{justify-content:flex-start}
+.aniv.hj{background:#fdf2f8;border-radius:12px;padding-left:8px}
+.chipsel small{font-weight:500;opacity:.8}
+.chipsel.vaziom{color:var(--muted)}
+.loginlogo{display:flex;align-items:center;justify-content:center;gap:10px}
+.loginlogo img{width:56px;height:56px;border-radius:50%}
+.loginlogo b{font-family:'Black Ops One',sans-serif;font-weight:400;font-size:34px;color:var(--brand2)}
+.field:disabled{background:#f3f4f8;color:var(--muted)}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">
+      <img class="logo-img" src="/logo.png" alt="Movimento Vou Fluir">
+      <div><h1>Teens</h1><small>Movimento Vou Fluir</small></div>
+    </div>
+    <button class="userbtn" id="userBtn" type="button" aria-label="Minha conta">?</button>
+  </div>
+  <nav id="nav">
+    <button data-v="prog" class="on" type="button">Programação</button>
+    <button data-v="teens" type="button">Teens</button>
+    <button data-v="aniv" type="button">Aniversariantes</button>
+    <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
+  </nav>
+</header>
+
+<main>
+  <!-- PROGRAMAÇÃO ANUAL -->
+  <section class="view on" id="v-prog">
+    <div class="proxbox" id="proxBox"></div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Programação <span id="pgAno"></span></h3><span class="hint" id="pgConta"></span></div>
+      <div class="filtros" id="pgFiltros">
+        <button type="button" class="chipsel on" data-pf="tudo">Tudo</button>
+        <button type="button" class="chipsel" data-pf="encontro">Encontros</button>
+        <button type="button" class="chipsel" data-pf="evento">Eventos</button>
+        <button type="button" class="chipsel" data-pf="falta">Falta louvor ou palavra</button>
+      </div>
+      <div class="row" id="pgAcoes" style="margin:8px 0 2px" hidden>
+        <button class="btn dark" id="novoEnc" type="button">+ Encontro</button>
+        <button class="btn dark" id="novoEvt" type="button">+ Evento</button>
+        <button class="btn" id="gerarEnc" type="button">Gerar encontros do ano</button>
+      </div>
+      <div id="pgLista"></div>
+      <button class="link" id="verPassados" type="button" style="margin-top:8px"></button>
+    </div>
+  </section>
+
+  <!-- CADASTRO DOS TEENS -->
+  <section class="view" id="v-teens">
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">Teens cadastrados</h3><span class="hint" id="teConta"></span></div>
+      <div class="row" style="margin:10px 0 4px">
+        <input class="field" id="teBusca" type="search" placeholder="Buscar por nome, pai/mãe ou telefone…" autocomplete="off" style="flex:1;min-width:200px">
+        <button class="btn dark" id="novoTeen" type="button">+ Cadastrar teen</button>
+      </div>
+      <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="teInativos" style="width:18px;height:18px"> Mostrar quem não participa mais</label>
+      <div id="teLista"></div>
+    </div>
+  </section>
+
+  <!-- ANIVERSARIANTES -->
+  <section class="view" id="v-aniv">
+    <div class="alerta" id="anivHoje" hidden></div>
+    <div class="card">
+      <h3>Aniversariantes</h3>
+      <p class="hint" style="margin:0 0 6px">Vem do cadastro dos teens (só quem tem data de nascimento).</p>
+      <div class="filtros" id="anivMeses"></div>
+      <div id="anivLista"></div>
+    </div>
+  </section>
+
+  <!-- ACESSOS -->
+  <section class="view" id="v-acessos">
+    <div class="card">
+      <h3>Dar acesso ao Teens</h3>
+      <p class="hint" style="margin:0 0 4px">Quem tem acesso aqui vê a programação, preenche louvor e palavra e cuida do cadastro dos teens. Isso não dá acesso ao caixa, ao Flow nem ao Flow Camp.</p>
+      <div class="grid2">
+        <div><label class="lb" for="acNome">Nome</label><input class="field" id="acNome" autocomplete="off"></div>
+        <div><label class="lb" for="acEmail">E-mail</label><input class="field" id="acEmail" type="email" autocomplete="off"></div>
+      </div>
+      <label class="lb" for="acSenha">Senha inicial (mín. 6)</label><input class="field" id="acSenha" type="text" autocomplete="off">
+      <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="acAdmin" style="width:18px;height:18px"> Administrador (cria e apaga encontros e eventos e dá acessos)</label>
+      <button class="go" id="acCriar" type="button">Liberar acesso</button>
+    </div>
+    <div class="card"><h3>Quem tem acesso</h3><div id="acLista"><p class="hint">Carregando…</p></div></div>
+  </section>
+</main>
+
+<!-- Login -->
+<div id="login">
+  <form class="box" id="loginForm">
+    <div class="loginlogo"><img src="/logo.png" alt=""><b>Teens</b></div>
+    <h2 style="text-align:center">Teens · Vou Fluir</h2>
+    <label class="lb" for="lEmail">E-mail</label>
+    <input id="lEmail" class="field" type="email" autocomplete="username" required>
+    <label class="lb" for="lSenha">Senha</label>
+    <input id="lSenha" class="field" type="password" autocomplete="current-password" required>
+    <div class="erro" id="lErro"></div>
+    <button class="go" id="lBtn" type="submit">Entrar</button>
+    <p class="hint" style="margin:12px 0 0">Use o mesmo e-mail e senha dos outros sistemas da igreja. Ainda não tem acesso? Peça para um administrador do Teens.</p>
+  </form>
+</div>
+
+<!-- Encontro / evento -->
+<div class="modal" id="enModal">
+  <div class="sheet">
+    <h3 id="enTit">Encontro</h3>
+    <div id="enCampoTitulo"><label class="lb" for="enTitulo">Nome do evento</label><input class="field" id="enTitulo" maxlength="120" placeholder="Ex.: Retiro de Carnaval" autocomplete="off"></div>
+    <div class="grid2">
+      <div><label class="lb" for="enData" id="enDataLb">Data</label><input class="field" id="enData" type="date"></div>
+      <div id="enCampoFim"><label class="lb" for="enFim">Até <small>(se for mais de um dia)</small></label><input class="field" id="enFim" type="date"></div>
+      <div><label class="lb" for="enHora">Horário</label><input class="field" id="enHora" type="time"></div>
+      <div><label class="lb" for="enLocal">Local <small>(opcional)</small></label><input class="field" id="enLocal" maxlength="100" autocomplete="off"></div>
+    </div>
+    <div id="enCampoTema"><label class="lb" for="enTema">Tema do encontro <small>(opcional)</small></label><input class="field" id="enTema" maxlength="120" autocomplete="off"></div>
+    <label class="hint" id="enCampoCanc" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="enCanc" style="width:18px;height:18px"> Não vai ter encontro nesse dia</label>
+
+    <div id="enCampos">
+      <div class="secao">🎸 Louvor</div>
+      <div id="enLouvor"></div>
+      <button class="link" id="enAddFun" type="button">+ Adicionar função</button>
+      <div class="secao">📖 Palavra</div>
+      <div class="grid2">
+        <div><label class="lb" for="enPal">Quem vai dar a palavra</label><input class="field" id="enPal" maxlength="80" list="dlPessoas" autocomplete="off"></div>
+        <div><label class="lb" for="enPalTema">Tema / passagem <small>(opcional)</small></label><input class="field" id="enPalTema" maxlength="120" autocomplete="off"></div>
+      </div>
+    </div>
+    <label class="lb" for="enObs">Observações <small>(opcional — um tópico por linha)</small></label><textarea class="field" id="enObs" rows="3" maxlength="1500"></textarea>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="enSalvar" type="button">Salvar</button>
+      <button class="btn" id="enFechar" type="button">Fechar</button>
+      <button class="link red" id="enExcluir" type="button" style="margin-left:auto" hidden>Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gerar encontros -->
+<div class="modal" id="geModal">
+  <div class="sheet">
+    <h3>Gerar encontros</h3>
+    <p class="hint" style="margin:0 0 4px">Cria de uma vez os encontros no período. Dias que já têm encontro não são duplicados.</p>
+    <div class="grid2">
+      <div><label class="lb" for="geDia">Dia da semana</label><select class="field" id="geDia"></select></div>
+      <div><label class="lb" for="geFreq">Frequência</label><select class="field" id="geFreq">
+        <option value="1">Toda semana</option><option value="2">A cada 15 dias</option>
+        <option value="m1">1ª semana do mês</option><option value="m2">2ª semana do mês</option><option value="m3">3ª semana do mês</option><option value="m4">4ª semana do mês</option>
+        <option value="m13">1ª e 3ª semanas do mês</option><option value="m24">2ª e 4ª semanas do mês</option>
+      </select></div>
+      <div><label class="lb" for="geDe">A partir de</label><input class="field" id="geDe" type="date"></div>
+      <div><label class="lb" for="geAte">Até</label><input class="field" id="geAte" type="date"></div>
+      <div><label class="lb" for="geHora">Horário</label><input class="field" id="geHora" type="time"></div>
+      <div><label class="lb" for="geLocal">Local <small>(opcional)</small></label><input class="field" id="geLocal" maxlength="100" autocomplete="off"></div>
+    </div>
+    <p class="hint" id="gePrevia" style="margin:10px 0 0"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="geCriar" type="button">Criar encontros</button>
+      <button class="btn" id="geFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teen -->
+<div class="modal" id="tnModal">
+  <div class="sheet">
+    <h3 id="tnTit">Cadastrar teen</h3>
+    <label class="lb" for="tnNome">Nome completo</label><input class="field" id="tnNome" maxlength="120" autocomplete="off">
+    <label class="lb" for="tnNasc">Data de nascimento</label><input class="field" id="tnNasc" type="date" style="max-width:60%">
+    <label class="lb" for="tnPais">Nome dos pais / responsáveis</label><input class="field" id="tnPais" maxlength="200" placeholder="Ex.: Ana (mãe) e Carlos (pai)" autocomplete="off">
+    <label class="lb" for="tnCont">Contatos <small>(telefones — um por linha, pode pôr de quem é)</small></label><textarea class="field" id="tnCont" rows="3" maxlength="400" placeholder="Ex.:&#10;47 99999-1111 mãe&#10;47 98888-2222 pai&#10;47 97777-3333 do teen"></textarea>
+    <label class="lb" for="tnObs">Observações <small>(opcional — alergias, cuidados…)</small></label><input class="field" id="tnObs" maxlength="300" autocomplete="off">
+    <label class="hint" id="tnAtivoBox" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="tnAtivo" style="width:18px;height:18px"> Participa dos Teens</label>
+    <div class="row" style="margin-top:14px">
+      <button class="btn dark" id="tnSalvar" type="button">Salvar</button>
+      <button class="btn" id="tnFechar" type="button">Fechar</button>
+      <button class="link red" id="tnExcluir" type="button" style="margin-left:auto" hidden>Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmação -->
+<div class="modal" id="confModal">
+  <div class="sheet">
+    <h3 id="cTitulo">Confirmar</h3>
+    <p id="cTexto" style="margin:0 0 6px;line-height:1.45;white-space:pre-line"></p>
+    <input id="cInput" class="field" hidden>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="cNao" type="button">Cancelar</button>
+      <button class="btn dark" id="cSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Minha conta -->
+<div class="modal" id="contaModal">
+  <div class="sheet">
+    <h3 id="ctNome">Minha conta</h3>
+    <p class="hint" id="ctEmail" style="margin:0 0 10px"></p>
+    <label class="lb" for="ctSenha">Nova senha (mín. 6)</label>
+    <input id="ctSenha" class="field" type="password" autocomplete="new-password">
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="ctTrocar" type="button">Trocar senha</button>
+      <button class="btn red" id="ctSair" type="button">Sair</button>
+      <button class="btn" id="ctFechar" type="button">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="dlPessoas"></datalist>
+<datalist id="dlFuncoes"></datalist>
+<div class="toast" id="toast"></div>
+<script>/* =========================================================
+   Teens — programação anual (encontros e eventos), cadastro dos teens e aniversariantes
+   Acesso próprio (vf_membros.teens / teens_admin), mesma conta de login dos outros sistemas.
+   ========================================================= */
+const SB = 'https://wengqckoknqqgeucgubg.supabase.co';
+const SB_URL = SB + '/rest/v1';
+const SB_KEY = 'sb_publishable_JuPHTEh530A0RGsn4CugKg_L-DaKIBm';
+const K = {sess:'vf8_sess', eu:'tn1_eu', cache:'tn1_cache', aba:'tn1_aba'};
+const DIAS = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const limpa = s => String(s||'').replace(/\s+/g,' ').trim();
+const semAcento = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const num = v => { const n = parseFloat(String(v).replace(',','.')); return Number.isFinite(n) ? n : null; };
+const fmtN = n => (Math.round(n*100)/100).toLocaleString('pt-BR');
+const brl = n => (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const deISO = s => new Date(s+'T12:00');
+const diaTxt = d => { const x = deISO(d); return `${DIAS[x.getDay()]}, ${x.getDate()}/${x.getMonth()+1}`; };
+function toast(msg, cor, ms){ const t=$('#toast'); t.textContent=msg; t.style.background=cor||'var(--ok)'; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),ms||2600); }
+function perguntar(titulo, texto, {sim='Confirmar', perigo=false, input=null}={}){
+  return new Promise(res=>{
+    $('#cTitulo').textContent = titulo; $('#cTexto').textContent = texto;
+    const inp = $('#cInput'); inp.hidden = !input; inp.type = input?.tipo||'text'; inp.value = input?.valor||''; inp.placeholder = input?.ph||'';
+    const b = $('#cSim'); b.textContent = sim; b.className = 'btn ' + (perigo?'red':'dark');
+    $('#confModal').classList.add('on'); if(input) setTimeout(()=>inp.focus(),50);
+    const fim = v=>{ $('#confModal').classList.remove('on'); $('#cSim').onclick = $('#cNao').onclick = null; res(v); };
+    $('#cSim').onclick = ()=>fim(input ? inp.value : true); $('#cNao').onclick = ()=>fim(input ? null : false);
+  });
+}
+const abrir = id => $(id).classList.add('on'), fechar = id => $(id).classList.remove('on');
+
+/* ---------- login (mesma conta dos outros sistemas) ---------- */
+let sess = load(K.sess, null), eu = load(K.eu, null);
+async function authReq(path, body, metodo='POST', tok){
+  const r = await fetch(SB+'/auth/v1/'+path, {method:metodo, headers:{apikey:SB_KEY,'Content-Type':'application/json', ...(tok?{Authorization:'Bearer '+tok}:{})}, body:JSON.stringify(body)});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw Object.assign(new Error(j.error_description||j.msg||j.message||('Erro '+r.status)), {status:r.status});
+  return j;
+}
+function guardaSessao(j){ sess = {access_token:j.access_token, refresh_token:j.refresh_token, expires_at:j.expires_at || (Math.floor(Date.now()/1000)+(j.expires_in||3600)), email:(j.user?.email||sess?.email||'').toLowerCase()}; save(K.sess, sess); }
+let renovando = null;
+async function renovar(){
+  if(!sess?.refresh_token) throw new Error('sem sessão');
+  if(!renovando) renovando = authReq('token?grant_type=refresh_token', {refresh_token:sess.refresh_token}).then(guardaSessao)
+    .catch(e=>{ if(e.status===400||e.status===401) sair(); throw e; }).finally(()=>{ renovando=null; });
+  return renovando;
+}
+async function tokenValido(){ if(!sess) throw new Error('sem sessão'); if(sess.expires_at*1000 - Date.now() < 90000) await renovar(); return sess.access_token; }
+async function sb(path, opt={}, tentativa=0){
+  const tok = await tokenValido();
+  const r = await fetch(SB_URL+path, {...opt, headers:{apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json', ...(opt.headers||{})}});
+  if(r.status===401 && !tentativa){ await renovar(); return sb(path, opt, 1); }
+  if(!r.ok) throw new Error(r.status+' '+await r.text());
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+async function equipe(body){
+  const tok = await tokenValido();
+  const r = await fetch(SB+'/functions/v1/vf-equipe', {method:'POST', headers:{apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json'}, body:JSON.stringify({sistema:'teens', ...body})});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.erro || ('Erro '+r.status)); return j;
+}
+async function carregarEu(){
+  const m = await sb('/vf_membros?select=email,nome,ativo,teens,teens_admin,admin&email=eq.'+encodeURIComponent(sess.email));
+  const x = m && m[0];
+  if(!x || !x.ativo || !(x.teens || x.teens_admin)) throw Object.assign(new Error('Seu e-mail ainda não tem acesso ao Teens. Peça para um administrador do Teens liberar.'), {semAcesso:true});
+  eu = {email:x.email, nome:x.nome, admin:!!(x.teens_admin || x.admin)}; save(K.eu, eu);
+}
+function sair(){ sess = null; eu = null; save(K.sess, null); save(K.eu, null); $('#login').classList.add('on'); }
+$('#loginForm').onsubmit = async e=>{
+  e.preventDefault(); $('#lErro').textContent=''; const b=$('#lBtn'); b.disabled=true; b.textContent='Entrando…';
+  try{
+    const j = await authReq('token?grant_type=password', {email:$('#lEmail').value.trim().toLowerCase(), password:$('#lSenha').value});
+    guardaSessao(j); await carregarEu(); $('#login').classList.remove('on'); $('#lSenha').value=''; iniciar();
+  }catch(err){
+    if(err.semAcesso){ sess=null; save(K.sess,null); }
+    $('#lErro').textContent = /invalid login|invalid_grant|credentials/i.test(err.message) ? 'E-mail ou senha incorretos.' : (navigator.onLine ? err.message : 'Sem internet. O login precisa de conexão.');
+  }finally{ b.disabled=false; b.textContent='Entrar'; }
+};
+
+/* ---------- dados ---------- */
+let D = load(K.cache, {encontros:[], teens:[], equipe:[]});
+async function carregarTudo(){
+  const [encontros, teens, equipe] = await Promise.all([
+    sb('/tn_encontros?select=*&order=data,hora'), sb('/tn_teens?select=*&order=nome'),
+    sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[])]);
+  D = {encontros, teens, equipe}; save(K.cache, D);
+}
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const FUNCOES_PADRAO = ['Ministro(a)','Voz','Violão','Teclado'];
+const FUNCOES = ['Ministro(a)','Voz','Back vocal','Violão','Guitarra','Teclado','Baixo','Bateria','Cajon','Baixolão'];
+const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const isoDe = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const diaCurto = d => { const x = deISO(d); return `${DIAS[x.getDay()].slice(0,3)} ${x.getDate()}/${x.getMonth()+1}`; };
+const hhmm = t => t ? String(t).slice(0,5) : '';
+const horaTxt = t => { const h = hhmm(t); return h ? h.replace(':00','h').replace(':','h') : ''; };
+const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*·–]\s*/,'')).filter(Boolean);
+const primeiroNome = n => String(n||'').split(' ')[0];
+const louvorOk = e => (e.louvor||[]).some(l=>limpa(l.nome));
+const faltaDe = e => e.tipo!=='encontro' || e.cancelado ? [] : [!louvorOk(e) && 'louvor', !limpa(e.palavra) && 'palavra'].filter(Boolean);
+const fonesDe = t => String(t||'').split(/\s*(?:\/|\||(?<!\p{L})(?:ou|e)(?!\p{L})|\n|;|,|\.\s+|\s{2,}|\s(?=\())\s*/iu).map(x=>x.trim().replace(/[.\s]+$/,'')).filter(x=>x.replace(/\D/g,'').length>=8)
+  .map(x=>{ const n = x.replace(/\D/g,''); return {txt:x, ok: n.length===10 || n.length===11 || (n.length===13 && n.startsWith('55')), n}; });
+const contatosHtml = t => { const fs = fonesDe(t); const linhas = String(t||'').split(/\n/).map(limpa).filter(Boolean);
+  if(!fs.length) return esc(linhas.join(' · '));
+  return fs.map(f=> f.ok ? `<a href="https://wa.me/${f.n.length<=11?'55'+f.n:f.n}" target="_blank" rel="noopener">${esc(f.txt)}</a>` : esc(f.txt)).join(' · '); };
+function idadeEm(nasc, ref){ if(!nasc) return null; const n = deISO(nasc), r = ref ? deISO(ref) : new Date(); let i = r.getFullYear()-n.getFullYear();
+  if(r.getMonth()<n.getMonth() || (r.getMonth()===n.getMonth() && r.getDate()<n.getDate())) i--; return i; }
+const dataBR = d => { if(!d) return ''; const x = deISO(d); return `${String(x.getDate()).padStart(2,'0')}/${String(x.getMonth()+1).padStart(2,'0')}/${x.getFullYear()}`; };
+
+/* ---------- navegação ---------- */
+let vista = load(K.aba, 'prog');
+function irPara(v){
+  if(v==='acessos' && !eu?.admin) v = 'prog';
+  vista = v; save(K.aba, v);
+  $$('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  $$('.view').forEach(s=>s.classList.toggle('on', s.id==='v-'+v));
+  render(); window.scrollTo(0,0);
+}
+$$('nav button').forEach(b=>b.onclick=()=>irPara(b.dataset.v));
+function render(){
+  ({prog:renderProg, teens:renderTeens, aniv:renderAniv, acessos:renderAcessos}[vista]||renderProg)();
+  const nomes = [...new Set([...(D.equipe||[]).map(m=>m.nome), ...(D.teens||[]).filter(t=>t.ativo).map(t=>t.nome)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+  $('#dlPessoas').innerHTML = nomes.map(n=>`<option value="${esc(n)}">`).join('');
+  $('#dlFuncoes').innerHTML = FUNCOES.map(n=>`<option value="${esc(n)}">`).join('');
+}
+
+/* ---------- programação anual (encontros + eventos) ---------- */
+let pgFiltro = 'tudo', verPassados = false;
+function cardEncontro(e){
+  const falta = faltaDe(e), hoje = hojeISO();
+  const quando = e.tipo==='evento' && e.data_fim && e.data_fim!==e.data ? `${diaCurto(e.data)} a ${diaCurto(e.data_fim)}` : diaCurto(e.data);
+  const lv = (e.louvor||[]).filter(l=>limpa(l.nome));
+  const det = e.tipo==='evento' ? '' : e.cancelado ? '<div class="sem">Não vai ter encontro</div>' : `
+    <div class="ln"><span>🎸 Louvor</span>${lv.length ? lv.map(l=>`<span class="tag"><small>${esc(l.funcao||'')}</small> ${esc(l.nome)}</span>`).join('') : '<span class="tag falta">a definir</span>'}</div>
+    <div class="ln"><span>📖 Palavra</span>${limpa(e.palavra) ? `<span class="tag pal">${esc(e.palavra)}</span>${e.palavra_tema?`<i>${esc(e.palavra_tema)}</i>`:''}` : '<span class="tag falta">a definir</span>'}</div>`;
+  return `<div class="enc ${e.tipo} ${e.cancelado?'canc':''} ${e.data===hoje?'hoje':''}" data-en="${e.id}">
+    <div class="d"><b>${deISO(e.data).getDate()}</b><small>${DIAS[deISO(e.data).getDay()].slice(0,3)}</small></div>
+    <div class="t"><div class="tt">${e.tipo==='evento'?'<span class="tag evt">Evento</span> ':''}<b>${esc(e.tipo==='evento' ? (e.tema||'Evento') : (e.tema || 'Encontro dos Teens'))}</b></div>
+      <div class="meta">${[quando, horaTxt(e.hora), e.local?'📍 '+esc(e.local):''].filter(Boolean).join(' · ')}</div>
+      ${det}${topicos(e.obs).length?`<ul class="tops">${topicos(e.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
+      ${falta.length && e.data>=hoje ? `<div class="aviso">Falta definir: ${falta.join(' e ')}</div>`:''}</div></div>`;
+}
+function renderProg(){
+  const E = D.encontros||[], hoje = hojeISO();
+  $('#pgAcoes').hidden = !eu?.admin;
+  const anos = [...new Set(E.map(e=>e.data.slice(0,4)))]; $('#pgAno').textContent = anos.length===1 ? anos[0] : '';
+  let l = E.filter(e=> pgFiltro==='tudo' || (pgFiltro==='falta' ? faltaDe(e).length && e.data>=hoje : e.tipo===pgFiltro));
+  const passados = l.filter(e=>(e.data_fim||e.data) < hoje);
+  if(!verPassados) l = l.filter(e=>(e.data_fim||e.data) >= hoje);
+  const nEnc = E.filter(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hoje).length, nEvt = E.filter(e=>e.tipo==='evento' && (e.data_fim||e.data)>=hoje).length;
+  $('#pgConta').textContent = `${nEnc} encontro${nEnc===1?'':'s'} e ${nEvt} evento${nEvt===1?'':'s'} pela frente`;
+  const meses = {}; l.forEach(e=>(meses[e.data.slice(0,7)] ||= []).push(e));
+  $('#pgLista').innerHTML = Object.entries(meses).map(([m, es])=>`<div class="mes"><h4>${MESES[+m.slice(5)-1]} <small>${m.slice(0,4)}</small></h4>${es.map(cardEncontro).join('')}</div>`).join('')
+    || `<p class="vazio">${E.length ? 'Nada por aqui com esse filtro.' : eu?.admin ? 'Nenhum encontro ainda. Use “Gerar encontros do ano” para criar todos de uma vez, ou “+ Encontro” / “+ Evento”.' : 'A programação ainda não foi montada pelos administradores.'}</p>`;
+  $('#verPassados').hidden = !passados.length;
+  $('#verPassados').textContent = verPassados ? 'Esconder os que já passaram' : `Ver os que já passaram (${passados.length})`;
+  // próximo encontro em destaque
+  const prox = E.find(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hoje);
+  $('#proxBox').innerHTML = prox ? `<div class="prox" data-en="${prox.id}"><small>${prox.data===hoje?'HOJE':'PRÓXIMO ENCONTRO'}</small><b>${diaTxt(prox.data)}${prox.hora?' · '+horaTxt(prox.hora):''}</b>
+    <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div></div>` : '';
+}
+$$('#pgFiltros [data-pf]').forEach(b=>b.onclick=()=>{ pgFiltro = b.dataset.pf; $$('#pgFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderProg(); });
+$('#verPassados').onclick = ()=>{ verPassados = !verPassados; renderProg(); };
+
+// editar encontro / evento
+let enEdit = null, enTipo = 'encontro';
+function linhaLouvor(f='', n=''){ return `<div class="lvrow"><input class="field" data-lf list="dlFuncoes" value="${esc(f)}" placeholder="Função" maxlength="40" autocomplete="off"><input class="field" data-ln list="dlPessoas" value="${esc(n)}" placeholder="Quem" maxlength="80" autocomplete="off"><button type="button" class="x" data-lx aria-label="Tirar linha">×</button></div>`; }
+function ligarLouvor(){ $$('#enLouvor [data-lx]').forEach(b=>b.onclick=()=>b.closest('.lvrow').remove()); }
+$('#enAddFun').onclick = ()=>{ $('#enLouvor').insertAdjacentHTML('beforeend', linhaLouvor()); ligarLouvor(); $$('#enLouvor [data-lf]').pop().focus(); };
+function abrirEncontro(id, tipo){
+  const e = id ? (D.encontros||[]).find(x=>x.id===id) : null; if(id && !e) return;
+  enEdit = e ? e.id : null; enTipo = e ? e.tipo : tipo;
+  const evt = enTipo==='evento';
+  $('#enTit').textContent = (e ? 'Editar ' : 'Novo ') + (evt ? 'evento' : 'encontro');
+  $('#enCampoTitulo').hidden = !evt; $('#enCampoFim').hidden = !evt; $('#enCampoTema').hidden = evt; $('#enCampoCanc').hidden = evt;
+  $('#enDataLb').textContent = evt ? 'Começa em' : 'Data';
+  $('#enTitulo').value = evt ? (e?.tema||'') : ''; $('#enTema').value = !evt ? (e?.tema||'') : '';
+  $('#enData').value = e?.data||''; $('#enFim').value = e?.data_fim||''; $('#enHora').value = hhmm(e?.hora); $('#enLocal').value = e?.local||'';
+  $('#enCanc').checked = !!e?.cancelado; $('#enObs').value = e?.obs||'';
+  const lv = e ? (e.louvor||[]) : []; $('#enLouvor').innerHTML = (lv.length ? lv : FUNCOES_PADRAO.map(f=>({funcao:f, nome:''}))).map(l=>linhaLouvor(l.funcao, l.nome)).join(''); ligarLouvor();
+  $('#enPal').value = e?.palavra||''; $('#enPalTema').value = e?.palavra_tema||'';
+  $('#enCampos').hidden = evt; mostrarCanc();
+  // data/hora e exclusão só para administradores
+  ['#enData','#enFim','#enTitulo'].forEach(s=>$(s).disabled = !!e && !eu.admin);
+  $('#enExcluir').hidden = !(e && eu.admin);
+  abrir('#enModal');
+}
+function mostrarCanc(){ if(enTipo==='encontro') $('#enCampos').hidden = $('#enCanc').checked; }
+$('#enCanc').onchange = mostrarCanc;
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-en]'); if(el && !e.target.closest('a')) abrirEncontro(el.dataset.en); });
+$('#novoEnc').onclick = ()=>abrirEncontro(null, 'encontro');
+$('#novoEvt').onclick = ()=>abrirEncontro(null, 'evento');
+$('#enFechar').onclick = ()=>fechar('#enModal');
+$('#enSalvar').onclick = async ()=>{
+  const evt = enTipo==='evento', data = $('#enData').value, fim = $('#enFim').value;
+  if(!data){ toast('Coloque a data','var(--danger)'); $('#enData').focus(); return; }
+  if(evt && !limpa($('#enTitulo').value)){ toast('Coloque o nome do evento','var(--danger)'); $('#enTitulo').focus(); return; }
+  if(evt && fim && fim < data){ toast('A data final precisa ser depois do início','var(--danger)'); return; }
+  const louvor = $$('#enLouvor .lvrow').map(r=>({funcao:limpa(r.querySelector('[data-lf]').value), nome:limpa(r.querySelector('[data-ln]').value)})).filter(l=>l.funcao||l.nome);
+  const row = {data, hora:$('#enHora').value||null, local:limpa($('#enLocal').value)||null, obs:topicos($('#enObs').value).join('\n')||null,
+    ...(evt ? {tema:limpa($('#enTitulo').value), data_fim:fim && fim!==data ? fim : null}
+            : {tema:limpa($('#enTema').value)||null, cancelado:$('#enCanc').checked, louvor, palavra:limpa($('#enPal').value)||null, palavra_tema:limpa($('#enPalTema').value)||null})};
+  if(enEdit && !eu.admin){ delete row.data; delete row.data_fim; if(evt) delete row.tema; }
+  const b = $('#enSalvar'); b.disabled = true;
+  try{ if(enEdit) await sb('/tn_encontros?id=eq.'+enEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    else await sb('/tn_encontros', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, tipo:enTipo, criado_por:eu.nome||eu.email})});
+    await carregarTudo(); fechar('#enModal'); renderProg(); toast(evt ? 'Evento salvo' : 'Encontro salvo'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; }
+};
+$('#enExcluir').onclick = async ()=>{ const e = (D.encontros||[]).find(x=>x.id===enEdit); if(!e) return;
+  if(!(await perguntar(e.tipo==='evento'?'Excluir evento?':'Excluir encontro?', `${diaTxt(e.data)}${e.tema?' · '+e.tema:''}\n\nSe for só um dia sem encontro, prefira marcar “Não vai ter encontro nesse dia”.`, {sim:'Excluir', perigo:true}))) return;
+  try{ await sb('/tn_encontros?id=eq.'+e.id, {method:'DELETE'}); await carregarTudo(); fechar('#enModal'); renderProg(); toast('Excluído'); }
+  catch(err){ toast('Não excluiu: '+err.message,'var(--danger)'); } };
+
+// gerar encontros do ano
+function datasGeradas(){
+  const de = $('#geDe').value, ate = $('#geAte').value, dow = +$('#geDia').value, fq = $('#geFreq').value; if(!de || !ate || ate < de) return [];
+  const out = []; let d = deISO(de); while(d.getDay()!==dow) d.setDate(d.getDate()+1);
+  let i = 0; const fim = deISO(ate);
+  for(; d <= fim; d.setDate(d.getDate()+7), i++){
+    const sem = Math.ceil(d.getDate()/7);
+    const ok = fq==='1' || (fq==='2' && i%2===0) || (fq[0]==='m' && fq.slice(1).includes(String(sem)));
+    if(ok) out.push(isoDe(d));
+  }
+  return out;
+}
+function previaGerar(){ const ds = datasGeradas(), ja = new Set((D.encontros||[]).filter(e=>e.tipo==='encontro').map(e=>e.data)), novos = ds.filter(d=>!ja.has(d));
+  $('#gePrevia').textContent = ds.length ? `${novos.length} encontro${novos.length===1?'':'s'} novo${novos.length===1?'':'s'}${ds.length-novos.length?` (${ds.length-novos.length} já existia${ds.length-novos.length===1?'':'m'})`:''}${novos.length?': '+novos.slice(0,4).map(diaCurto).join(', ')+(novos.length>4?'…':''):''}` : 'Escolha o período.';
+  return novos; }
+$('#geDia').innerHTML = DIAS.map((d,i)=>`<option value="${i}" ${i===6?'selected':''}>${d}</option>`).join('');
+['#geDia','#geFreq','#geDe','#geAte'].forEach(s=>$(s).onchange = previaGerar);
+$('#gerarEnc').onclick = ()=>{ const a = new Date().getFullYear() + (new Date().getMonth()>=10 ? 1 : 0);
+  if(!$('#geDe').value){ $('#geDe').value = `${a}-01-01`; $('#geAte').value = `${a}-12-31`; } previaGerar(); abrir('#geModal'); };
+$('#geFechar').onclick = ()=>fechar('#geModal');
+$('#geCriar').onclick = async ()=>{ const novos = previaGerar(); if(!novos.length){ toast('Nenhum encontro novo para criar','var(--danger)'); return; }
+  if(!(await perguntar('Criar encontros?', `${novos.length} encontros de ${diaCurto(novos[0])} a ${diaCurto(novos[novos.length-1])}.`, {sim:'Criar'}))) return;
+  const b = $('#geCriar'); b.disabled = true;
+  try{ await sb('/tn_encontros', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(novos.map(data=>({data, tipo:'encontro', hora:$('#geHora').value||null, local:limpa($('#geLocal').value)||null, criado_por:eu.nome||eu.email})))});
+    await carregarTudo(); fechar('#geModal'); renderProg(); toast(`${novos.length} encontros criados`); }
+  catch(e){ toast('Não criou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; } };
+
+/* ---------- cadastro dos teens ---------- */
+function renderTeens(){
+  const T = D.teens||[], q = semAcento($('#teBusca').value), inat = $('#teInativos').checked;
+  const l = T.filter(t=>(inat || t.ativo) && (!q || semAcento([t.nome, t.pais, t.contatos].join(' ')).includes(q) || String(t.contatos||'').replace(/\D/g,'').includes(q.replace(/\D/g,'')||'#')));
+  const ativos = T.filter(t=>t.ativo).length;
+  $('#teConta').textContent = `${ativos} participando${T.length-ativos?` · ${T.length-ativos} não participa${T.length-ativos===1?'':'m'} mais`:''}`;
+  $('#teLista').innerHTML = l.map(t=>{ const i = idadeEm(t.nascimento);
+    return `<div class="item tn ${t.ativo?'':'inat'}" data-tn="${t.id}"><div class="t"><b>${esc(t.nome)}</b> ${i!=null?`<span class="tag">${i} anos</span>`:'<span class="tag falta">sem nascimento</span>'}${t.ativo?'':' <span class="tag">não participa mais</span>'}
+      ${t.nascimento?`<div>🎂 ${dataBR(t.nascimento)}</div>`:''}${t.pais?`<div>👨‍👩‍👧 ${esc(t.pais)}</div>`:''}${t.contatos?`<div>📞 ${contatosHtml(t.contatos)}</div>`:'<div class="faltatxt">sem contato</div>'}${t.obs?`<div>📝 ${esc(t.obs)}</div>`:''}</div></div>`; }).join('')
+    || `<p class="vazio">${T.length ? 'Ninguém encontrado.' : 'Nenhum teen cadastrado ainda. Toque em “+ Cadastrar teen”.'}</p>`;
+}
+$('#teBusca').oninput = renderTeens; $('#teInativos').onchange = renderTeens;
+let tnEdit = null;
+function abrirTeen(id){ const t = id ? (D.teens||[]).find(x=>x.id===id) : null; tnEdit = t ? t.id : null;
+  $('#tnTit').textContent = t ? 'Editar cadastro' : 'Cadastrar teen';
+  $('#tnNome').value = t?.nome||''; $('#tnNasc').value = t?.nascimento||''; $('#tnPais').value = t?.pais||''; $('#tnCont').value = t?.contatos||''; $('#tnObs').value = t?.obs||'';
+  $('#tnAtivo').checked = t ? !!t.ativo : true; $('#tnAtivoBox').hidden = !t; $('#tnExcluir').hidden = !(t && eu.admin);
+  abrir('#tnModal'); setTimeout(()=>$('#tnNome').focus(), 60); }
+$('#novoTeen').onclick = ()=>abrirTeen(null);
+document.addEventListener('click', e=>{ const el = e.target.closest('[data-tn]'); if(el && !e.target.closest('a')) abrirTeen(el.dataset.tn); });
+$('#tnFechar').onclick = ()=>fechar('#tnModal');
+$('#tnSalvar').onclick = async ()=>{
+  const nome = limpa($('#tnNome').value); if(nome.length<2){ toast('Digite o nome','var(--danger)'); $('#tnNome').focus(); return; }
+  const nasc = $('#tnNasc').value; if(nasc && (nasc > hojeISO() || nasc < '1990-01-01')){ toast('Confira a data de nascimento','var(--danger)'); return; }
+  const dup = (D.teens||[]).find(t=>t.id!==tnEdit && semAcento(t.nome)===semAcento(nome));
+  if(dup && !(await perguntar('Nome repetido', `Já existe “${dup.nome}” no cadastro. Salvar mesmo assim?`, {sim:'Salvar'}))) return;
+  const row = {nome, nascimento:nasc||null, pais:limpa($('#tnPais').value)||null, contatos:String($('#tnCont').value).split(/\n/).map(limpa).filter(Boolean).join('\n')||null, obs:limpa($('#tnObs').value)||null, ativo:tnEdit ? $('#tnAtivo').checked : true};
+  const b = $('#tnSalvar'); b.disabled = true;
+  try{ if(tnEdit) await sb('/tn_teens?id=eq.'+tnEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
+    else await sb('/tn_teens', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify({...row, criado_por:eu.nome||eu.email})});
+    await carregarTudo(); fechar('#tnModal'); render(); toast('Cadastro salvo'); }
+  catch(e){ toast('Não salvou: '+e.message,'var(--danger)'); }
+  finally{ b.disabled = false; } };
+$('#tnExcluir').onclick = async ()=>{ const t = (D.teens||[]).find(x=>x.id===tnEdit); if(!t) return;
+  if(!(await perguntar('Excluir cadastro?', `${t.nome} será apagado de vez.\nSe a pessoa só parou de vir, prefira desmarcar “Participa dos Teens”.`, {sim:'Excluir', perigo:true}))) return;
+  try{ await sb('/tn_teens?id=eq.'+t.id, {method:'DELETE'}); await carregarTudo(); fechar('#tnModal'); render(); toast('Cadastro excluído'); }
+  catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
+
+/* ---------- aniversariantes ---------- */
+let anivMes = new Date().getMonth();
+function renderAniv(){
+  const T = (D.teens||[]).filter(t=>t.ativo && t.nascimento), hoje = new Date(), ano = hoje.getFullYear();
+  const dm = t => ({m:+t.nascimento.slice(5,7)-1, d:+t.nascimento.slice(8,10)});
+  const cont = Array(12).fill(0); T.forEach(t=>cont[dm(t).m]++);
+  $('#anivMeses').innerHTML = MESES.map((m,i)=>`<button type="button" class="chipsel ${i===anivMes?'on':''} ${cont[i]?'':'vaziom'}" data-am="${i}">${m.slice(0,3)}${cont[i]?` <small>${cont[i]}</small>`:''}</button>`).join('');
+  $$('#anivMeses [data-am]').forEach(b=>b.onclick=()=>{ anivMes = +b.dataset.am; renderAniv(); });
+  const l = T.filter(t=>dm(t).m===anivMes).sort((a,b)=>dm(a).d-dm(b).d);
+  $('#anivLista').innerHTML = l.map(t=>{ const {m,d} = dm(t), ehHoje = m===hoje.getMonth() && d===hoje.getDate();
+    const aRef = (m<hoje.getMonth() || (m===hoje.getMonth() && d<hoje.getDate())) ? ano+1 : ano;   // próximo aniversário
+    const faz = aRef - +t.nascimento.slice(0,4), passou = aRef > ano && m===hoje.getMonth();
+    return `<div class="item aniv ${ehHoje?'hj':''}" data-tn="${t.id}"><div class="dd"><b>${d}</b><small>${MESES[m].slice(0,3)}</small></div><div class="t"><b>${esc(t.nome)}</b>${ehHoje?' <span class="tag ok">🎉 hoje!</span>':''}
+      <div>${passou?`fez ${faz-1} anos`:`faz ${faz} anos`} · ${DIAS[new Date(aRef, m, d).getDay()]}</div>${t.contatos?`<div>📞 ${contatosHtml(t.contatos)}</div>`:''}</div></div>`; }).join('')
+    || `<p class="vazio">Nenhum aniversariante em ${MESES[anivMes].toLowerCase()}.</p>`;
+  // aviso de quem faz aniversário nos próximos 7 dias
+  const prox = T.map(t=>{ const {m,d} = dm(t); let x = new Date(ano, m, d); if(x < new Date(ano, hoje.getMonth(), hoje.getDate())) x = new Date(ano+1, m, d);
+    return {t, dias: Math.round((x - new Date(ano, hoje.getMonth(), hoje.getDate()))/864e5)}; }).filter(x=>x.dias<=7).sort((a,b)=>a.dias-b.dias);
+  $('#anivHoje').hidden = !prox.length;
+  $('#anivHoje').innerHTML = prox.length ? '🎂 <b>Esta semana:</b> ' + prox.map(x=>`${esc(primeiroNome(x.t.nome))} (${x.dias===0?'hoje':x.dias===1?'amanhã':diaCurto(isoDe(new Date(Date.now()+x.dias*864e5)))})`).join(', ') : '';
+}
+
+/* ---------- acessos ---------- */
+async function renderAcessos(){
+  const box = $('#acLista');
+  try{ const {membros} = await equipe({acao:'listar'});
+    box.innerHTML = membros.map(m=>`<div class="item"><div class="t"><b>${esc(m.nome||m.email)}</b> ${m.teens_admin?'<span class="tag ok">administrador</span>':''}${!m.ativo?' <span class="tag">desativado</span>':''}<div>${esc(m.email)}${m.outros?' · também usa outros sistemas da igreja':''}</div></div>
+      <div class="a">${m.email!==eu.email?`<button class="btn sm" data-acadm="${esc(m.email)}" data-v="${m.teens_admin?0:1}" type="button">${m.teens_admin?'Tirar admin':'Tornar admin'}</button>`:''}
+        ${m.outros?'':`<button class="btn sm" data-acsenha="${esc(m.email)}" type="button">Senha</button>`}
+        ${m.email!==eu.email?`<button class="btn sm red" data-acrem="${esc(m.email)}" type="button">Tirar acesso</button>`:''}</div></div>`).join('') || '<p class="vazio">Ninguém ainda.</p>';
+    $$('[data-acadm]').forEach(b=>b.onclick=async ()=>{ try{ await equipe({acao:'acesso', email:b.dataset.acadm, teens_admin:b.dataset.v==='1'}); toast('Acesso atualizado'); renderAcessos(); }catch(e){ toast(e.message,'var(--danger)'); } });
+    $$('[data-acrem]').forEach(b=>b.onclick=async ()=>{ if(!(await perguntar('Tirar acesso?', `${b.dataset.acrem} não vai mais entrar no Teens.`, {sim:'Tirar', perigo:true}))) return;
+      try{ await equipe({acao:'acesso', email:b.dataset.acrem, teens:false}); toast('Acesso retirado'); renderAcessos(); }catch(e){ toast(e.message,'var(--danger)'); } });
+    $$('[data-acsenha]').forEach(b=>b.onclick=async ()=>{ const s = await perguntar('Nova senha', `Nova senha para ${b.dataset.acsenha} (mín. 6):`, {sim:'Trocar', input:{ph:'Nova senha'}}); if(!s) return;
+      try{ await equipe({acao:'senha', email:b.dataset.acsenha, senha:s}); toast('Senha trocada'); }catch(e){ toast(e.message,'var(--danger)'); } });
+  }catch(e){ box.innerHTML = `<p class="hint">Não consegui carregar: ${esc(e.message)}</p>`; }
+}
+$('#acCriar').onclick = async ()=>{
+  const nome = limpa($('#acNome').value), email = $('#acEmail').value.trim().toLowerCase(), senha = $('#acSenha').value;
+  if(!nome || !email){ toast('Preencha nome e e-mail','var(--danger)'); return; }
+  const b = $('#acCriar'); b.disabled = true;
+  try{ const j = await equipe({acao:'criar', nome, email, senha, teens_admin:$('#acAdmin').checked});
+    $('#acNome').value = $('#acEmail').value = $('#acSenha').value = ''; $('#acAdmin').checked = false; toast(j.msg, undefined, 4000); renderAcessos(); }
+  catch(e){ toast(e.message,'var(--danger)', 4500); }
+  finally{ b.disabled = false; }
+};
+
+/* ---------- minha conta ---------- */
+$('#userBtn').onclick = ()=>{ $('#ctNome').textContent = eu?.nome || 'Minha conta'; $('#ctEmail').textContent = (eu?.email||'') + (eu?.admin ? ' · administrador' : ''); $('#ctSenha').value=''; abrir('#contaModal'); };
+$('#ctFechar').onclick = ()=>fechar('#contaModal');
+$('#ctSair').onclick = ()=>{ fechar('#contaModal'); sair(); };
+$('#ctTrocar').onclick = async ()=>{ const s = $('#ctSenha').value; if(s.length<6){ toast('Mínimo 6 caracteres','var(--danger)'); return; }
+  try{ await authReq('user', {password:s}, 'PUT', await tokenValido()); toast('Senha trocada'); fechar('#contaModal'); }catch(e){ toast('Não trocou: '+e.message,'var(--danger)'); } };
+$$('.modal').forEach(m=>m.addEventListener('click', e=>{ if(e.target===m && m.id!=='confModal') m.classList.remove('on'); }));
+
+/* ---------- início ---------- */
+async function iniciar(){
+  $('#userBtn').textContent = (eu?.nome||'?').trim().charAt(0).toUpperCase();
+  $('#navAcessos').hidden = !eu?.admin;
+  irPara(vista);
+  try{ await carregarTudo(); render(); }catch(e){ toast(navigator.onLine ? 'Não consegui atualizar: '+e.message : 'Sem internet — mostrando o último carregado','var(--danger)', 4000); }
+  carregarEu().then(()=>{ $('#navAcessos').hidden = !eu.admin; $('#userBtn').textContent = (eu.nome||'?').trim().charAt(0).toUpperCase(); }).catch(e=>{ if(e.semAcesso){ sair(); $('#lErro').textContent = e.message; } });
+}
+setInterval(()=>{ if(sess && document.visibilityState==='visible' && !$$('.modal.on').length) carregarTudo().then(render).catch(()=>{}); }, 30000);
+if(sess && eu) iniciar(); else $('#login').classList.add('on');
+</script>
+</body>
+</html>
