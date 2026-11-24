@@ -237,9 +237,10 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <div class="grid2">
       <div><label class="lb" for="enData" id="enDataLb">Data</label><input class="field" id="enData" type="date"></div>
       <div id="enCampoFim"><label class="lb" for="enFim">Até <small>(se for mais de um dia)</small></label><input class="field" id="enFim" type="date"></div>
-      <div><label class="lb" for="enHora">Horário</label><input class="field" id="enHora" type="time"></div>
-      <div><label class="lb" for="enLocal">Local <small>(opcional)</small></label><input class="field" id="enLocal" maxlength="100" autocomplete="off"></div>
+      <div><label class="lb" for="enHora">Começa às</label><input class="field" id="enHora" type="time"></div>
+      <div><label class="lb" for="enHoraFim">Termina às</label><input class="field" id="enHoraFim" type="time"></div>
     </div>
+    <label class="lb" for="enLocal">Local <small>(opcional)</small></label><input class="field" id="enLocal" maxlength="100" autocomplete="off">
     <div id="enCampoTema"><label class="lb" for="enTema">Tema do encontro <small>(opcional)</small></label><input class="field" id="enTema" maxlength="120" autocomplete="off"></div>
     <label class="hint" id="enCampoCanc" style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="enCanc" style="width:18px;height:18px"> Não vai ter encontro nesse dia</label>
 
@@ -249,7 +250,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       <button class="link" id="enAddFun" type="button">+ Adicionar função</button>
       <div class="secao">📖 Palavra</div>
       <div class="grid2">
-        <div><label class="lb" for="enPal">Quem vai dar a palavra</label><input class="field" id="enPal" maxlength="80" list="dlPessoas" autocomplete="off"></div>
+        <div><label class="lb" for="enPal">Quem vai dar a palavra</label><select class="field" id="enPal"></select></div>
         <div><label class="lb" for="enPalTema">Tema / passagem <small>(opcional)</small></label><input class="field" id="enPalTema" maxlength="120" autocomplete="off"></div>
       </div>
     </div>
@@ -276,9 +277,10 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
       </select></div>
       <div><label class="lb" for="geDe">A partir de</label><input class="field" id="geDe" type="date"></div>
       <div><label class="lb" for="geAte">Até</label><input class="field" id="geAte" type="date"></div>
-      <div><label class="lb" for="geHora">Horário</label><input class="field" id="geHora" type="time"></div>
-      <div><label class="lb" for="geLocal">Local <small>(opcional)</small></label><input class="field" id="geLocal" maxlength="100" autocomplete="off"></div>
+      <div><label class="lb" for="geHora">Começa às</label><input class="field" id="geHora" type="time"></div>
+      <div><label class="lb" for="geHoraFim">Termina às</label><input class="field" id="geHoraFim" type="time"></div>
     </div>
+    <label class="lb" for="geLocal">Local <small>(opcional)</small></label><input class="field" id="geLocal" maxlength="100" autocomplete="off">
     <p class="hint" id="gePrevia" style="margin:10px 0 0"></p>
     <div class="row" style="margin-top:14px">
       <button class="btn dark" id="geCriar" type="button">Criar encontros</button>
@@ -433,6 +435,7 @@ const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${Strin
 const isoDe = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const diaCurto = d => { const x = deISO(d); return `${DIAS[x.getDay()].slice(0,3)} ${x.getDate()}/${x.getMonth()+1}`; };
 const hhmm = t => t ? String(t).slice(0,5) : '';
+const faixaHora = e => { const a = horaTxt(e.hora), b = horaTxt(e.hora_fim); return a && b ? `${a} às ${b}` : a; };
 const horaTxt = t => { const h = hhmm(t); return h ? h.replace(':00','h').replace(':','h') : ''; };
 const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*·–]\s*/,'')).filter(Boolean);
 const primeiroNome = n => String(n||'').split(' ')[0];
@@ -476,7 +479,7 @@ function cardEncontro(e){
   return `<div class="enc ${e.tipo} ${e.cancelado?'canc':''} ${e.data===hoje?'hoje':''}" data-en="${e.id}">
     <div class="d"><b>${deISO(e.data).getDate()}</b><small>${DIAS[deISO(e.data).getDay()].slice(0,3)}</small></div>
     <div class="t"><div class="tt">${e.tipo==='evento'?'<span class="tag evt">Evento</span> ':''}<b>${esc(e.tipo==='evento' ? (e.tema||'Evento') : (e.tema || 'Encontro dos Teens'))}</b></div>
-      <div class="meta">${[quando, horaTxt(e.hora), e.local?'📍 '+esc(e.local):''].filter(Boolean).join(' · ')}</div>
+      <div class="meta">${[quando, faixaHora(e), e.local?'📍 '+esc(e.local):''].filter(Boolean).join(' · ')}</div>
       ${det}${topicos(e.obs).length?`<ul class="tops">${topicos(e.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}
       ${falta.length && e.data>=hoje ? `<div class="aviso">Falta definir: ${falta.join(' e ')}</div>`:''}</div></div>`;
 }
@@ -496,7 +499,7 @@ function renderProg(){
   $('#verPassados').textContent = verPassados ? 'Esconder os que já passaram' : `Ver os que já passaram (${passados.length})`;
   // próximo encontro em destaque
   const prox = E.find(e=>e.tipo==='encontro' && !e.cancelado && e.data>=hoje);
-  $('#proxBox').innerHTML = prox ? `<div class="prox" data-en="${prox.id}"><small>${prox.data===hoje?'HOJE':'PRÓXIMO ENCONTRO'}</small><b>${diaTxt(prox.data)}${prox.hora?' · '+horaTxt(prox.hora):''}</b>
+  $('#proxBox').innerHTML = prox ? `<div class="prox" data-en="${prox.id}"><small>${prox.data===hoje?'HOJE':'PRÓXIMO ENCONTRO'}</small><b>${diaTxt(prox.data)}${prox.hora?' · '+faixaHora(prox):''}</b>
     <div>🎸 ${louvorOk(prox) ? esc((prox.louvor||[]).filter(x=>limpa(x.nome)).map(x=>primeiroNome(x.nome)).filter((v,i,a)=>a.indexOf(v)===i).join(', ')) : '<u>louvor a definir</u>'} &nbsp; 📖 ${limpa(prox.palavra) ? esc(prox.palavra) : '<u>palavra a definir</u>'}</div></div>` : '';
 }
 $$('#pgFiltros [data-pf]').forEach(b=>b.onclick=()=>{ pgFiltro = b.dataset.pf; $$('#pgFiltros [data-pf]').forEach(x=>x.classList.toggle('on', x===b)); renderProg(); });
@@ -504,7 +507,13 @@ $('#verPassados').onclick = ()=>{ verPassados = !verPassados; renderProg(); };
 
 // editar encontro / evento
 let enEdit = null, enTipo = 'encontro';
-function linhaLouvor(f='', n=''){ return `<div class="lvrow"><input class="field" data-lf list="dlFuncoes" value="${esc(f)}" placeholder="Função" maxlength="40" autocomplete="off"><input class="field" data-ln list="dlPessoas" value="${esc(n)}" placeholder="Quem" maxlength="80" autocomplete="off"><button type="button" class="x" data-lx aria-label="Tirar linha">×</button></div>`; }
+// louvor: só os teens (cadastro ativo); palavra: só os tios (quem tem acesso, menos pastor/pastora)
+const teensAtivos = () => (D.teens||[]).filter(t=>t.ativo).map(t=>t.nome).sort((a,b)=>a.localeCompare(b,'pt'));
+const ehPastor = n => /^(pra?\.|pastor|pastora)\s/i.test(String(n||'').trim());
+const tios = () => [...new Set((D.equipe||[]).map(m=>m.nome).filter(n=>n && !ehPastor(n)))].sort((a,b)=>a.localeCompare(b,'pt'));
+function opcoes(lista, atual, vazio){ const extra = atual && !lista.includes(atual) ? `<option value="${esc(atual)}" selected>${esc(atual)} (fora da lista)</option>` : '';
+  return `<option value="">${vazio}</option>${lista.map(n=>`<option value="${esc(n)}" ${n===atual?'selected':''}>${esc(n)}</option>`).join('')}${extra}`; }
+function linhaLouvor(f='', n=''){ return `<div class="lvrow"><input class="field" data-lf list="dlFuncoes" value="${esc(f)}" placeholder="Função" maxlength="40" autocomplete="off"><select class="field" data-ln>${opcoes(teensAtivos(), n, '— Quem —')}</select><button type="button" class="x" data-lx aria-label="Tirar linha">×</button></div>`; }
 function ligarLouvor(){ $$('#enLouvor [data-lx]').forEach(b=>b.onclick=()=>b.closest('.lvrow').remove()); }
 $('#enAddFun').onclick = ()=>{ $('#enLouvor').insertAdjacentHTML('beforeend', linhaLouvor()); ligarLouvor(); $$('#enLouvor [data-lf]').pop().focus(); };
 function abrirEncontro(id, tipo){
@@ -515,11 +524,12 @@ function abrirEncontro(id, tipo){
   $('#enCampoTitulo').hidden = !evt; $('#enCampoFim').hidden = !evt; $('#enCampoTema').hidden = evt; $('#enCampoCanc').hidden = evt;
   $('#enDataLb').textContent = evt ? 'Começa em' : 'Data';
   $('#enTitulo').value = evt ? (e?.tema||'') : ''; $('#enTema').value = !evt ? (e?.tema||'') : '';
-  $('#enData').value = e?.data||''; $('#enFim').value = e?.data_fim||''; $('#enHora').value = hhmm(e?.hora); $('#enLocal').value = e?.local||'';
+  $('#enData').value = e?.data||''; $('#enFim').value = e?.data_fim||''; $('#enHora').value = hhmm(e?.hora); $('#enHoraFim').value = hhmm(e?.hora_fim); $('#enLocal').value = e?.local||'';
   $('#enCanc').checked = !!e?.cancelado; $('#enObs').value = e?.obs||'';
   const lv = e ? (e.louvor||[]) : []; $('#enLouvor').innerHTML = (lv.length ? lv : FUNCOES_PADRAO.map(f=>({funcao:f, nome:''}))).map(l=>linhaLouvor(l.funcao, l.nome)).join(''); ligarLouvor();
-  $('#enPal').value = e?.palavra||''; $('#enPalTema').value = e?.palavra_tema||'';
+  $('#enPal').innerHTML = opcoes(tios(), e?.palavra||'', '— A definir —'); $('#enPalTema').value = e?.palavra_tema||'';
   $('#enCampos').hidden = evt; mostrarCanc();
+  $('#enAddFun').textContent = teensAtivos().length ? '+ Adicionar função' : '+ Adicionar função (cadastre os teens na aba Teens)';
   // data/hora e exclusão só para administradores
   ['#enData','#enFim','#enTitulo'].forEach(s=>$(s).disabled = !!e && !eu.admin);
   $('#enExcluir').hidden = !(e && eu.admin);
@@ -536,10 +546,12 @@ $('#enSalvar').onclick = async ()=>{
   if(!data){ toast('Coloque a data','var(--danger)'); $('#enData').focus(); return; }
   if(evt && !limpa($('#enTitulo').value)){ toast('Coloque o nome do evento','var(--danger)'); $('#enTitulo').focus(); return; }
   if(evt && fim && fim < data){ toast('A data final precisa ser depois do início','var(--danger)'); return; }
+  const hi = $('#enHora').value, hf = $('#enHoraFim').value;
+  if(hf && hi && hf <= hi && !(evt && fim && fim > data)){ toast('O horário de término precisa ser depois do início','var(--danger)'); $('#enHoraFim').focus(); return; }
   const louvor = $$('#enLouvor .lvrow').map(r=>({funcao:limpa(r.querySelector('[data-lf]').value), nome:limpa(r.querySelector('[data-ln]').value)})).filter(l=>l.funcao||l.nome);
-  const row = {data, hora:$('#enHora').value||null, local:limpa($('#enLocal').value)||null, obs:topicos($('#enObs').value).join('\n')||null,
+  const row = {data, hora:hi||null, hora_fim:hf||null, local:limpa($('#enLocal').value)||null, obs:topicos($('#enObs').value).join('\n')||null,
     ...(evt ? {tema:limpa($('#enTitulo').value), data_fim:fim && fim!==data ? fim : null}
-            : {tema:limpa($('#enTema').value)||null, cancelado:$('#enCanc').checked, louvor, palavra:limpa($('#enPal').value)||null, palavra_tema:limpa($('#enPalTema').value)||null})};
+            : {tema:limpa($('#enTema').value)||null, cancelado:$('#enCanc').checked, louvor, palavra:$('#enPal').value||null, palavra_tema:limpa($('#enPalTema').value)||null})};
   if(enEdit && !eu.admin){ delete row.data; delete row.data_fim; if(evt) delete row.tema; }
   const b = $('#enSalvar'); b.disabled = true;
   try{ if(enEdit) await sb('/tn_encontros?id=eq.'+enEdit, {method:'PATCH', headers:{Prefer:'return=minimal'}, body:JSON.stringify(row)});
@@ -573,10 +585,11 @@ $('#geDia').innerHTML = DIAS.map((d,i)=>`<option value="${i}" ${i===6?'selected'
 $('#gerarEnc').onclick = ()=>{ const a = new Date().getFullYear() + (new Date().getMonth()>=10 ? 1 : 0);
   if(!$('#geDe').value){ $('#geDe').value = `${a}-01-01`; $('#geAte').value = `${a}-12-31`; } previaGerar(); abrir('#geModal'); };
 $('#geFechar').onclick = ()=>fechar('#geModal');
+$('#geHoraFim').onchange = ()=>{ if($('#geHora').value && $('#geHoraFim').value && $('#geHoraFim').value <= $('#geHora').value) toast('O fim precisa ser depois do início','var(--danger)'); };
 $('#geCriar').onclick = async ()=>{ const novos = previaGerar(); if(!novos.length){ toast('Nenhum encontro novo para criar','var(--danger)'); return; }
   if(!(await perguntar('Criar encontros?', `${novos.length} encontros de ${diaCurto(novos[0])} a ${diaCurto(novos[novos.length-1])}.`, {sim:'Criar'}))) return;
   const b = $('#geCriar'); b.disabled = true;
-  try{ await sb('/tn_encontros', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(novos.map(data=>({data, tipo:'encontro', hora:$('#geHora').value||null, local:limpa($('#geLocal').value)||null, criado_por:eu.nome||eu.email})))});
+  try{ await sb('/tn_encontros', {method:'POST', headers:{Prefer:'return=minimal'}, body:JSON.stringify(novos.map(data=>({data, tipo:'encontro', hora:$('#geHora').value||null, hora_fim:$('#geHoraFim').value||null, local:limpa($('#geLocal').value)||null, criado_por:eu.nome||eu.email})))});
     await carregarTudo(); fechar('#geModal'); renderProg(); toast(`${novos.length} encontros criados`); }
   catch(e){ toast('Não criou: '+e.message,'var(--danger)'); }
   finally{ b.disabled = false; } };
