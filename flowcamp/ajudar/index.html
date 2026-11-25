@@ -159,25 +159,31 @@ async function carregarRefs(){
   if(sairam.length && !$('#form').hidden) $('#erro').textContent = `A vaga de ${sairam.filter(Boolean).map(nomeRef).join(', ')} acabou de ser preenchida por outra pessoa e saiu da lista.`;
   desenharRefs();
 }
+// unidade com o tamanho/peso que está na observação do item (ex.: "Pacotes de 500g", "latas grandes")
+function unDe(i){ const o = String(i.obs||'').trim(), u = String(i.unidade||'').trim(); if(!o) return u;
+  if(/^pacote de /i.test(o)) return `${u} de ${o.slice(10)}`;
+  if(u && o.toLowerCase().startsWith(u.toLowerCase().slice(0,5))) return o[0].toLowerCase()+o.slice(1);
+  if(/^un/i.test(u) && /^lata/i.test(o)) return o[0].toLowerCase()+o.slice(1);
+  return `${u} de ${o}`; }
 const fmtQ = n => (Math.round(Number(n)*100)/100).toLocaleString('pt-BR');
 function desenharItens(){
   $('#itens').innerHTML = ITENS.length ? ITENS.map(i=>{ const cheio = i.faltam !== null && Number(i.faltam) <= 0, marcado = marc.has(i.id);
-    const info = cheio ? '✅ já tem quem vai doar' : i.meta !== null ? `Precisamos de ${fmtQ(i.meta)} ${esc(i.unidade)} · <b class="falta">faltam ${fmtQ(i.faltam)}</b>` : '';
+    const info = cheio ? '✅ já tem quem vai doar' : i.meta !== null ? `Precisamos de ${fmtQ(i.meta)} ${esc(unDe(i))} · <b class="falta">faltam ${fmtQ(i.faltam)}</b>` : '';
     return `<div class="itw ${marcado?'on':''}"><label class="it ${cheio?'cheio':''}"><input type="checkbox" data-i="${esc(i.id)}" ${marcado?'checked':''} ${cheio?'disabled':''}>
       <span class="n"><b>${esc(i.nome)}</b>${info?`<small>${info}</small>`:''}</span></label>
-      ${marcado ? `<div class="qrow"><label for="q-${esc(i.id)}">Quantos você vai doar?</label><input id="q-${esc(i.id)}" type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(marc.get(i.id)||'')}" placeholder="${i.faltam!==null?fmtQ(i.faltam):''}" ${i.faltam!==null?`max="${Number(i.faltam)}"`:''}><span>${esc(i.unidade)}</span></div>` : ''}</div>`; }).join('')
+      ${marcado ? `<div class="qrow"><label for="q-${esc(i.id)}">Quantos você vai doar?</label><input id="q-${esc(i.id)}" type="number" min="0" step="any" inputmode="decimal" data-q="${esc(i.id)}" value="${esc(marc.get(i.id)||'')}" placeholder="${i.faltam!==null?fmtQ(i.faltam):''}" ${i.faltam!==null?`max="${Number(i.faltam)}"`:''}><span>${esc(unDe(i))}</span></div>` : ''}</div>`; }).join('')
     : '<p class="hint">A lista ainda está sendo montada. Se quiser, escreva abaixo o que pode doar.</p>';
   document.querySelectorAll('[data-i]').forEach(c=>c.onchange=()=>{ c.checked ? marc.set(c.dataset.i, '') : marc.delete(c.dataset.i); $('#erro').textContent=''; desenharItens(); if(c.checked) $(`[data-q="${c.dataset.i}"]`)?.focus(); });
   document.querySelectorAll('[data-q]').forEach(x=>x.oninput=()=>{ marc.set(x.dataset.q, x.value); });
 }
-const carregarItens = ()=> rpc('fc_itens_publicos').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
+const carregarItens = ()=> rpc('fc_itens_publicos_v2').then(r=>{ ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); });
 carregarRefs().catch(()=>{ $('#refs').innerHTML = '<p class="hint">Não consegui carregar as refeições. Confira a internet e recarregue a página.</p>'; });
 carregarItens().catch(()=>{ $('#itens').innerHTML = '<p class="hint">Não consegui carregar a lista. Confira a internet e recarregue a página.</p>'; });
 let itensJson = '';
 function atualizar(){
   if(document.hidden || $('#form').hidden) return;
   carregarRefs().catch(()=>{});
-  rpc('fc_itens_publicos').then(r=>{ const j = JSON.stringify(r||[]); if(j === itensJson) return;
+  rpc('fc_itens_publicos_v2').then(r=>{ const j = JSON.stringify(r||[]); if(j === itensJson) return;
     if(document.activeElement?.dataset?.q) return;   // não atrapalha quem está digitando a quantidade
     itensJson = j; ITENS = r||[]; [...marc.keys()].forEach(id=>{ const i = ITENS.find(x=>x.id===id); if(!i || (i.faltam!==null && Number(i.faltam)<=0)) marc.delete(id); }); desenharItens(); }).catch(()=>{});
 }
@@ -203,7 +209,7 @@ $('#enviar').onclick = async ()=>{
   if(doar){ const semQ = [...marc].filter(([id,q])=>{ const i = ITENS.find(x=>x.id===id); return !(Number(String(q).replace(',','.'))>0) && i && i.meta===null; });
     if(semQ.length) return erro(`Diga quantos vai doar de: ${semQ.map(([id])=>ITENS.find(x=>x.id===id).nome).join(', ')}.`);
     const demais = [...marc].map(([id,q])=>[ITENS.find(x=>x.id===id), Number(String(q).replace(',','.'))]).filter(([i,q])=>i && i.faltam!==null && q > Number(i.faltam));
-    if(demais.length) return erro(demais.map(([i])=>`De ${i.nome} faltam só ${fmtQ(i.faltam)} ${i.unidade}.`).join(' ') + ' Se quiser ajudar com mais, escolha outro item ou escreva em “outra coisa”.'); }
+    if(demais.length) return erro(demais.map(([i])=>`De ${i.nome} faltam só ${fmtQ(i.faltam)} ${unDe(i)}.`).join(' ') + ' Se quiser ajudar com mais, escolha outro item ou escreva em “outra coisa”.'); }
   const b = $('#enviar'); b.disabled = true; b.textContent = 'Enviando…';
   try{
     if(vol && !feitoVol){ try{ await rpc('fc_inscrever', {p_nome:nome, p_telefone:tel, p_refeicoes:[...sel], p_funcao:fun||null, p_obs:obs}); feitoVol = true; }
