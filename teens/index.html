@@ -171,7 +171,7 @@ label.lb,.lb{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
     <button data-v="teens" type="button">Teens</button>
     <button data-v="equipe" type="button">Equipe</button>
     <button data-v="aniv" type="button">Aniversariantes</button>
-    <button data-v="caixa" type="button">Caixa</button>
+    <button data-v="caixa" type="button" id="navCaixa" hidden>Caixa</button>
     <button data-v="acessos" type="button" id="navAcessos" hidden>Acessos</button>
   </nav>
 </header>
@@ -525,8 +525,11 @@ async function carregarTudo(){
   const [encontros, teens, equipe, info, caixa] = await Promise.all([
     sb('/tn_encontros?select=*&order=data,hora'), sb('/tn_teens?select=*&order=nome'),
     sb('/rpc/tn_equipe', {method:'POST', body:'{}'}).catch(()=>D.equipe||[]), sb('/tn_equipe_info?select=*').catch(()=>D.info||[]), sb('/tn_caixa?select=*&order=data,criado_em').catch(()=>D.caixa||[])]);
-  D = {encontros, teens, equipe, info, caixa}; save(K.cache, D);
+  D = {encontros, teens, equipe, info, caixa}; save(K.cache, D); ajustarCaixa();
 }
+// caixa: só líderes e co-líderes (a regra também está no banco)
+const ehLider = () => !!eu && ['lider','colider'].includes(((D.info||[]).find(i=>i.email===String(eu.email).toLowerCase())||{}).papel);
+function ajustarCaixa(){ const ok = ehLider(); if($('#navCaixa')) $('#navCaixa').hidden = !ok; if(!ok){ D.caixa = []; if(vista==='caixa') irPara('prog'); } }
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const FUNCOES_PADRAO = ['Ministro(a)','Voz','Violão','Teclado'];
 const FUNCOES = ['Ministro(a)','Voz','Back vocal','Violão','Guitarra','Teclado','Baixo','Bateria','Cajon','Baixolão'];
@@ -553,6 +556,7 @@ const dataBR = d => { if(!d) return ''; const x = deISO(d); return `${String(x.g
 let vista = load(K.aba, 'prog');
 function irPara(v){
   if(v==='acessos' && !eu?.admin) v = 'prog';
+  if(v==='caixa' && !ehLider()) v = 'prog';
   vista = v; save(K.aba, v);
   $$('nav button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
   $$('.view').forEach(s=>s.classList.toggle('on', s.id==='v-'+v));
