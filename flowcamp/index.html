@@ -289,7 +289,7 @@ a.btn{text-decoration:none;display:inline-block}
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="margin:0">Programação do acampamento</h3><span class="hint" id="pgConta"></span></div>
       <div class="filtros" id="pgDias"></div>
-      <button class="btn dark" id="pgNovo" type="button" style="margin:6px 0 4px">+ Adicionar horário</button>
+      <div class="row" style="margin:6px 0 4px"><button class="btn dark" id="pgNovo" type="button">+ Adicionar horário</button><button class="btn" id="pgPdf" type="button">📄 Gerar PDF</button></div>
       <div id="pgLista"></div>
       <p class="hint" style="margin:12px 0 0" id="pgDica"></p>
     </div>
@@ -1124,6 +1124,66 @@ $('#pgExcluir').onclick = async ()=>{ const x = (D.programacao||[]).find(p=>p.id
   if(!(await perguntar('Excluir este horário?', `${hhmm(x.inicio)} · ${x.atividade}`, {sim:'Excluir', perigo:true}))) return;
   try{ await sb('/fc_programacao?id=eq.'+x.id, {method:'DELETE'}); await carregarTudo(); fechar('#pgModal'); renderProgramacao(); toast('Horário excluído'); }
   catch(e){ toast('Não excluiu: '+e.message,'var(--danger)'); } };
+
+
+/* ---------- PDF da programação (jsPDF, texto de verdade, várias páginas) ---------- */
+function carregarJs(src){ return new Promise((ok, erro)=>{ if([...document.scripts].some(s=>s.src===src)) return ok();
+  const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ()=>erro(new Error('Não consegui carregar o gerador de PDF. Confira a internet.')); document.head.appendChild(s); }); }
+const pdfTxt = t => String(t||'').replace(/[☀-➿️\u{1F000}-\u{1FFFF}]/gu,'').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[–—]/g,'-').replace(/\s+/g,' ').trim();
+// doc: {titulo, sub, cor:[r,g,b], dias:[{titulo, itens:[{hora, fim, texto, linhas:[], destaque:'ref'|'aviso'|''}]}]}
+async function gerarPdfProgramacao(doc){
+  await carregarJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const pdf = new window.jspdf.jsPDF({unit:'pt', format:'a4'});
+  const W = 595.28, H = 841.89, M = 40, colH = 62, X2 = M + colH, larg = W - M - X2 - 6;
+  const cor = doc.cor || [44,80,22], laranja = doc.destaqueCor || [232,102,31], cinza = [100,110,92];
+  let y = M, pag = 1;
+  const rodape = ()=>{ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...cinza); pdf.text(`Página ${pag}`, W-M, H-20, {align:'right'}); };
+  const novaPag = ()=>{ rodape(); pdf.addPage(); pag++; y = M; };
+  const cabe = h => { if(y + h > H - 40) novaPag(); };
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(20); pdf.setTextColor(...cor); pdf.text(pdfTxt(doc.titulo), M, y+16); y += 30;
+  if(doc.sub){ pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(...cinza); pdf.text(pdfTxt(doc.sub), M, y); y += 18; }
+  for(const dia of doc.dias){
+    cabe(60);
+    pdf.setFillColor(...cor); pdf.rect(M, y, W-2*M, 24, 'F');
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(255,255,255); pdf.text(pdfTxt(dia.titulo), M+8, y+16); y += 30;
+    if(!dia.itens.length){ pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(...cinza); pdf.text('Nada programado.', X2, y+10); y += 22; }
+    for(const it of dia.itens){
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10.5);
+      const tl = pdf.splitTextToSize(pdfTxt(it.texto), larg);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9);
+      const sub = (it.linhas||[]).filter(Boolean).flatMap(l=>pdf.splitTextToSize('• '+pdfTxt(l), larg));
+      const ab = it.abaixo || (it.fim ? 'até '+it.fim : '');
+      const alt = Math.max(tl.length*13 + sub.length*11.5, ab ? 24 : 13) + 10;
+      cabe(alt);
+      if(it.destaque==='aviso'){ pdf.setFillColor(255,244,229); pdf.rect(M, y-3, W-2*M, alt, 'F'); }
+      const c = it.destaque==='ref' ? laranja : cor;
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10.5); pdf.setTextColor(...c); pdf.text(pdfTxt(it.hora||'—'), M+4, y+9);
+      if(ab){ pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5); pdf.setTextColor(...cinza); pdf.text(pdfTxt(ab), M+4, y+21); }
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10.5); pdf.setTextColor(...(it.destaque==='ref' ? laranja : [25,30,25])); pdf.text(tl, X2, y+9);
+      let yy = y + 9 + tl.length*13;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(55,62,50); sub.forEach(l=>{ pdf.text(l, X2, yy-1); yy += 11.5; });
+      y += alt; pdf.setDrawColor(223,225,214); pdf.setLineWidth(.5); pdf.line(M, y-4, W-M, y-4);
+    }
+    y += 10;
+  }
+  rodape();
+  const blob = pdf.output('blob'), nome = doc.arquivo || 'Programacao.pdf', file = new File([blob], nome, {type:'application/pdf'});
+  if(navigator.canShare && navigator.canShare({files:[file]}) && /iphone|ipad|android/i.test(navigator.userAgent)){
+    try{ await navigator.share({files:[file], title:nome.replace('.pdf','')}); return; }catch(e){ if(e.name==='AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+}
+
+const NOMES_DIA = {'2026-12-04':'Sexta-feira, 4 de dezembro','2026-12-05':'Sábado, 5 de dezembro','2026-12-06':'Domingo, 6 de dezembro'};
+$('#pgPdf').onclick = async ()=>{ const b = $('#pgPdf'); b.disabled = true; const t = b.textContent; b.textContent = 'Gerando…';
+  try{
+    const dias = DIAS_EVT.map(d=>({titulo:NOMES_DIA[d]||diaTxt(d), itens:itensDoDia(d).map(x=>{
+      if(x.tipo==='ref'){ const r = refDe(x.id)||{}; const card = ['almoco','jantar'].includes(r.tipo) && r.cardapio ? [r.cardapio] : [];
+        return {hora:x.ini||'—', fim:x.fim||'', texto:x.atividade, linhas:card, destaque:'ref'}; }
+      return {hora:x.ini, fim:hhmm(x.fim), texto:x.atividade + (x.local ? ' · '+x.local : ''), linhas:topicos(x.obs), destaque:/^\s*⚠/.test(x.atividade)?'aviso':''}; })}));
+    await gerarPdfProgramacao({titulo:'Flow Camp 2026 — Programação', sub:'4 a 6 de dezembro · Movimento Vou Fluir · refeições em laranja', dias, arquivo:'Flow Camp 2026 - Programacao.pdf'});
+  }catch(e){ toast(e.message,'var(--danger)'); }
+  finally{ b.disabled = false; b.textContent = t; } };
 
 /* ---------- acessos ---------- */
 async function renderAcessos(){
