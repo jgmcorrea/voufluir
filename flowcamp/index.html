@@ -1194,7 +1194,7 @@ $('#paPdf').onclick = async ()=>{ const b = $('#paPdf'); b.disabled = true; cons
     const P = [...(D.participantes||[])].sort((a,b)=>semAcento(a.nome).localeCompare(semAcento(b.nome)));
     const pdf = new window.jspdf.jsPDF({unit:'pt', format:'a4', orientation:'landscape'});
     const W = 841.89, H = 595.28, M = 32, verde = [44,80,22], cinza = [100,110,92];
-    const cols = [{t:'#', w:26}, {t:'Nome', w:230}, {t:'Responsável', w:205}, {t:'Alergia / restrição', w:200}, {t:'Brinde', w:58, ck:true}, {t:'Termo assinado', w:59, ck:true}];
+    const cols = [{t:'#', w:26}, {t:'Nome', w:218}, {t:'Responsável', w:195}, {t:'Alergia / restrição', w:187}, {t:'Brinde', w:62, ck:true}, {t:'Termo assinado', w:90, ck:true}];
     let y = M, pag = 1;
     const cab = ()=>{ pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(...verde); pdf.text('Flow Camp 2026 - Lista de chegada', M, y+12);
       pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...cinza); pdf.text(`${P.length} participantes · 4 a 6 de dezembro · gerada em ${new Date().toLocaleDateString('pt-BR')}`, M, y+27); y += 40;
