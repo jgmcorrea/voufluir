@@ -209,6 +209,7 @@ a.btn{text-decoration:none;display:inline-block}
     <div id="paAvisos"></div>
     <div class="card">
       <div class="row" style="justify-content:space-between"><h3 style="margin:0">Participantes</h3><span class="hint" id="paConta"></span></div>
+      <button class="btn" id="paPdf" type="button" style="margin-top:10px">📄 Gerar PDF (lista de chegada)</button>
       <input class="field" id="paBusca" type="search" placeholder="Buscar participante ou responsável…" style="margin-top:10px" autocomplete="off">
       <div class="filtros" id="paFiltros">
         <button type="button" class="chipsel on" data-pf="todos">Todos</button>
@@ -1184,6 +1185,42 @@ $('#pgPdf').onclick = async ()=>{ const b = $('#pgPdf'); b.disabled = true; cons
     await gerarPdfProgramacao({titulo:'Flow Camp 2026 — Programação', sub:'4 a 6 de dezembro · Movimento Vou Fluir · refeições em laranja', dias, arquivo:'Flow Camp 2026 - Programacao.pdf'});
   }catch(e){ toast(e.message,'var(--danger)'); }
   finally{ b.disabled = false; b.textContent = t; } };
+
+// lista de chegada: nome, responsável, alergia e checkboxes de brinde e termo assinado
+const semAlergia = t => !t || /^(n[aã]o\.?|nenhuma\.?|nada\.?|-)$/i.test(String(t).trim());
+$('#paPdf').onclick = async ()=>{ const b = $('#paPdf'); b.disabled = true; const tx = b.textContent; b.textContent = 'Gerando…';
+  try{
+    await carregarJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const P = [...(D.participantes||[])].sort((a,b)=>semAcento(a.nome).localeCompare(semAcento(b.nome)));
+    const pdf = new window.jspdf.jsPDF({unit:'pt', format:'a4', orientation:'landscape'});
+    const W = 841.89, H = 595.28, M = 32, verde = [44,80,22], cinza = [100,110,92];
+    const cols = [{t:'#', w:26}, {t:'Nome', w:230}, {t:'Responsável', w:205}, {t:'Alergia / restrição', w:200}, {t:'Brinde', w:58, ck:true}, {t:'Termo assinado', w:59, ck:true}];
+    let y = M, pag = 1;
+    const cab = ()=>{ pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(...verde); pdf.text('Flow Camp 2026 - Lista de chegada', M, y+12);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(...cinza); pdf.text(`${P.length} participantes · 4 a 6 de dezembro · gerada em ${new Date().toLocaleDateString('pt-BR')}`, M, y+27); y += 40;
+      pdf.setFillColor(...verde); pdf.rect(M, y, W-2*M, 20, 'F'); pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(255,255,255);
+      let x = M; cols.forEach(c=>{ pdf.text(c.t, c.ck ? x + c.w/2 : x+5, y+13.5, c.ck ? {align:'center'} : undefined); x += c.w; }); y += 20; };
+    const rodape = ()=>{ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(...cinza); pdf.text(`Página ${pag}`, W-M, H-16, {align:'right'}); };
+    cab();
+    P.forEach((p, i)=>{
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5);
+      const ale = semAlergia(p.alergias) ? '' : pdfTxt(p.alergias);
+      const lin = [String(i+1), pdfTxt(nomeBonito(p.nome)), pdfTxt(p.responsavel||''), ale].map((t,k)=>pdf.splitTextToSize(t, cols[k].w-10));
+      const h = Math.max(22, Math.max(...lin.map(l=>l.length))*11.5 + 9);
+      if(y + h > H - 30){ rodape(); pdf.addPage(); pag++; y = M; cab(); }
+      if(i%2){ pdf.setFillColor(246,247,242); pdf.rect(M, y, W-2*M, h, 'F'); }
+      let x = M;
+      lin.forEach((l,k)=>{ pdf.setFont('helvetica', k===1 ? 'bold' : 'normal'); pdf.setTextColor(...(k===3 && ale ? [192,57,43] : k===0 ? cinza : [25,30,25])); pdf.text(l, x+5, y+14); x += cols[k].w; });
+      [4,5].forEach(k=>{ const cx = x + cols[k].w/2 - 6; pdf.setDrawColor(60,70,55); pdf.setLineWidth(1); pdf.rect(cx, y + h/2 - 6, 12, 12); x += cols[k].w; });
+      pdf.setDrawColor(223,225,214); pdf.setLineWidth(.5); pdf.line(M, y+h, W-M, y+h); y += h;
+    });
+    rodape();
+    const blob = pdf.output('blob'), nome = 'Flow Camp 2026 - Lista de chegada.pdf', file = new File([blob], nome, {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]}) && /iphone|ipad|android/i.test(navigator.userAgent)){
+      try{ await navigator.share({files:[file], title:nome.replace('.pdf','')}); return; }catch(e){ if(e.name==='AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ toast(e.message,'var(--danger)'); }
+  finally{ b.disabled = false; b.textContent = tx; } };
 
 /* ---------- acessos ---------- */
 async function renderAcessos(){
