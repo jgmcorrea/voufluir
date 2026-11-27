@@ -1023,8 +1023,11 @@ const topicos = t => String(t||'').split(/\n/).map(l=>limpa(l).replace(/^[-•*�
 const hhmm = t => t ? String(t).slice(0,5) : '';
 const horaRef = h => { const m = String(h||'').match(/(\d{1,2})\s*(?:h|:)\s*(\d{2})?/i); return m ? `${m[1].padStart(2,'0')}:${m[2]||'00'}` : null; };
 // disponíveis = quem tem acesso ao sistema + voluntários
+// missionários que ficam o acampamento inteiro: não precisam ser marcados na programação
+const SEMPRE_PRESENTES = ['iago'];
+const ehSempre = n => SEMPRE_PRESENTES.includes(String(n||'').trim().toLowerCase());
 function pessoasDisp(){
-  const eq = [...new Set((D.equipe||[]).map(m=>limpa(m.nome)).filter(Boolean))], low = new Set(eq.map(n=>n.toLowerCase())), vs = [];
+  const eq = [...new Set((D.equipe||[]).map(m=>limpa(m.nome)).filter(n=>n && !ehSempre(n)))], low = new Set(eq.map(n=>n.toLowerCase())), vs = [];
   D.voluntarios.forEach(v=>{ const n = limpa(v.nome); if(n && !low.has(n.toLowerCase())){ low.add(n.toLowerCase()); vs.push(n); } });
   return {equipe: eq.sort((a,b)=>a.localeCompare(b,'pt')), vols: vs.sort((a,b)=>a.localeCompare(b,'pt'))};
 }
@@ -1049,7 +1052,7 @@ function renderProgramacao(){
     return `<div class="pg ${x.tipo==='ref'&&!eu.admin?'pgref':''} ${x.tipo==='ref'?'ehref':''} ${x===atual?'agora':''}" ${x.tipo==='prog'?`data-pged="${x.id}"`:eu.admin?`data-pgrf="${x.id}"`:''}>
       <div class="h">${x.ini || '—'}${x.fim?`<small>até ${hhmm(x.fim)}</small>`:''}${x===atual?'<small style="color:var(--ok)">● agora</small>':''}</div>
       <div class="t"><b>${x.tipo==='ref'?'🍽️ ':''}${esc(x.atividade)}</b>${x.local?`<div>📍 ${esc(x.local)}</div>`:''}${x.obs?(x.tipo==='prog'?`<ul class="tops">${topicos(x.obs).map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:`<div>📝 ${esc(x.obs)}</div>`):''}${x.tipo==='ref'&&!x.ini?`<div style="color:var(--accent)">${eu.admin?'⏰ Toque para colocar o horário':'Horário ainda não definido'}</div>`:''}
-      ${ppl?`<div class="pp">${ppl}</div>`:''}${eu.nome?(()=>{ const vou = (x.pessoas||[]).some(n=>n.toLowerCase()===eu.nome.toLowerCase()) && verdes.has(eu.nome.toLowerCase());
+      ${ppl?`<div class="pp">${ppl}</div>`:''}${eu.nome && !ehSempre(eu.nome)?(()=>{ const vou = (x.pessoas||[]).some(n=>n.toLowerCase()===eu.nome.toLowerCase()) && verdes.has(eu.nome.toLowerCase());
         return `<button type="button" class="pres ${vou?'on':''}" data-pres="${x.tipo}|${x.id}" aria-pressed="${vou}">${vou?'✓ Vou estar':'✋ Vou estar'}</button>`; })():''}</div></div>`; }).join('')
     || '<p class="vazio">Nada neste dia ainda. Use “+ Adicionar horário”.</p>';
 }
